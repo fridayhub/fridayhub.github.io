@@ -6,55 +6,10 @@
     <description>Recent content in Tags on Friday - Here I record my experience</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-CN</language>
-    <lastBuildDate>Thu, 13 Jun 2019 16:54:20 +0800</lastBuildDate>
+    <lastBuildDate>Fri, 15 Dec 2017 12:01:23 +0800</lastBuildDate>
     
 	<atom:link href="https://fridayhub.github.io/tags/index.xml" rel="self" type="application/rss+xml" />
     
-    
-    <item>
-      <title>container</title>
-      <link>https://fridayhub.github.io/tags/container/</link>
-      <pubDate>Thu, 13 Jun 2019 16:54:20 +0800</pubDate>
-      
-      <guid>https://fridayhub.github.io/tags/container/</guid>
-      <description></description>
-    </item>
-    
-    <item>
-      <title>docker</title>
-      <link>https://fridayhub.github.io/tags/docker/</link>
-      <pubDate>Thu, 13 Jun 2019 16:54:20 +0800</pubDate>
-      
-      <guid>https://fridayhub.github.io/tags/docker/</guid>
-      <description></description>
-    </item>
-    
-    <item>
-      <title>TCP</title>
-      <link>https://fridayhub.github.io/tags/tcp/</link>
-      <pubDate>Mon, 04 Jun 2018 16:49:24 +0800</pubDate>
-      
-      <guid>https://fridayhub.github.io/tags/tcp/</guid>
-      <description></description>
-    </item>
-    
-    <item>
-      <title>CI</title>
-      <link>https://fridayhub.github.io/tags/ci/</link>
-      <pubDate>Wed, 20 Dec 2017 23:59:24 +0800</pubDate>
-      
-      <guid>https://fridayhub.github.io/tags/ci/</guid>
-      <description></description>
-    </item>
-    
-    <item>
-      <title>travis</title>
-      <link>https://fridayhub.github.io/tags/travis/</link>
-      <pubDate>Wed, 20 Dec 2017 23:59:24 +0800</pubDate>
-      
-      <guid>https://fridayhub.github.io/tags/travis/</guid>
-      <description></description>
-    </item>
     
     <item>
       <title>preview</title>
