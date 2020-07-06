@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>CD on Friday - Here I record my experience</title>
+    <link>https://fridayhub.github.io/tags/cd/</link>
+    <description>Recent content in CD on Friday - Here I record my experience</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>zh-CN</language>
+    <lastBuildDate>Tue, 24 Sep 2019 22:09:23 +0800</lastBuildDate>
+    
+	<atom:link href="https://fridayhub.github.io/tags/cd/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>博客的CI/CD方案</title>
+      <link>https://fridayhub.github.io/post/blog-ci-cd/</link>
+      <pubDate>Tue, 24 Sep 2019 22:09:23 +0800</pubDate>
+      
+      <guid>https://fridayhub.github.io/post/blog-ci-cd/</guid>
+      <description>&lt;p&gt;好像还没有介绍我这个博客的CI/CD链。我自己感觉很清爽。&lt;/p&gt;</description>
+    </item>
+    
+  </channel>
+</rss>

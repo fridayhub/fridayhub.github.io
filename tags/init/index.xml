@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>init on Friday - Here I record my experience</title>
+    <link>https://fridayhub.github.io/tags/init/</link>
+    <description>Recent content in init on Friday - Here I record my experience</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>zh-CN</language>
+    <lastBuildDate>Fri, 15 Dec 2017 14:24:49 +0800</lastBuildDate>
+    
+	<atom:link href="https://fridayhub.github.io/tags/init/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>博客尘埃落定</title>
+      <link>https://fridayhub.github.io/post/init/</link>
+      <pubDate>Fri, 15 Dec 2017 14:24:49 +0800</pubDate>
+      
+      <guid>https://fridayhub.github.io/post/init/</guid>
+      <description>&lt;p&gt;关于博客的事情断断续续折腾了很久。总想着自己造轮子，把前后端的新技术都熟悉一遍，但又因为各种原因一直没能成形。这次看到golang写的hugo感觉十分不错，在网络上找了github pages的教程把博客放到这里。就这样了。&lt;/p&gt;</description>
+    </item>
+    
+  </channel>
+</rss>

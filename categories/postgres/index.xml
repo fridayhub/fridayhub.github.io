@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>postgres on Friday - Here I record my experience</title>
+    <link>https://fridayhub.github.io/categories/postgres/</link>
+    <description>Recent content in postgres on Friday - Here I record my experience</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>zh-CN</language>
+    <lastBuildDate>Wed, 25 Sep 2019 13:53:06 +0800</lastBuildDate>
+    
+	<atom:link href="https://fridayhub.github.io/categories/postgres/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Postgres 分组排序取第一个</title>
+      <link>https://fridayhub.github.io/post/postgres-group-first/</link>
+      <pubDate>Wed, 25 Sep 2019 13:53:06 +0800</pubDate>
+      
+      <guid>https://fridayhub.github.io/post/postgres-group-first/</guid>
+      <description>&lt;p&gt;之前遇到一个场景，需要写一个sql取一个表中的数据按某字段分组排序后每个组的第一个元素，这里记录下。&lt;/p&gt;</description>
+    </item>
+    
+    <item>
+      <title>Postgresql Sequence</title>
+      <link>https://fridayhub.github.io/post/postgresql-sequence/</link>
+      <pubDate>Wed, 25 Sep 2019 13:50:25 +0800</pubDate>
+      
+      <guid>https://fridayhub.github.io/post/postgresql-sequence/</guid>
+      <description>&lt;p&gt;记录下postgres中实现自增id的方式。&lt;/p&gt;</description>
+    </item>
+    
+    <item>
+      <title>Postgresql Change Owner</title>
+      <link>https://fridayhub.github.io/post/postgresql-change-owner/</link>
+      <pubDate>Wed, 25 Sep 2019 13:36:41 +0800</pubDate>
+      
+      <guid>https://fridayhub.github.io/post/postgresql-change-owner/</guid>
+      <description>&lt;p&gt;之前在一次更改postgres数据库owner的时候遇到一些问题做过一点记录，摘录过来。&lt;/p&gt;</description>
+    </item>
+    
+    <item>
+      <title>Pgbadger Analyze</title>
+      <link>https://fridayhub.github.io/post/pgbadger-analyze/</link>
+      <pubDate>Fri, 30 Mar 2018 17:10:33 +0800</pubDate>
+      
+      <guid>https://fridayhub.github.io/post/pgbadger-analyze/</guid>
+      <description>&lt;p&gt;记录一下如何使用pgbadger分析postgres数据库日志。&lt;/p&gt;</description>
+    </item>
+    
+  </channel>
+</rss>

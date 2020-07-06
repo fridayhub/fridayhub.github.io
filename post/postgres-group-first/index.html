@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <title>Postgres 分组排序取第一个 - Friday - Here I record my experience</title>
+  <meta name="renderer" content="webkit" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+<meta name="theme-color" content="#f8f5ec" />
+<meta name="msapplication-navbutton-color" content="#f8f5ec">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="#f8f5ec">
+
+
+<meta name="author" content="hulb" /><meta name="description" content="之前遇到一个场景，需要写一个sql取一个表中的数据按某字段分组排序后每个组的第一个元素，这里记录下。
+" /><meta name="keywords" content="postgres, window function, group by" />
+
+
+
+
+
+
+<meta name="generator" content="Hugo 0.68.3 with theme even" />
+
+
+<link rel="canonical" href="https://fridayhub.github.io/post/postgres-group-first/" />
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+<link rel="manifest" href="/manifest.json">
+<link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5">
+
+
+
+<link href="/sass/main.min.e861d9ade66fcc0257009476263fc9ff874695b6028dadc923a84c98b842034b.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.css" integrity="sha256-7TyXnr2YU040zfSP+rEcz29ggW4j56/ujTPwjMzyqFY=" crossorigin="anonymous">
+
+
+<meta property="og:title" content="Postgres 分组排序取第一个" />
+<meta property="og:description" content="之前遇到一个场景，需要写一个sql取一个表中的数据按某字段分组排序后每个组的第一个元素，这里记录下。" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://fridayhub.github.io/post/postgres-group-first/" />
+<meta property="article:published_time" content="2019-09-25T13:53:06+08:00" />
+<meta property="article:modified_time" content="2019-09-25T13:53:06+08:00" />
+<meta itemprop="name" content="Postgres 分组排序取第一个">
+<meta itemprop="description" content="之前遇到一个场景，需要写一个sql取一个表中的数据按某字段分组排序后每个组的第一个元素，这里记录下。">
+<meta itemprop="datePublished" content="2019-09-25T13:53:06&#43;08:00" />
+<meta itemprop="dateModified" content="2019-09-25T13:53:06&#43;08:00" />
+<meta itemprop="wordCount" content="645">
+
+
+
+<meta itemprop="keywords" content="postgres," /><meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Postgres 分组排序取第一个"/>
+<meta name="twitter:description" content="之前遇到一个场景，需要写一个sql取一个表中的数据按某字段分组排序后每个组的第一个元素，这里记录下。"/>
+
+<!--[if lte IE 9]>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/classlist/1.1.20170427/classList.min.js"></script>
+<![endif]-->
+
+<!--[if lt IE 9]>
+  <script src="https://cdn.jsdelivr.net/npm/html5shiv@3.7.3/dist/html5shiv.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/respond.js@1.4.2/dest/respond.min.js"></script>
+<![endif]-->
+
+</head>
+<body>
+  <div id="mobile-navbar" class="mobile-navbar">
+  <div class="mobile-header-logo">
+    <a href="/" class="logo">Friday</a>
+  </div>
+  <div class="mobile-navbar-icon">
+    <span></span>
+    <span></span>
+    <span></span>
+  </div>
+</div>
+<nav id="mobile-menu" class="mobile-menu slideout-menu">
+  <ul class="mobile-menu-list">
+    <a href="/">
+        <li class="mobile-menu-item">Home</li>
+      </a><a href="/post/">
+        <li class="mobile-menu-item">Archives</li>
+      </a><a href="/tags/">
+        <li class="mobile-menu-item">Tags</li>
+      </a><a href="/categories/">
+        <li class="mobile-menu-item">Categories</li>
+      </a><a href="/about/">
+        <li class="mobile-menu-item">About</li>
+      </a>
+  </ul>
+</nav>
+  <div class="container" id="mobile-panel">
+    <header id="header" class="header">
+        <div class="logo-wrapper">
+  <a href="/" class="logo">Friday</a>
+</div>
+
+<nav class="site-navbar">
+  <ul id="menu" class="menu">
+    <li class="menu-item">
+        <a class="menu-item-link" href="/">Home</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="/post/">Archives</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="/tags/">Tags</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="/categories/">Categories</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="/about/">About</a>
+      </li>
+  </ul>
+</nav>
+    </header>
+
+    <main id="main" class="main">
+      <div class="content-wrapper">
+        <div id="content" class="content">
+          <article class="post">
+    
+    <header class="post-header">
+      <h1 class="post-title">Postgres 分组排序取第一个</h1>
+
+      <div class="post-meta">
+        <span class="post-time"> 2019-09-25 13:53:06 </span>
+        <div class="post-category">
+            <a href="/categories/postgres/"> postgres </a>
+            </div>
+          <span class="more-meta"> 645 words </span>
+          <span class="more-meta"> 2 mins read </span>
+        
+      </div>
+    </header>
+
+    
+    <div class="post-content">
+      <p>之前遇到一个场景，需要写一个sql取一个表中的数据按某字段分组排序后每个组的第一个元素，这里记录下。</p>
+<p>表结构如下：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-fallback" data-lang="fallback">Table &#34;public.commission_group_employee_rel&#34;
+       Column            |  Type   
+----------------------------------+---------
+ commission_group_id     | integer 
+ employee_id             | integer 
+</code></pre></td></tr></table>
+</div>
+</div><p>还有一个表，记录的是commission_group_id的表</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-fallback" data-lang="fallback">Table &#34;public.commission_group&#34;
+          Column          |            Type            
+--------------------------+--------------------------
+ id                       | integer                     
+ state                    | character varying    
+
+write_date                | timestamp without time zone
+</code></pre></td></tr></table>
+</div>
+</div><p>现在要针对commission_group_employee_rel表中，按照employee_id来分组得到的每个employee_id对应的多个commission_group_id在commission_group中的write_date最大的一条。</p>
+<p>这里用postgres的窗口函数可以来实现：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span><span class="lnt">8
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-SQL" data-lang="SQL"><span class="k">select</span> <span class="n">employee_id</span><span class="p">,</span> <span class="n">group_id</span> <span class="k">from</span> <span class="p">(</span>
+    <span class="k">select</span> <span class="n">gel</span><span class="p">.</span><span class="n">employee_id</span> <span class="k">as</span> <span class="n">employee_id</span><span class="p">,</span> <span class="n">gel</span><span class="p">.</span><span class="n">commission_group_id</span> <span class="k">as</span> <span class="n">group_id</span><span class="p">,</span> <span class="n">row_number</span><span class="p">()</span> <span class="n">over</span><span class="p">(</span><span class="n">partition</span> <span class="k">by</span> <span class="n">gel</span><span class="p">.</span><span class="n">employee_id</span> <span class="k">order</span> <span class="k">by</span> <span class="n">cg</span><span class="p">.</span><span class="n">write_date</span> <span class="k">desc</span><span class="p">)</span> <span class="k">as</span> <span class="n">rnum</span>
+        <span class="k">from</span> <span class="n">commission_group_employee_rel</span> <span class="k">as</span> <span class="n">gel</span>
+        <span class="k">left</span> <span class="k">join</span>
+            <span class="n">commission_group</span> <span class="k">as</span> <span class="n">cg</span> <span class="k">on</span> <span class="n">cg</span><span class="p">.</span><span class="n">id</span><span class="o">=</span><span class="n">gel</span><span class="p">.</span><span class="n">commission_group_id</span>
+        <span class="k">where</span> <span class="n">cg</span><span class="p">.</span><span class="k">state</span><span class="o">=</span><span class="s1">&#39;done&#39;</span>
+    <span class="p">)</span> <span class="k">as</span> <span class="n">tmp</span>
+<span class="k">where</span> <span class="n">rnum</span> <span class="o">=</span> <span class="mi">1</span> <span class="k">order</span> <span class="k">by</span> <span class="n">employee_id</span><span class="p">;</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>使用row_number() 这个窗口函数搭配over (partition by gel.employee order by cg.write_date desc)来按照employee_id分组后，每个小组按照commission_group_id对应的write_date desc排序后，算出来row_numer, 然后最外面用select 取row_number为1的，即是write_date最大的。</p>
+<p>还有一种写法也可以达到目的，用到了select 语句的WINDOW 从句：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span><span class="lnt">8
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-SQL" data-lang="SQL"><span class="k">select</span> <span class="k">distinct</span> <span class="n">gel</span><span class="p">.</span><span class="n">employee_id</span><span class="p">,</span><span class="n">first_value</span><span class="p">(</span><span class="n">gel</span><span class="p">.</span><span class="n">commission_group_id</span><span class="p">)</span> <span class="n">over</span> <span class="n">w</span>
+<span class="k">from</span>
+    <span class="n">commission_group_employee_rel</span> <span class="k">as</span> <span class="n">gel</span>
+<span class="k">left</span> <span class="k">join</span>
+    <span class="n">commission_group</span> <span class="k">as</span> <span class="n">cg</span> <span class="k">on</span> <span class="n">cg</span><span class="p">.</span><span class="n">id</span><span class="o">=</span><span class="n">gel</span><span class="p">.</span><span class="n">commission_group_id</span>
+<span class="k">where</span>
+    <span class="n">cg</span><span class="p">.</span><span class="k">state</span><span class="o">=</span><span class="s1">&#39;done&#39;</span>
+<span class="n">WINDOW</span> <span class="n">w</span> <span class="k">as</span> <span class="p">(</span><span class="n">partition</span> <span class="k">by</span> <span class="n">gel</span><span class="p">.</span><span class="n">employee_id</span> <span class="k">order</span> <span class="k">by</span> <span class="n">cg</span><span class="p">.</span><span class="n">write_date</span> <span class="k">desc</span> <span class="p">)</span> <span class="k">order</span> <span class="k">by</span> <span class="n">gel</span><span class="p">.</span><span class="n">employee_id</span><span class="p">;</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>这里是用WINDOW 从句来分组和排序，然后用first_value这个窗口函数来取每个分组里的第一条数据，但是最终的结果会出现重复值，所以加了distinct。</p>
+    </div>
+
+    
+<footer class="post-footer">
+      <div class="post-tags">
+          <a href="/tags/postgres/">postgres</a>
+          </div>
+      <nav class="post-nav">
+        
+        <a class="next" href="/post/postgresql-sequence/">
+            <span class="next-text nav-default">Postgresql Sequence</span>
+            <span class="next-text nav-mobile">Next</span>
+            <i class="iconfont icon-right"></i>
+          </a>
+      </nav>
+    </footer>
+  </article>
+        </div>
+        
+
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="social-links">
+      <a href="mailto:hanglinux@163.com" class="iconfont icon-email" title="email"></a>
+      <a href="https://github.com/fridayhub" class="iconfont icon-github" title="github"></a>
+  <a href="https://fridayhub.github.io/index.xml" type="application/rss+xml" class="iconfont icon-rss" title="rss"></a>
+</div>
+
+<div class="copyright">
+  <span class="power-by">
+    Powered by <a class="hexo-link" href="https://gohugo.io">Hugo</a>
+  </span>
+  <span class="division">|</span>
+  <span class="theme-info">
+    Theme - 
+    <a class="theme-link" href="https://github.com/olOwOlo/hugo-theme-even">Even</a>
+  </span>
+
+  
+
+  <span class="copyright-year">
+    &copy; 
+    2017 - 
+    2020
+    <span class="heart">
+      <i class="iconfont icon-heart"></i>
+    </span>
+    <span class="author">hulb</span>
+  </span>
+</div>
+    </footer>
+
+    <div class="back-to-top" id="back-to-top">
+      <i class="iconfont icon-up"></i>
+    </div>
+  </div>
+  
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.2.1/dist/jquery.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/slideout@1.0.1/dist/slideout.min.js" integrity="sha256-t+zJ/g8/KXIJMjSVQdnibt4dlaDxc9zXr/9oNPeWqdg=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.js" integrity="sha256-XVLffZaxoWfGUEbdzuLi7pwaUJv1cecsQJQqGLe7axY=" crossorigin="anonymous"></script>
+
+
+
+<script type="text/javascript" src="/js/main.min.d7b7ada643c9c1a983026e177f141f7363b4640d619caf01d8831a6718cd44ea.js"></script>
+
+
+
+
+
+
+
+
+</body>
+</html>

@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Categories on Friday - Here I record my experience</title>
+    <link>https://fridayhub.github.io/categories/</link>
+    <description>Recent content in Categories on Friday - Here I record my experience</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>zh-CN</language>
+    <lastBuildDate>Wed, 25 Sep 2019 13:53:06 +0800</lastBuildDate>
+    
+	<atom:link href="https://fridayhub.github.io/categories/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>postgres</title>
+      <link>https://fridayhub.github.io/categories/postgres/</link>
+      <pubDate>Wed, 25 Sep 2019 13:53:06 +0800</pubDate>
+      
+      <guid>https://fridayhub.github.io/categories/postgres/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>go</title>
+      <link>https://fridayhub.github.io/categories/go/</link>
+      <pubDate>Tue, 24 Sep 2019 21:02:48 +0800</pubDate>
+      
+      <guid>https://fridayhub.github.io/categories/go/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>protobuf</title>
+      <link>https://fridayhub.github.io/categories/protobuf/</link>
+      <pubDate>Mon, 16 Sep 2019 17:54:49 +0800</pubDate>
+      
+      <guid>https://fridayhub.github.io/categories/protobuf/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>nginx</title>
+      <link>https://fridayhub.github.io/categories/nginx/</link>
+      <pubDate>Thu, 13 Jun 2019 16:54:51 +0800</pubDate>
+      
+      <guid>https://fridayhub.github.io/categories/nginx/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>docker</title>
+      <link>https://fridayhub.github.io/categories/docker/</link>
+      <pubDate>Thu, 13 Jun 2019 16:54:20 +0800</pubDate>
+      
+      <guid>https://fridayhub.github.io/categories/docker/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>odoo</title>
+      <link>https://fridayhub.github.io/categories/odoo/</link>
+      <pubDate>Sun, 09 Sep 2018 16:23:58 +0800</pubDate>
+      
+      <guid>https://fridayhub.github.io/categories/odoo/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>python</title>
+      <link>https://fridayhub.github.io/categories/python/</link>
+      <pubDate>Sun, 09 Sep 2018 16:23:58 +0800</pubDate>
+      
+      <guid>https://fridayhub.github.io/categories/python/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>electron</title>
+      <link>https://fridayhub.github.io/categories/electron/</link>
+      <pubDate>Mon, 14 May 2018 13:01:03 +0800</pubDate>
+      
+      <guid>https://fridayhub.github.io/categories/electron/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>CI</title>
+      <link>https://fridayhub.github.io/categories/ci/</link>
+      <pubDate>Wed, 20 Dec 2017 23:59:24 +0800</pubDate>
+      
+      <guid>https://fridayhub.github.io/categories/ci/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Syntax Highlighting</title>
+      <link>https://fridayhub.github.io/categories/syntax-highlighting/</link>
+      <pubDate>Fri, 15 Dec 2017 12:01:23 +0800</pubDate>
+      
+      <guid>https://fridayhub.github.io/categories/syntax-highlighting/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Theme preview</title>
+      <link>https://fridayhub.github.io/categories/theme-preview/</link>
+      <pubDate>Fri, 15 Dec 2017 12:01:23 +0800</pubDate>
+      
+      <guid>https://fridayhub.github.io/categories/theme-preview/</guid>
+      <description></description>
+    </item>
+    
+  </channel>
+</rss>

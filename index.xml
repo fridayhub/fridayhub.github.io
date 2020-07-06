@@ -1,0 +1,242 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Friday - Here I record my experience</title>
+    <link>https://fridayhub.github.io/</link>
+    <description>Recent content on Friday - Here I record my experience</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>zh-CN</language>
+    <lastBuildDate>Fri, 15 Dec 2017 12:01:23 +0800</lastBuildDate>
+    
+	<atom:link href="https://fridayhub.github.io/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>About</title>
+      <link>https://fridayhub.github.io/about/</link>
+      <pubDate>Fri, 15 Dec 2017 12:01:23 +0800</pubDate>
+      
+      <guid>https://fridayhub.github.io/about/</guid>
+      <description>Hugo is a static site engine written in Go.
+It makes use of a variety of open source projects including:
+ Cobra Viper J Walter Weatherman Cast  Learn more and contribute on GitHub.</description>
+    </item>
+    
+    <item>
+      <title>Postgres 分组排序取第一个</title>
+      <link>https://fridayhub.github.io/post/postgres-group-first/</link>
+      <pubDate>Wed, 25 Sep 2019 13:53:06 +0800</pubDate>
+      
+      <guid>https://fridayhub.github.io/post/postgres-group-first/</guid>
+      <description>&lt;p&gt;之前遇到一个场景，需要写一个sql取一个表中的数据按某字段分组排序后每个组的第一个元素，这里记录下。&lt;/p&gt;</description>
+    </item>
+    
+    <item>
+      <title>Postgresql Sequence</title>
+      <link>https://fridayhub.github.io/post/postgresql-sequence/</link>
+      <pubDate>Wed, 25 Sep 2019 13:50:25 +0800</pubDate>
+      
+      <guid>https://fridayhub.github.io/post/postgresql-sequence/</guid>
+      <description>&lt;p&gt;记录下postgres中实现自增id的方式。&lt;/p&gt;</description>
+    </item>
+    
+    <item>
+      <title>Postgresql Change Owner</title>
+      <link>https://fridayhub.github.io/post/postgresql-change-owner/</link>
+      <pubDate>Wed, 25 Sep 2019 13:36:41 +0800</pubDate>
+      
+      <guid>https://fridayhub.github.io/post/postgresql-change-owner/</guid>
+      <description>&lt;p&gt;之前在一次更改postgres数据库owner的时候遇到一些问题做过一点记录，摘录过来。&lt;/p&gt;</description>
+    </item>
+    
+    <item>
+      <title>博客的CI/CD方案</title>
+      <link>https://fridayhub.github.io/post/blog-ci-cd/</link>
+      <pubDate>Tue, 24 Sep 2019 22:09:23 +0800</pubDate>
+      
+      <guid>https://fridayhub.github.io/post/blog-ci-cd/</guid>
+      <description>&lt;p&gt;好像还没有介绍我这个博客的CI/CD链。我自己感觉很清爽。&lt;/p&gt;</description>
+    </item>
+    
+    <item>
+      <title>了解了下Go Context</title>
+      <link>https://fridayhub.github.io/post/go-context/</link>
+      <pubDate>Tue, 24 Sep 2019 21:02:48 +0800</pubDate>
+      
+      <guid>https://fridayhub.github.io/post/go-context/</guid>
+      <description>&lt;p&gt;最近看到将go里面context的文章，之前对这块了解不多。感觉很奇怪为何parent context的取消同时可以影响到child context的取消,以此做链式控制。跟着网上前人的一些技术博客看了下context源码，代码不多也很容易看懂。这里记录下看到的几个有意思的地方。&lt;/p&gt;</description>
+    </item>
+    
+    <item>
+      <title>Protobuf Import 路径问题</title>
+      <link>https://fridayhub.github.io/post/protobuf-import/</link>
+      <pubDate>Mon, 16 Sep 2019 17:54:49 +0800</pubDate>
+      
+      <guid>https://fridayhub.github.io/post/protobuf-import/</guid>
+      <description>&lt;p&gt;最近要把项目中的某块数据结构的序列化换成protobuf，遇到了引用其他&lt;code&gt;.proto&lt;/code&gt;文件中结构的问题。查了很多资料总算解决了，这里记录一下。&lt;/p&gt;</description>
+    </item>
+    
+    <item>
+      <title>Nginx 配置多个子域名</title>
+      <link>https://fridayhub.github.io/post/nginx-multi-subdomain/</link>
+      <pubDate>Thu, 13 Jun 2019 16:54:51 +0800</pubDate>
+      
+      <guid>https://fridayhub.github.io/post/nginx-multi-subdomain/</guid>
+      <description>&lt;p&gt;查了很多资料，终于给网站加了多个子域名，这样以后就可以有很多玩法了。这里记录一下。&lt;/p&gt;</description>
+    </item>
+    
+    <item>
+      <title>Docker 多阶段构建尝试</title>
+      <link>https://fridayhub.github.io/post/docker-multi-stage-build/</link>
+      <pubDate>Thu, 13 Jun 2019 16:54:20 +0800</pubDate>
+      
+      <guid>https://fridayhub.github.io/post/docker-multi-stage-build/</guid>
+      <description>&lt;p&gt;这两天抽空买了一个域名，打算将博客放上来。想着用docker来跑应用，便想将博客构建成docker镜像然后直接运行。由于博客采用hugo生成，直接都是静态文件，所以只需要使用nginx官方镜像就可以了。我尝试了下docker多阶段构建，记录一下。&lt;/p&gt;</description>
+    </item>
+    
+    <item>
+      <title>Odoo Web Server初探</title>
+      <link>https://fridayhub.github.io/post/odoo-web-server-explore/</link>
+      <pubDate>Sun, 09 Sep 2018 16:23:58 +0800</pubDate>
+      
+      <guid>https://fridayhub.github.io/post/odoo-web-server-explore/</guid>
+      <description>&lt;p&gt;最近有机会面试了几位python web方向求职者，聊到关于django,flask，就少不了WSGI，过程中发现自己对用了很久的odoo框架web server的运行机制印象很模糊，不是很了解。遂花了点时间看了下实现。&lt;/p&gt;</description>
+    </item>
+    
+    <item>
+      <title>对python上下文管理器的认识</title>
+      <link>https://fridayhub.github.io/post/python-with-context-manager/</link>
+      <pubDate>Mon, 11 Jun 2018 15:59:40 +0800</pubDate>
+      
+      <guid>https://fridayhub.github.io/post/python-with-context-manager/</guid>
+      <description>&lt;p&gt;odoo框架给我们单元测试提供了BaseCase.assertRaises之类的方法去assert异常类型，一直在使用从未探究过其实现。今天突然来了兴趣，仔细看看收获不少。&lt;/p&gt;</description>
+    </item>
+    
+    <item>
+      <title>TCP Handshake</title>
+      <link>https://fridayhub.github.io/post/tcp-handshake/</link>
+      <pubDate>Mon, 04 Jun 2018 16:49:24 +0800</pubDate>
+      
+      <guid>https://fridayhub.github.io/post/tcp-handshake/</guid>
+      <description>&lt;p&gt;最近排查一个问题比较诡异的问题，使用了wireshark这个抓包工具来查看http请求过程中的TCP数据包，加深了我对TCP建立连接和断开连接时候的握手过程的理解，做一下记录。&lt;/p&gt;</description>
+    </item>
+    
+    <item>
+      <title>Electron 框架学习(一)</title>
+      <link>https://fridayhub.github.io/post/electron-learning-1/</link>
+      <pubDate>Mon, 14 May 2018 13:01:03 +0800</pubDate>
+      
+      <guid>https://fridayhub.github.io/post/electron-learning-1/</guid>
+      <description>&lt;p&gt;最近一个需求需要做一个windows客户端，第一时间想到了electron，遂简单学习了一下。&lt;/p&gt;</description>
+    </item>
+    
+    <item>
+      <title>Pgbadger Analyze</title>
+      <link>https://fridayhub.github.io/post/pgbadger-analyze/</link>
+      <pubDate>Fri, 30 Mar 2018 17:10:33 +0800</pubDate>
+      
+      <guid>https://fridayhub.github.io/post/pgbadger-analyze/</guid>
+      <description>&lt;p&gt;记录一下如何使用pgbadger分析postgres数据库日志。&lt;/p&gt;</description>
+    </item>
+    
+    <item>
+      <title>Python Metaclass</title>
+      <link>https://fridayhub.github.io/post/python-metaclass/</link>
+      <pubDate>Fri, 23 Mar 2018 13:13:09 +0800</pubDate>
+      
+      <guid>https://fridayhub.github.io/post/python-metaclass/</guid>
+      <description>&lt;p&gt;关于python metaclass 也就是元类的一点体会。&lt;/p&gt;</description>
+    </item>
+    
+    <item>
+      <title>Python Xlrd</title>
+      <link>https://fridayhub.github.io/post/python-xlrd/</link>
+      <pubDate>Fri, 23 Mar 2018 12:58:44 +0800</pubDate>
+      
+      <guid>https://fridayhub.github.io/post/python-xlrd/</guid>
+      <description>&lt;p&gt;记录下python读取excel的做法。&lt;/p&gt;</description>
+    </item>
+    
+    <item>
+      <title>说说Python Decorator</title>
+      <link>https://fridayhub.github.io/post/python-decorator/</link>
+      <pubDate>Sat, 17 Mar 2018 11:12:24 +0800</pubDate>
+      
+      <guid>https://fridayhub.github.io/post/python-decorator/</guid>
+      <description>&lt;p&gt;python装饰器这个东西用得好能给代码结构带来很大的方便，之前一直是用到就翻翻资料，今天做一个总结。&lt;/p&gt;</description>
+    </item>
+    
+    <item>
+      <title>Python Defaultdict</title>
+      <link>https://fridayhub.github.io/post/python-defaultdict/</link>
+      <pubDate>Thu, 15 Mar 2018 13:13:49 +0800</pubDate>
+      
+      <guid>https://fridayhub.github.io/post/python-defaultdict/</guid>
+      <description>&lt;p&gt;在看代码的时候，发现用到一个collections.defaultdic类，以前接触得不多，查了查资料自己体验了一下，做个记录。&lt;/p&gt;</description>
+    </item>
+    
+    <item>
+      <title>Python格式化输出</title>
+      <link>https://fridayhub.github.io/post/python-format/</link>
+      <pubDate>Wed, 14 Mar 2018 12:57:57 +0800</pubDate>
+      
+      <guid>https://fridayhub.github.io/post/python-format/</guid>
+      <description>&lt;p&gt;python 格式化输出用的比较多的就是&amp;rsquo;%s&amp;rsquo;，用这个在文本中占位，然后后面给出这个位置的值。一旦位置可能发生变化就不好弄了，比如中英文翻译时，不同语境占位的顺序可能不固定，这时可以用format。以下举例常用的几种：&lt;/p&gt;</description>
+    </item>
+    
+    <item>
+      <title>用travis自动构建Hugo的Github Pages</title>
+      <link>https://fridayhub.github.io/post/hugo-travis-github-pages/</link>
+      <pubDate>Wed, 20 Dec 2017 23:59:24 +0800</pubDate>
+      
+      <guid>https://fridayhub.github.io/post/hugo-travis-github-pages/</guid>
+      <description>&lt;p&gt;博客搭建好后，一个重要的问题就是每次有新写的md文件难道要手动执行hugo，然后将public文件夹推送到github pages仓库？显然这不是我想要的。&lt;/p&gt;</description>
+    </item>
+    
+    <item>
+      <title>博客尘埃落定</title>
+      <link>https://fridayhub.github.io/post/init/</link>
+      <pubDate>Fri, 15 Dec 2017 14:24:49 +0800</pubDate>
+      
+      <guid>https://fridayhub.github.io/post/init/</guid>
+      <description>&lt;p&gt;关于博客的事情断断续续折腾了很久。总想着自己造轮子，把前后端的新技术都熟悉一遍，但又因为各种原因一直没能成形。这次看到golang写的hugo感觉十分不错，在网络上找了github pages的教程把博客放到这里。就这样了。&lt;/p&gt;</description>
+    </item>
+    
+    <item>
+      <title>Syntax Highlighting</title>
+      <link>https://fridayhub.github.io/post/syntax-highlighting/</link>
+      <pubDate>Fri, 15 Dec 2017 12:01:23 +0800</pubDate>
+      
+      <guid>https://fridayhub.github.io/post/syntax-highlighting/</guid>
+      <description>&lt;blockquote&gt;
+&lt;p&gt;Copy from &lt;a href=&#34;https://blog.olowolo.com/example-site/post/syntax-highlighting/&#34;&gt;《Syntax Highlighting》&lt;/a&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;div class=&#34;chroma&#34;&gt;
+&lt;table class=&#34;lntable&#34;&gt;&lt;tr&gt;&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre class=&#34;chroma&#34;&gt;&lt;code&gt;&lt;span class=&#34;lnt&#34;&gt;1
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;2
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;3
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre class=&#34;chroma&#34;&gt;&lt;code class=&#34;language-js&#34; data-lang=&#34;js&#34;&gt;&lt;span class=&#34;kd&#34;&gt;function&lt;/span&gt; &lt;span class=&#34;nx&#34;&gt;helloWorld&lt;/span&gt; &lt;span class=&#34;p&#34;&gt;()&lt;/span&gt; &lt;span class=&#34;p&#34;&gt;{&lt;/span&gt;
+  &lt;span class=&#34;nx&#34;&gt;alert&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;(&lt;/span&gt;&lt;span class=&#34;s2&#34;&gt;&amp;#34;Hello, World!&amp;#34;&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;)&lt;/span&gt;
+&lt;span class=&#34;p&#34;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;</description>
+    </item>
+    
+    <item>
+      <title>Theme preview</title>
+      <link>https://fridayhub.github.io/post/even-preview/</link>
+      <pubDate>Fri, 15 Dec 2017 12:01:23 +0800</pubDate>
+      
+      <guid>https://fridayhub.github.io/post/even-preview/</guid>
+      <description>&lt;blockquote&gt;
+&lt;p&gt;Copy from &lt;a href=&#34;https://laozhu.me/post/hugo-nuo-post-preview/&#34;&gt;《Hugo 主题 Nuo 文章样式预览》&lt;/a&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;这篇文章集中说明主题所支持的 Markdown 语法和 Hugo Shortcodes 插件，你也可以在这里预览到他们的样子。如果你不喜欢某些样式，可以去修改 css/ 文件夹下的 .scss 文件。&lt;/p&gt;</description>
+    </item>
+    
+  </channel>
+</rss>

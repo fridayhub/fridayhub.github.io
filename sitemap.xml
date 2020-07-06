@@ -1,0 +1,431 @@
+<?xml-stylesheet type="text/xsl" href="https://fridayhub.github.io/sitemap.xsl"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  
+  <url>
+    <loc>https://fridayhub.github.io/about/</loc>
+    <lastmod>2017-12-15T12:01:23+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://fridayhub.github.io/categories/</loc>
+    <lastmod>2019-09-25T13:53:06+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://fridayhub.github.io/tags/postgres/</loc>
+    <lastmod>2019-09-25T13:53:06+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://fridayhub.github.io/categories/postgres/</loc>
+    <lastmod>2019-09-25T13:53:06+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://fridayhub.github.io/post/postgres-group-first/</loc>
+    <lastmod>2019-09-25T13:53:06+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://fridayhub.github.io/post/</loc>
+    <lastmod>2019-09-25T13:53:06+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://fridayhub.github.io/tags/</loc>
+    <lastmod>2019-09-25T13:53:06+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://fridayhub.github.io/post/postgresql-sequence/</loc>
+    <lastmod>2019-09-25T13:50:25+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://fridayhub.github.io/tags/sequence/</loc>
+    <lastmod>2019-09-25T13:50:25+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://fridayhub.github.io/post/postgresql-change-owner/</loc>
+    <lastmod>2019-09-25T13:36:41+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://fridayhub.github.io/tags/cd/</loc>
+    <lastmod>2019-09-24T22:09:23+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://fridayhub.github.io/tags/ci/</loc>
+    <lastmod>2019-09-24T22:09:23+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://fridayhub.github.io/post/blog-ci-cd/</loc>
+    <lastmod>2019-09-24T22:09:23+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://fridayhub.github.io/tags/go/</loc>
+    <lastmod>2019-09-24T21:02:48+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://fridayhub.github.io/categories/go/</loc>
+    <lastmod>2019-09-24T21:02:48+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://fridayhub.github.io/post/go-context/</loc>
+    <lastmod>2019-09-24T21:02:48+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://fridayhub.github.io/tags/protobuf/</loc>
+    <lastmod>2019-09-16T17:54:49+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://fridayhub.github.io/categories/protobuf/</loc>
+    <lastmod>2019-09-16T17:54:49+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://fridayhub.github.io/post/protobuf-import/</loc>
+    <lastmod>2019-09-16T17:54:49+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://fridayhub.github.io/tags/nginx/</loc>
+    <lastmod>2019-06-13T16:54:51+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://fridayhub.github.io/categories/nginx/</loc>
+    <lastmod>2019-06-13T16:54:51+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://fridayhub.github.io/post/nginx-multi-subdomain/</loc>
+    <lastmod>2019-06-13T16:54:51+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://fridayhub.github.io/tags/container/</loc>
+    <lastmod>2019-06-13T16:54:20+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://fridayhub.github.io/tags/docker/</loc>
+    <lastmod>2019-06-13T16:54:20+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://fridayhub.github.io/categories/docker/</loc>
+    <lastmod>2019-06-13T16:54:20+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://fridayhub.github.io/post/docker-multi-stage-build/</loc>
+    <lastmod>2019-06-13T16:54:20+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://fridayhub.github.io/tags/odoo/</loc>
+    <lastmod>2018-09-09T16:23:58+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://fridayhub.github.io/categories/odoo/</loc>
+    <lastmod>2018-09-09T16:23:58+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://fridayhub.github.io/post/odoo-web-server-explore/</loc>
+    <lastmod>2018-09-09T16:23:58+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://fridayhub.github.io/tags/python/</loc>
+    <lastmod>2018-09-09T16:23:58+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://fridayhub.github.io/categories/python/</loc>
+    <lastmod>2018-09-09T16:23:58+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://fridayhub.github.io/tags/web/</loc>
+    <lastmod>2018-09-09T16:23:58+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://fridayhub.github.io/tags/wsgi/</loc>
+    <lastmod>2018-09-09T16:23:58+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://fridayhub.github.io/tags/contextmanager/</loc>
+    <lastmod>2018-06-11T15:59:40+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://fridayhub.github.io/post/python-with-context-manager/</loc>
+    <lastmod>2018-06-11T15:59:40+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://fridayhub.github.io/tags/tcp/</loc>
+    <lastmod>2018-06-04T16:49:24+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://fridayhub.github.io/post/tcp-handshake/</loc>
+    <lastmod>2018-06-04T16:49:24+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://fridayhub.github.io/tags/electron/</loc>
+    <lastmod>2018-05-14T13:01:03+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://fridayhub.github.io/categories/electron/</loc>
+    <lastmod>2018-05-14T13:01:03+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://fridayhub.github.io/post/electron-learning-1/</loc>
+    <lastmod>2018-05-14T13:01:03+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://fridayhub.github.io/post/pgbadger-analyze/</loc>
+    <lastmod>2018-03-30T17:10:33+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://fridayhub.github.io/tags/metaclass/</loc>
+    <lastmod>2018-03-23T13:13:09+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://fridayhub.github.io/post/python-metaclass/</loc>
+    <lastmod>2018-03-23T13:13:09+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://fridayhub.github.io/tags/excel/</loc>
+    <lastmod>2018-03-23T12:58:44+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://fridayhub.github.io/post/python-xlrd/</loc>
+    <lastmod>2018-03-23T12:58:44+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://fridayhub.github.io/post/python-decorator/</loc>
+    <lastmod>2018-07-17T07:50:00+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://fridayhub.github.io/post/python-defaultdict/</loc>
+    <lastmod>2018-03-15T13:13:49+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://fridayhub.github.io/post/python-format/</loc>
+    <lastmod>2018-03-14T12:57:57+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://fridayhub.github.io/categories/ci/</loc>
+    <lastmod>2017-12-20T23:59:24+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://fridayhub.github.io/tags/travis/</loc>
+    <lastmod>2017-12-20T23:59:24+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://fridayhub.github.io/post/hugo-travis-github-pages/</loc>
+    <lastmod>2017-12-20T23:59:24+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://fridayhub.github.io/tags/init/</loc>
+    <lastmod>2017-12-15T14:24:49+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://fridayhub.github.io/post/init/</loc>
+    <lastmod>2017-12-15T14:24:49+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://fridayhub.github.io/</loc>
+    <lastmod>2017-12-15T12:01:23+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://fridayhub.github.io/tags/preview/</loc>
+    <lastmod>2017-12-15T12:01:23+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://fridayhub.github.io/tags/syntax-highlighting/</loc>
+    <lastmod>2017-12-15T12:01:23+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://fridayhub.github.io/categories/syntax-highlighting/</loc>
+    <lastmod>2017-12-15T12:01:23+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://fridayhub.github.io/post/syntax-highlighting/</loc>
+    <lastmod>2017-12-15T12:01:23+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://fridayhub.github.io/tags/theme-preview/</loc>
+    <lastmod>2017-12-15T12:01:23+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://fridayhub.github.io/categories/theme-preview/</loc>
+    <lastmod>2017-12-15T12:01:23+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://fridayhub.github.io/post/even-preview/</loc>
+    <lastmod>2017-12-15T12:01:23+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+</urlset>

@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <title>Odoo Web Server初探 - Friday - Here I record my experience</title>
+  <meta name="renderer" content="webkit" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+<meta name="theme-color" content="#f8f5ec" />
+<meta name="msapplication-navbutton-color" content="#f8f5ec">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="#f8f5ec">
+
+
+<meta name="author" content="hulb" /><meta name="description" content="最近有机会面试了几位python web方向求职者，聊到关于django,flask，就少不了WSGI，过程中发现自己对用了很久的odoo框架web server的运行机制印象很模糊，不是很了解。遂花了点时间看了下实现。
+" /><meta name="keywords" content="odoo, python, web server, wsgi" />
+
+
+
+
+
+
+<meta name="generator" content="Hugo 0.68.3 with theme even" />
+
+
+<link rel="canonical" href="https://fridayhub.github.io/post/odoo-web-server-explore/" />
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+<link rel="manifest" href="/manifest.json">
+<link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5">
+
+
+
+<link href="/sass/main.min.e861d9ade66fcc0257009476263fc9ff874695b6028dadc923a84c98b842034b.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.css" integrity="sha256-7TyXnr2YU040zfSP+rEcz29ggW4j56/ujTPwjMzyqFY=" crossorigin="anonymous">
+
+
+<meta property="og:title" content="Odoo Web Server初探" />
+<meta property="og:description" content="最近有机会面试了几位python web方向求职者，聊到关于django,flask，就少不了WSGI，过程中发现自己对用了很久的odoo框架web server的运行机制印象很模糊，不是很了解。遂花了点时间看了下实现。" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://fridayhub.github.io/post/odoo-web-server-explore/" />
+<meta property="article:published_time" content="2018-09-09T16:23:58+08:00" />
+<meta property="article:modified_time" content="2018-09-09T16:23:58+08:00" />
+<meta itemprop="name" content="Odoo Web Server初探">
+<meta itemprop="description" content="最近有机会面试了几位python web方向求职者，聊到关于django,flask，就少不了WSGI，过程中发现自己对用了很久的odoo框架web server的运行机制印象很模糊，不是很了解。遂花了点时间看了下实现。">
+<meta itemprop="datePublished" content="2018-09-09T16:23:58&#43;08:00" />
+<meta itemprop="dateModified" content="2018-09-09T16:23:58&#43;08:00" />
+<meta itemprop="wordCount" content="3681">
+
+
+
+<meta itemprop="keywords" content="python,web,odoo,wsgi," /><meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Odoo Web Server初探"/>
+<meta name="twitter:description" content="最近有机会面试了几位python web方向求职者，聊到关于django,flask，就少不了WSGI，过程中发现自己对用了很久的odoo框架web server的运行机制印象很模糊，不是很了解。遂花了点时间看了下实现。"/>
+
+<!--[if lte IE 9]>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/classlist/1.1.20170427/classList.min.js"></script>
+<![endif]-->
+
+<!--[if lt IE 9]>
+  <script src="https://cdn.jsdelivr.net/npm/html5shiv@3.7.3/dist/html5shiv.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/respond.js@1.4.2/dest/respond.min.js"></script>
+<![endif]-->
+
+</head>
+<body>
+  <div id="mobile-navbar" class="mobile-navbar">
+  <div class="mobile-header-logo">
+    <a href="/" class="logo">Friday</a>
+  </div>
+  <div class="mobile-navbar-icon">
+    <span></span>
+    <span></span>
+    <span></span>
+  </div>
+</div>
+<nav id="mobile-menu" class="mobile-menu slideout-menu">
+  <ul class="mobile-menu-list">
+    <a href="/">
+        <li class="mobile-menu-item">Home</li>
+      </a><a href="/post/">
+        <li class="mobile-menu-item">Archives</li>
+      </a><a href="/tags/">
+        <li class="mobile-menu-item">Tags</li>
+      </a><a href="/categories/">
+        <li class="mobile-menu-item">Categories</li>
+      </a><a href="/about/">
+        <li class="mobile-menu-item">About</li>
+      </a>
+  </ul>
+</nav>
+  <div class="container" id="mobile-panel">
+    <header id="header" class="header">
+        <div class="logo-wrapper">
+  <a href="/" class="logo">Friday</a>
+</div>
+
+<nav class="site-navbar">
+  <ul id="menu" class="menu">
+    <li class="menu-item">
+        <a class="menu-item-link" href="/">Home</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="/post/">Archives</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="/tags/">Tags</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="/categories/">Categories</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="/about/">About</a>
+      </li>
+  </ul>
+</nav>
+    </header>
+
+    <main id="main" class="main">
+      <div class="content-wrapper">
+        <div id="content" class="content">
+          <article class="post">
+    
+    <header class="post-header">
+      <h1 class="post-title">Odoo Web Server初探</h1>
+
+      <div class="post-meta">
+        <span class="post-time"> 2018-09-09 16:23:58 </span>
+        <div class="post-category">
+            <a href="/categories/python/"> python </a>
+            <a href="/categories/odoo/"> odoo </a>
+            </div>
+          <span class="more-meta"> 3681 words </span>
+          <span class="more-meta"> 8 mins read </span>
+        
+      </div>
+    </header>
+
+    
+    <div class="post-content">
+      <p>最近有机会面试了几位python web方向求职者，聊到关于django,flask，就少不了WSGI，过程中发现自己对用了很久的odoo框架web server的运行机制印象很模糊，不是很了解。遂花了点时间看了下实现。</p>
+<p>先说说WSGI。WSGI是一个接口，或者说协议。对于一个web应用来说，要做的事情不外乎&quot;接收请求&rdquo;，&ldquo;处理请求&rdquo;，&ldquo;返回请求处理结果&quot;这三个步骤，至于如何接收请求和如何返回请求响应，这对不同的web程序来说大致是相同的，即都必须要遵循http协议和相关的规范。比如http请求响应的格式，响应码等等。</p>
+<p>如果有一个通用的模块可以处理这些比较底层的东西，让大部分开发人员能专注于实际业务和数据的处理，就能显著提高开发效率。WSGI就是定义了一个这样的接口，只要是实现了WSGI接口的python 程序，就能把比较底层的http请求响应格式之类的处理逻辑交给现成的功能模块去做，程序本身专注于处理业务就行了。</p>
+<p>odoo的web server 自己实现了WSGI接口,也用到了werkzeug的ThreadedWSGIServer，服务启动的过程比较繁琐，不像flask那么直接了当。当然，这也是由于odoo自身实现了很多特性。接下来我们一点点来分解。</p>
+<p>odoo的入口在openerp.cli.main() 这个main方法用得也有点tricky，先看看代码</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-python" data-lang="python"><span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
+    <span class="n">args</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+
+    <span class="c1"># The only shared option is &#39;--addons-path=&#39; needed to discover additional</span>
+    <span class="c1"># commands from modules</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;--addons-path=&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">args</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&#34;-&#34;</span><span class="p">):</span>
+        <span class="c1"># parse only the addons-path, do not setup the logger...</span>
+        <span class="n">openerp</span><span class="o">.</span><span class="n">tools</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">_parse_config</span><span class="p">([</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]])</span>
+        <span class="n">args</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+
+    <span class="c1"># Default legacy command</span>
+    <span class="n">command</span> <span class="o">=</span> <span class="s2">&#34;server&#34;</span>
+
+    <span class="c1"># TODO: find a way to properly discover addons subcommands without importing the world</span>
+    <span class="c1"># Subcommand discovery</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&#34;-&#34;</span><span class="p">):</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">disable</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">CRITICAL</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">module</span> <span class="ow">in</span> <span class="n">get_modules</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">isdir</span><span class="p">(</span><span class="n">joinpath</span><span class="p">(</span><span class="n">get_module_path</span><span class="p">(</span><span class="n">module</span><span class="p">),</span> <span class="s1">&#39;cli&#39;</span><span class="p">)):</span>
+                <span class="nb">__import__</span><span class="p">(</span><span class="s1">&#39;openerp.addons.&#39;</span> <span class="o">+</span> <span class="n">module</span><span class="p">)</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">disable</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">NOTSET</span><span class="p">)</span>
+        <span class="n">command</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">args</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+
+    <span class="k">if</span> <span class="n">command</span> <span class="ow">in</span> <span class="n">commands</span><span class="p">:</span>
+        <span class="n">o</span> <span class="o">=</span> <span class="n">commands</span><span class="p">[</span><span class="n">command</span><span class="p">]()</span>
+        <span class="n">o</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
+
+</code></pre></td></tr></table>
+</div>
+</div><p>一般启动odoo server的时候有多种方式，所需的一些参数我们可以直接在启动命令上带上，也可以写到配置文件里，然后启动的时候用&rdquo;-c&quot;指定配置文件就行了。我用得比较多的是启动的时候只指定配置文件，所以6-23行不会执行。程序执行到25行会发现,command默认值为&rsquo;server'是会在commands里的，那么不禁要问commands的数据是怎么来的呢？可以看我之前写的一篇关于<a href="https://hulb.github.io/post/python-metaclass/">python metaclass的博客</a>，里面介绍了commands数据初始化的过程用来举例说明python metaclass的用法。</p>
+<p>接下来到27行后，程序会执行到openerp.cli.server.main()方法。至于前面需要用command去commands里找到一个实例来动态分发到这里的目的，是为了便于扩展odoo命令行执行的功能，使得其不仅可以用来run一个web服务，甚至还能用来将模块部署到远程或是启动一个交互式odoo服务以及创建一个标准结构的odoo模块等功能。要扩展更多功能只需将写好的文件放到openerp/cli目录下即可。</p>
+<p>再来看到openerp.cli.server.main()方法，看看里面的逻辑。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-python" data-lang="python"><span class="k">def</span> <span class="nf">main</span><span class="p">(</span><span class="n">args</span><span class="p">):</span>
+    <span class="n">check_root_user</span><span class="p">()</span>
+    <span class="n">openerp</span><span class="o">.</span><span class="n">tools</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">parse_config</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
+    <span class="n">check_postgres_user</span><span class="p">()</span>
+    <span class="n">report_configuration</span><span class="p">()</span>
+
+    <span class="n">config</span> <span class="o">=</span> <span class="n">openerp</span><span class="o">.</span><span class="n">tools</span><span class="o">.</span><span class="n">config</span>
+
+    <span class="c1"># the default limit for CSV fields in the module is 128KiB, which is not</span>
+    <span class="c1"># quite sufficient to import images to store in attachment. 500MiB is a</span>
+    <span class="c1"># bit overkill, but better safe than sorry I guess</span>
+    <span class="n">csv</span><span class="o">.</span><span class="n">field_size_limit</span><span class="p">(</span><span class="mi">500</span> <span class="o">*</span> <span class="mi">1024</span> <span class="o">*</span> <span class="mi">1024</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">config</span><span class="p">[</span><span class="s2">&#34;db_name&#34;</span><span class="p">]:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">openerp</span><span class="o">.</span><span class="n">service</span><span class="o">.</span><span class="n">db</span><span class="o">.</span><span class="n">_create_empty_database</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&#34;db_name&#34;</span><span class="p">])</span>
+        <span class="k">except</span> <span class="n">openerp</span><span class="o">.</span><span class="n">service</span><span class="o">.</span><span class="n">db</span><span class="o">.</span><span class="n">DatabaseExists</span><span class="p">:</span>
+            <span class="k">pass</span>
+
+    <span class="k">if</span> <span class="n">config</span><span class="p">[</span><span class="s2">&#34;test_file&#34;</span><span class="p">]:</span>
+        <span class="n">config</span><span class="p">[</span><span class="s2">&#34;test_enable&#34;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">True</span>
+
+    <span class="k">if</span> <span class="n">config</span><span class="p">[</span><span class="s2">&#34;translate_out&#34;</span><span class="p">]:</span>
+        <span class="n">export_translation</span><span class="p">()</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">config</span><span class="p">[</span><span class="s2">&#34;translate_in&#34;</span><span class="p">]:</span>
+        <span class="n">import_translation</span><span class="p">()</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+    <span class="c1"># This needs to be done now to ensure the use of the multiprocessing</span>
+    <span class="c1"># signaling mecanism for registries loaded with -d</span>
+    <span class="k">if</span> <span class="n">config</span><span class="p">[</span><span class="s1">&#39;workers&#39;</span><span class="p">]:</span>
+        <span class="n">openerp</span><span class="o">.</span><span class="n">multi_process</span> <span class="o">=</span> <span class="bp">True</span>
+
+    <span class="n">preload</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">if</span> <span class="n">config</span><span class="p">[</span><span class="s1">&#39;db_name&#39;</span><span class="p">]:</span>
+        <span class="n">preload</span> <span class="o">=</span> <span class="n">config</span><span class="p">[</span><span class="s1">&#39;db_name&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)</span>
+
+    <span class="n">stop</span> <span class="o">=</span> <span class="n">config</span><span class="p">[</span><span class="s2">&#34;stop_after_init&#34;</span><span class="p">]</span>
+
+    <span class="n">setup_pid_file</span><span class="p">()</span>
+    <span class="n">rc</span> <span class="o">=</span> <span class="n">openerp</span><span class="o">.</span><span class="n">service</span><span class="o">.</span><span class="n">server</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="n">preload</span><span class="o">=</span><span class="n">preload</span><span class="p">,</span> <span class="n">stop</span><span class="o">=</span><span class="n">stop</span><span class="p">)</span>
+    <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="n">rc</span><span class="p">)</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>check_root_user()用来发出warning,建议不要用root用户运行odoo，以免造成一些安全性风险。check_postgres_user()用来禁止使用postgresql的默认postgres用户来连接数据库。setup_pid_file()检查了配置文件中的&rsquo;pidfile'项，如果配置了，会将当前程序的进程id写入进去，其中用到了一个atexit.register(rm_pid_file, pid),这是注册了正常退出的回调，用来在退出时删除pidfile。</p>
+<p>接下来我们重点关于43行。看到openerp.service.server.start()方法的逻辑。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-python" data-lang="python"><span class="k">def</span> <span class="nf">start</span><span class="p">(</span><span class="n">preload</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">stop</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+    <span class="s2">&#34;&#34;&#34; Start the openerp http server and cron processor.
+</span><span class="s2">    &#34;&#34;&#34;</span>
+    <span class="k">global</span> <span class="n">server</span>
+    <span class="n">load_server_wide_modules</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="n">openerp</span><span class="o">.</span><span class="n">evented</span><span class="p">:</span>
+        <span class="n">server</span> <span class="o">=</span> <span class="n">GeventServer</span><span class="p">(</span><span class="n">openerp</span><span class="o">.</span><span class="n">service</span><span class="o">.</span><span class="n">wsgi_server</span><span class="o">.</span><span class="n">application</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">config</span><span class="p">[</span><span class="s1">&#39;workers&#39;</span><span class="p">]:</span>
+        <span class="n">server</span> <span class="o">=</span> <span class="n">PreforkServer</span><span class="p">(</span><span class="n">openerp</span><span class="o">.</span><span class="n">service</span><span class="o">.</span><span class="n">wsgi_server</span><span class="o">.</span><span class="n">application</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">server</span> <span class="o">=</span> <span class="n">ThreadedServer</span><span class="p">(</span><span class="n">openerp</span><span class="o">.</span><span class="n">service</span><span class="o">.</span><span class="n">wsgi_server</span><span class="o">.</span><span class="n">application</span><span class="p">)</span>
+
+    <span class="n">watcher</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="k">if</span> <span class="n">config</span><span class="p">[</span><span class="s1">&#39;dev_mode&#39;</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="n">watchdog</span><span class="p">:</span>
+            <span class="n">watcher</span> <span class="o">=</span> <span class="n">FSWatcher</span><span class="p">()</span>
+            <span class="n">watcher</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">_logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&#34;&#39;watchdog&#39; module not installed. Code autoreload feature is disabled&#34;</span><span class="p">)</span>
+        <span class="n">server</span><span class="o">.</span><span class="n">app</span> <span class="o">=</span> <span class="n">DebuggedApplication</span><span class="p">(</span><span class="n">server</span><span class="o">.</span><span class="n">app</span><span class="p">,</span> <span class="n">evalex</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+
+    <span class="n">rc</span> <span class="o">=</span> <span class="n">server</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">preload</span><span class="p">,</span> <span class="n">stop</span><span class="p">)</span>
+
+    <span class="c1"># like the legend of the phoenix, all ends with beginnings</span>
+    <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">openerp</span><span class="p">,</span> <span class="s1">&#39;phoenix&#39;</span><span class="p">,</span> <span class="bp">False</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">watcher</span><span class="p">:</span>
+            <span class="n">watcher</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
+        <span class="n">_reexec</span><span class="p">()</span>
+
+    <span class="k">return</span> <span class="n">rc</span> <span class="k">if</span> <span class="n">rc</span> <span class="k">else</span> <span class="mi">0</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>这里的stop是在前面从配置文件中读取stop_after_init配置项来的，一般都为False。我们主要看7-12行，根据配置文件和的不同，启动的server类型也不同。配置了&quot;workers&quot;的时候启动的是PreforkServer,当openerp.evented为True时，启动的是GeventServer,其他情况下启动ThreadServer,当然我们也可以在这里拓展出自己的Server。我们先来看看ThreadServer。</p>
+<p>第12行将openerp.service.wsgi_server.application作为参数传入了ThreadServer, 它的就是odoo自己实现的WSGI接口，定义是这样的：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-python" data-lang="python"><span class="k">def</span> <span class="nf">application_unproxied</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="p">):</span>
+    <span class="s2">&#34;&#34;&#34; WSGI entry point.&#34;&#34;&#34;</span>
+    <span class="c1"># cleanup db/uid trackers - they&#39;re set at HTTP dispatch in</span>
+    <span class="c1"># web.session.OpenERPSession.send() and at RPC dispatch in</span>
+    <span class="c1"># openerp.service.web_services.objects_proxy.dispatch().</span>
+    <span class="c1"># /!\ The cleanup cannot be done at the end of this `application`</span>
+    <span class="c1"># method because werkzeug still produces relevant logging afterwards </span>
+    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">threading</span><span class="o">.</span><span class="n">current_thread</span><span class="p">(),</span> <span class="s1">&#39;uid&#39;</span><span class="p">):</span>
+        <span class="k">del</span> <span class="n">threading</span><span class="o">.</span><span class="n">current_thread</span><span class="p">()</span><span class="o">.</span><span class="n">uid</span>
+    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">threading</span><span class="o">.</span><span class="n">current_thread</span><span class="p">(),</span> <span class="s1">&#39;dbname&#39;</span><span class="p">):</span>
+        <span class="k">del</span> <span class="n">threading</span><span class="o">.</span><span class="n">current_thread</span><span class="p">()</span><span class="o">.</span><span class="n">dbname</span>
+
+    <span class="k">with</span> <span class="n">openerp</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">Environment</span><span class="o">.</span><span class="n">manage</span><span class="p">():</span>
+        <span class="c1"># Try all handlers until one returns some result (i.e. not None).</span>
+        <span class="k">for</span> <span class="n">handler</span> <span class="ow">in</span> <span class="p">[</span><span class="n">wsgi_xmlrpc</span><span class="p">,</span> <span class="n">openerp</span><span class="o">.</span><span class="n">http</span><span class="o">.</span><span class="n">root</span><span class="p">]:</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">handler</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">result</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="k">return</span> <span class="n">result</span>
+
+    <span class="c1"># We never returned from the loop.</span>
+    <span class="n">response</span> <span class="o">=</span> <span class="s1">&#39;No handler found.</span><span class="se">\n</span><span class="s1">&#39;</span>
+    <span class="n">start_response</span><span class="p">(</span><span class="s1">&#39;404 Not Found&#39;</span><span class="p">,</span> <span class="p">[(</span><span class="s1">&#39;Content-Type&#39;</span><span class="p">,</span> <span class="s1">&#39;text/plain&#39;</span><span class="p">),</span> <span class="p">(</span><span class="s1">&#39;Content-Length&#39;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">response</span><span class="p">)))])</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">response</span><span class="p">]</span>
+
+<span class="k">def</span> <span class="nf">application</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">config</span><span class="p">[</span><span class="s1">&#39;proxy_mode&#39;</span><span class="p">]</span> <span class="ow">and</span> <span class="s1">&#39;HTTP_X_FORWARDED_HOST&#39;</span> <span class="ow">in</span> <span class="n">environ</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">werkzeug</span><span class="o">.</span><span class="n">contrib</span><span class="o">.</span><span class="n">fixers</span><span class="o">.</span><span class="n">ProxyFix</span><span class="p">(</span><span class="n">application_unproxied</span><span class="p">)(</span><span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">application_unproxied</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="p">)</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>在27行判断了当前server是否处于代理服务器后面，如果是的话使用werkzeug.contrib.fixers.ProxyFix做一些转换，例如将http header里的远程地址转换一下，保证后面能拿到请求的真实来源等。整个WSGI接口的核心还是application_unproxied(env, start_response)方法。13-19行，在with的包裹下，分别用wsgi_xmlrpc和openerp.http.root两个handler去处理请求，result不为None的结果就直接返回。在实际程序执行的时候，一般只会用到openerp.http.root。</p>
+<p>上面介绍了odoo自己实现的WSGI接口，那么这个接口是如何被调用的呢？回到openerp.service.server.start()方法。最终会调到ThreadServer.run(), 里面是这么实现的：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-python" data-lang="python"><span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">preload</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">stop</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="s2">&#34;&#34;&#34; Start the http server and the cron thread then wait for a signal.
+</span><span class="s2">
+</span><span class="s2">        The first SIGINT or SIGTERM signal will initiate a graceful shutdown while
+</span><span class="s2">        a second one if any will force an immediate exit.
+</span><span class="s2">        &#34;&#34;&#34;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="n">stop</span><span class="o">=</span><span class="n">stop</span><span class="p">)</span>
+
+        <span class="n">rc</span> <span class="o">=</span> <span class="n">preload_registries</span><span class="p">(</span><span class="n">preload</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">stop</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
+            <span class="k">return</span> <span class="n">rc</span>
+
+        <span class="c1"># Wait for a first signal to be handled. (time.sleep will be interrupted</span>
+        <span class="c1"># by the signal handler.) The try/except is for the win32 case.</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">while</span> <span class="bp">self</span><span class="o">.</span><span class="n">quit_signals_received</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">60</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">KeyboardInterrupt</span><span class="p">:</span>
+            <span class="k">pass</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>preload_registries()会预先加载再配置文件里配置的db_name数据库中的模块和模型。主要看第一句self.start()的逻辑。后面在stop为False的情况下程序会进入一个while循环，各60s判断self.quit_signals_received来决定是否让程序退出。这是一种优雅的退出方式，即留下一个标识检查，如果需要退出，只需在程序执行逻辑里改这个标识就行。我们来看看self.start()</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-python" data-lang="python"><span class="k">def</span> <span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stop</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="n">_logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&#34;Setting signal handlers&#34;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s1">&#39;posix&#39;</span><span class="p">:</span>
+            <span class="n">signal</span><span class="o">.</span><span class="n">signal</span><span class="p">(</span><span class="n">signal</span><span class="o">.</span><span class="n">SIGINT</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">signal_handler</span><span class="p">)</span>
+            <span class="n">signal</span><span class="o">.</span><span class="n">signal</span><span class="p">(</span><span class="n">signal</span><span class="o">.</span><span class="n">SIGTERM</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">signal_handler</span><span class="p">)</span>
+            <span class="n">signal</span><span class="o">.</span><span class="n">signal</span><span class="p">(</span><span class="n">signal</span><span class="o">.</span><span class="n">SIGCHLD</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">signal_handler</span><span class="p">)</span>
+            <span class="n">signal</span><span class="o">.</span><span class="n">signal</span><span class="p">(</span><span class="n">signal</span><span class="o">.</span><span class="n">SIGHUP</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">signal_handler</span><span class="p">)</span>
+            <span class="n">signal</span><span class="o">.</span><span class="n">signal</span><span class="p">(</span><span class="n">signal</span><span class="o">.</span><span class="n">SIGQUIT</span><span class="p">,</span> <span class="n">dumpstacks</span><span class="p">)</span>
+            <span class="n">signal</span><span class="o">.</span><span class="n">signal</span><span class="p">(</span><span class="n">signal</span><span class="o">.</span><span class="n">SIGUSR1</span><span class="p">,</span> <span class="n">log_ormcache_stats</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">os</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s1">&#39;nt&#39;</span><span class="p">:</span>
+            <span class="kn">import</span> <span class="nn">win32api</span>
+            <span class="n">win32api</span><span class="o">.</span><span class="n">SetConsoleCtrlHandler</span><span class="p">(</span><span class="k">lambda</span> <span class="n">sig</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">signal_handler</span><span class="p">(</span><span class="n">sig</span><span class="p">,</span> <span class="bp">None</span><span class="p">),</span> <span class="mi">1</span><span class="p">)</span>
+
+        <span class="n">test_mode</span> <span class="o">=</span> <span class="n">config</span><span class="p">[</span><span class="s1">&#39;test_enable&#39;</span><span class="p">]</span> <span class="ow">or</span> <span class="n">config</span><span class="p">[</span><span class="s1">&#39;test_file&#39;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">test_mode</span> <span class="ow">or</span> <span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;xmlrpc&#39;</span><span class="p">]</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">stop</span><span class="p">):</span>
+            <span class="c1"># some tests need the http deamon to be available...</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">http_spawn</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">stop</span><span class="p">:</span>
+            <span class="c1"># only relevant if we are not in &#34;--stop-after-init&#34; mode</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cron_spawn</span><span class="p">()</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>这里先是针对不同的操作系统，写了不同的信号响应逻辑，后续根据配置一次调用了self.http_spawn()和self.cron_spawn()。cron_spawn()用来启动定时任务，http_spawn()用来启动http服务，我们重点关注http_spawn()。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-python" data-lang="python"><span class="k">def</span> <span class="nf">http_thread</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">def</span> <span class="nf">app</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="n">s</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="n">s</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">httpd</span> <span class="o">=</span> <span class="n">ThreadedWSGIServerReloadable</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">interface</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">port</span><span class="p">,</span> <span class="n">app</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">httpd</span><span class="o">.</span><span class="n">serve_forever</span><span class="p">()</span>
+
+<span class="k">def</span> <span class="nf">http_spawn</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Thread</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">http_thread</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&#34;openerp.service.httpd&#34;</span><span class="p">)</span>
+        <span class="n">t</span><span class="o">.</span><span class="n">setDaemon</span><span class="p">(</span><span class="bp">True</span><span class="p">)</span>
+        <span class="n">t</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+        <span class="n">_logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;HTTP service (werkzeug) running on </span><span class="si">%s</span><span class="s1">:</span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">interface</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">port</span><span class="p">)</span>
+
+</code></pre></td></tr></table>
+</div>
+</div><p>这里新开了一个线程来执行self.http_thread，而http_thread()则创建了一个ThreadedWSGIServerReloadable对象，传入的app即是前面说过的openerp.service.wsgi_server.application，通过代码可以知道ThreadedWSGIServerReloadable源于werkzeug.serving.ThreadedWSGIServer。接着调用server_forever()启动服务，监听请求。当请求来临时，根据WSGI协议，openerp.service.wsgi_server.application方法会被调用。</p>
+<p>大致情况就是这样。当然这只是ThreadedServer的逻辑，还有另外的PreforkServer和GeventServer虽然大同小异，但也有一些区别，后续有空会陆续介绍一下。</p>
+    </div>
+
+    
+<footer class="post-footer">
+      <div class="post-tags">
+          <a href="/tags/python/">python</a>
+          <a href="/tags/web/">web</a>
+          <a href="/tags/odoo/">odoo</a>
+          <a href="/tags/wsgi/">wsgi</a>
+          </div>
+      <nav class="post-nav">
+        <a class="prev" href="/post/docker-multi-stage-build/">
+            <i class="iconfont icon-left"></i>
+            <span class="prev-text nav-default">Docker 多阶段构建尝试</span>
+            <span class="prev-text nav-mobile">Prev</span>
+          </a>
+        <a class="next" href="/post/python-with-context-manager/">
+            <span class="next-text nav-default">对python上下文管理器的认识</span>
+            <span class="next-text nav-mobile">Next</span>
+            <i class="iconfont icon-right"></i>
+          </a>
+      </nav>
+    </footer>
+  </article>
+        </div>
+        
+
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="social-links">
+      <a href="mailto:hanglinux@163.com" class="iconfont icon-email" title="email"></a>
+      <a href="https://github.com/fridayhub" class="iconfont icon-github" title="github"></a>
+  <a href="https://fridayhub.github.io/index.xml" type="application/rss+xml" class="iconfont icon-rss" title="rss"></a>
+</div>
+
+<div class="copyright">
+  <span class="power-by">
+    Powered by <a class="hexo-link" href="https://gohugo.io">Hugo</a>
+  </span>
+  <span class="division">|</span>
+  <span class="theme-info">
+    Theme - 
+    <a class="theme-link" href="https://github.com/olOwOlo/hugo-theme-even">Even</a>
+  </span>
+
+  
+
+  <span class="copyright-year">
+    &copy; 
+    2017 - 
+    2020
+    <span class="heart">
+      <i class="iconfont icon-heart"></i>
+    </span>
+    <span class="author">hulb</span>
+  </span>
+</div>
+    </footer>
+
+    <div class="back-to-top" id="back-to-top">
+      <i class="iconfont icon-up"></i>
+    </div>
+  </div>
+  
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.2.1/dist/jquery.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/slideout@1.0.1/dist/slideout.min.js" integrity="sha256-t+zJ/g8/KXIJMjSVQdnibt4dlaDxc9zXr/9oNPeWqdg=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.js" integrity="sha256-XVLffZaxoWfGUEbdzuLi7pwaUJv1cecsQJQqGLe7axY=" crossorigin="anonymous"></script>
+
+
+
+<script type="text/javascript" src="/js/main.min.d7b7ada643c9c1a983026e177f141f7363b4640d619caf01d8831a6718cd44ea.js"></script>
+
+
+
+
+
+
+
+
+</body>
+</html>

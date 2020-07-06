@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>python on Friday - Here I record my experience</title>
+    <link>https://fridayhub.github.io/tags/python/</link>
+    <description>Recent content in python on Friday - Here I record my experience</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>zh-CN</language>
+    <lastBuildDate>Sun, 09 Sep 2018 16:23:58 +0800</lastBuildDate>
+    
+	<atom:link href="https://fridayhub.github.io/tags/python/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Odoo Web Server初探</title>
+      <link>https://fridayhub.github.io/post/odoo-web-server-explore/</link>
+      <pubDate>Sun, 09 Sep 2018 16:23:58 +0800</pubDate>
+      
+      <guid>https://fridayhub.github.io/post/odoo-web-server-explore/</guid>
+      <description>&lt;p&gt;最近有机会面试了几位python web方向求职者，聊到关于django,flask，就少不了WSGI，过程中发现自己对用了很久的odoo框架web server的运行机制印象很模糊，不是很了解。遂花了点时间看了下实现。&lt;/p&gt;</description>
+    </item>
+    
+    <item>
+      <title>对python上下文管理器的认识</title>
+      <link>https://fridayhub.github.io/post/python-with-context-manager/</link>
+      <pubDate>Mon, 11 Jun 2018 15:59:40 +0800</pubDate>
+      
+      <guid>https://fridayhub.github.io/post/python-with-context-manager/</guid>
+      <description>&lt;p&gt;odoo框架给我们单元测试提供了BaseCase.assertRaises之类的方法去assert异常类型，一直在使用从未探究过其实现。今天突然来了兴趣，仔细看看收获不少。&lt;/p&gt;</description>
+    </item>
+    
+    <item>
+      <title>Python Metaclass</title>
+      <link>https://fridayhub.github.io/post/python-metaclass/</link>
+      <pubDate>Fri, 23 Mar 2018 13:13:09 +0800</pubDate>
+      
+      <guid>https://fridayhub.github.io/post/python-metaclass/</guid>
+      <description>&lt;p&gt;关于python metaclass 也就是元类的一点体会。&lt;/p&gt;</description>
+    </item>
+    
+    <item>
+      <title>Python Xlrd</title>
+      <link>https://fridayhub.github.io/post/python-xlrd/</link>
+      <pubDate>Fri, 23 Mar 2018 12:58:44 +0800</pubDate>
+      
+      <guid>https://fridayhub.github.io/post/python-xlrd/</guid>
+      <description>&lt;p&gt;记录下python读取excel的做法。&lt;/p&gt;</description>
+    </item>
+    
+    <item>
+      <title>说说Python Decorator</title>
+      <link>https://fridayhub.github.io/post/python-decorator/</link>
+      <pubDate>Sat, 17 Mar 2018 11:12:24 +0800</pubDate>
+      
+      <guid>https://fridayhub.github.io/post/python-decorator/</guid>
+      <description>&lt;p&gt;python装饰器这个东西用得好能给代码结构带来很大的方便，之前一直是用到就翻翻资料，今天做一个总结。&lt;/p&gt;</description>
+    </item>
+    
+    <item>
+      <title>Python Defaultdict</title>
+      <link>https://fridayhub.github.io/post/python-defaultdict/</link>
+      <pubDate>Thu, 15 Mar 2018 13:13:49 +0800</pubDate>
+      
+      <guid>https://fridayhub.github.io/post/python-defaultdict/</guid>
+      <description>&lt;p&gt;在看代码的时候，发现用到一个collections.defaultdic类，以前接触得不多，查了查资料自己体验了一下，做个记录。&lt;/p&gt;</description>
+    </item>
+    
+    <item>
+      <title>Python格式化输出</title>
+      <link>https://fridayhub.github.io/post/python-format/</link>
+      <pubDate>Wed, 14 Mar 2018 12:57:57 +0800</pubDate>
+      
+      <guid>https://fridayhub.github.io/post/python-format/</guid>
+      <description>&lt;p&gt;python 格式化输出用的比较多的就是&amp;rsquo;%s&amp;rsquo;，用这个在文本中占位，然后后面给出这个位置的值。一旦位置可能发生变化就不好弄了，比如中英文翻译时，不同语境占位的顺序可能不固定，这时可以用format。以下举例常用的几种：&lt;/p&gt;</description>
+    </item>
+    
+  </channel>
+</rss>

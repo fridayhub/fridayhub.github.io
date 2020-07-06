@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>contextmanager on Friday - Here I record my experience</title>
+    <link>https://fridayhub.github.io/tags/contextmanager/</link>
+    <description>Recent content in contextmanager on Friday - Here I record my experience</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>zh-CN</language>
+    <lastBuildDate>Mon, 11 Jun 2018 15:59:40 +0800</lastBuildDate>
+    
+	<atom:link href="https://fridayhub.github.io/tags/contextmanager/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>对python上下文管理器的认识</title>
+      <link>https://fridayhub.github.io/post/python-with-context-manager/</link>
+      <pubDate>Mon, 11 Jun 2018 15:59:40 +0800</pubDate>
+      
+      <guid>https://fridayhub.github.io/post/python-with-context-manager/</guid>
+      <description>&lt;p&gt;odoo框架给我们单元测试提供了BaseCase.assertRaises之类的方法去assert异常类型，一直在使用从未探究过其实现。今天突然来了兴趣，仔细看看收获不少。&lt;/p&gt;</description>
+    </item>
+    
+  </channel>
+</rss>

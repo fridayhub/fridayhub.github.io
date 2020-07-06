@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>metaclass on Friday - Here I record my experience</title>
+    <link>https://fridayhub.github.io/tags/metaclass/</link>
+    <description>Recent content in metaclass on Friday - Here I record my experience</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>zh-CN</language>
+    <lastBuildDate>Fri, 23 Mar 2018 13:13:09 +0800</lastBuildDate>
+    
+	<atom:link href="https://fridayhub.github.io/tags/metaclass/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Python Metaclass</title>
+      <link>https://fridayhub.github.io/post/python-metaclass/</link>
+      <pubDate>Fri, 23 Mar 2018 13:13:09 +0800</pubDate>
+      
+      <guid>https://fridayhub.github.io/post/python-metaclass/</guid>
+      <description>&lt;p&gt;关于python metaclass 也就是元类的一点体会。&lt;/p&gt;</description>
+    </item>
+    
+  </channel>
+</rss>

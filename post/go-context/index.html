@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <title>了解了下Go Context - Friday - Here I record my experience</title>
+  <meta name="renderer" content="webkit" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+<meta name="theme-color" content="#f8f5ec" />
+<meta name="msapplication-navbutton-color" content="#f8f5ec">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="#f8f5ec">
+
+
+<meta name="author" content="hulb" /><meta name="description" content="最近看到将go里面context的文章，之前对这块了解不多。感觉很奇怪为何parent context的取消同时可以影响到child context的取消,以此做链式控制。跟着网上前人的一些技术博客看了下context源码，代码不多也很容易看懂。这里记录下看到的几个有意思的地方。
+" /><meta name="keywords" content="go, context" />
+
+
+
+
+
+
+<meta name="generator" content="Hugo 0.68.3 with theme even" />
+
+
+<link rel="canonical" href="https://fridayhub.github.io/post/go-context/" />
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+<link rel="manifest" href="/manifest.json">
+<link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5">
+
+
+
+<link href="/sass/main.min.e861d9ade66fcc0257009476263fc9ff874695b6028dadc923a84c98b842034b.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.css" integrity="sha256-7TyXnr2YU040zfSP+rEcz29ggW4j56/ujTPwjMzyqFY=" crossorigin="anonymous">
+
+
+<meta property="og:title" content="了解了下Go Context" />
+<meta property="og:description" content="最近看到将go里面context的文章，之前对这块了解不多。感觉很奇怪为何parent context的取消同时可以影响到child context的取消,以此做链式控制。跟着网上前人的一些技术博客看了下context源码，代码不多也很容易看懂。这里记录下看到的几个有意思的地方。" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://fridayhub.github.io/post/go-context/" />
+<meta property="article:published_time" content="2019-09-24T21:02:48+08:00" />
+<meta property="article:modified_time" content="2019-09-24T21:02:48+08:00" />
+<meta itemprop="name" content="了解了下Go Context">
+<meta itemprop="description" content="最近看到将go里面context的文章，之前对这块了解不多。感觉很奇怪为何parent context的取消同时可以影响到child context的取消,以此做链式控制。跟着网上前人的一些技术博客看了下context源码，代码不多也很容易看懂。这里记录下看到的几个有意思的地方。">
+<meta itemprop="datePublished" content="2019-09-24T21:02:48&#43;08:00" />
+<meta itemprop="dateModified" content="2019-09-24T21:02:48&#43;08:00" />
+<meta itemprop="wordCount" content="900">
+
+
+
+<meta itemprop="keywords" content="go," /><meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="了解了下Go Context"/>
+<meta name="twitter:description" content="最近看到将go里面context的文章，之前对这块了解不多。感觉很奇怪为何parent context的取消同时可以影响到child context的取消,以此做链式控制。跟着网上前人的一些技术博客看了下context源码，代码不多也很容易看懂。这里记录下看到的几个有意思的地方。"/>
+
+<!--[if lte IE 9]>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/classlist/1.1.20170427/classList.min.js"></script>
+<![endif]-->
+
+<!--[if lt IE 9]>
+  <script src="https://cdn.jsdelivr.net/npm/html5shiv@3.7.3/dist/html5shiv.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/respond.js@1.4.2/dest/respond.min.js"></script>
+<![endif]-->
+
+</head>
+<body>
+  <div id="mobile-navbar" class="mobile-navbar">
+  <div class="mobile-header-logo">
+    <a href="/" class="logo">Friday</a>
+  </div>
+  <div class="mobile-navbar-icon">
+    <span></span>
+    <span></span>
+    <span></span>
+  </div>
+</div>
+<nav id="mobile-menu" class="mobile-menu slideout-menu">
+  <ul class="mobile-menu-list">
+    <a href="/">
+        <li class="mobile-menu-item">Home</li>
+      </a><a href="/post/">
+        <li class="mobile-menu-item">Archives</li>
+      </a><a href="/tags/">
+        <li class="mobile-menu-item">Tags</li>
+      </a><a href="/categories/">
+        <li class="mobile-menu-item">Categories</li>
+      </a><a href="/about/">
+        <li class="mobile-menu-item">About</li>
+      </a>
+  </ul>
+</nav>
+  <div class="container" id="mobile-panel">
+    <header id="header" class="header">
+        <div class="logo-wrapper">
+  <a href="/" class="logo">Friday</a>
+</div>
+
+<nav class="site-navbar">
+  <ul id="menu" class="menu">
+    <li class="menu-item">
+        <a class="menu-item-link" href="/">Home</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="/post/">Archives</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="/tags/">Tags</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="/categories/">Categories</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="/about/">About</a>
+      </li>
+  </ul>
+</nav>
+    </header>
+
+    <main id="main" class="main">
+      <div class="content-wrapper">
+        <div id="content" class="content">
+          <article class="post">
+    
+    <header class="post-header">
+      <h1 class="post-title">了解了下Go Context</h1>
+
+      <div class="post-meta">
+        <span class="post-time"> 2019-09-24 21:02:48 </span>
+        <div class="post-category">
+            <a href="/categories/go/"> go </a>
+            </div>
+          <span class="more-meta"> 900 words </span>
+          <span class="more-meta"> 2 mins read </span>
+        
+      </div>
+    </header>
+
+    
+    <div class="post-content">
+      <p>最近看到将go里面context的文章，之前对这块了解不多。感觉很奇怪为何parent context的取消同时可以影响到child context的取消,以此做链式控制。跟着网上前人的一些技术博客看了下context源码，代码不多也很容易看懂。这里记录下看到的几个有意思的地方。</p>
+<p>第一个是<code>WithCancel</code>这个函数返回的时候：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="nf">WithCancel</span><span class="p">(</span><span class="nx">parent</span> <span class="nx">Context</span><span class="p">)</span> <span class="p">(</span><span class="nx">ctx</span> <span class="nx">Context</span><span class="p">,</span> <span class="nx">cancel</span> <span class="nx">CancelFunc</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nx">c</span> <span class="o">:=</span> <span class="nf">newCancelCtx</span><span class="p">(</span><span class="nx">parent</span><span class="p">)</span>
+	<span class="nf">propagateCancel</span><span class="p">(</span><span class="nx">parent</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">c</span><span class="p">)</span>
+	<span class="k">return</span> <span class="o">&amp;</span><span class="nx">c</span><span class="p">,</span> <span class="kd">func</span><span class="p">()</span> <span class="p">{</span> <span class="nx">c</span><span class="p">.</span><span class="nf">cancel</span><span class="p">(</span><span class="kc">true</span><span class="p">,</span> <span class="nx">Canceled</span><span class="p">)</span> <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>最后返回了一个<code>func(){c.cancel(true, Canceled)}</code>，这里很巧妙。用一个wrapper方法将实际函数内容返回出去，等到最终调用的时候才执行<code>c.cancel(true, Canceled)</code>，跟python的装饰器一样。</p>
+<p>同样在找到的<a href="https://segmentfault.com/a/1190000006261218">Go语言并发模型：像Unix Pipe那样使用channel</a>这篇博客里，使用channel实现的&rsquo;pipline'也很有趣。摘抄一点代码</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-fallback" data-lang="fallback">func gen(nums ...int) &lt;-chan int {
+    out := make(chan int)
+    go func() {
+        for _, n := range nums {
+            out &lt;- n
+        }
+        close(out)
+    }()
+    return out
+}
+</code></pre></td></tr></table>
+</div>
+</div><p>这里将channel返回出来，然后协程里起始在往这个channel里写数据，但是由于channel没有被读取而阻塞。所以当channel被读取的时候，协程里往channel里放数据的操作才会执行。</p>
+<p>说回context接口。除了最原始的<code>background</code>和<code>todo</code>这两个<code>emptyCtx</code>类型之外，其余实现context接口的都是以<code>cancelCtx</code>作为基础。所以每个类型都会存在<code>done</code>和<code>children</code>，parent context之所以可以影响到child context就是因为它在<code>children</code>属性里记录了所有child context；控制通过<code>done</code>这个cahnnel来实现，在协程中通过调用<code>Done()</code>函数监听到<code>done</code>这个channel，然后在<code>cancel</code>函数被调用的时候关闭掉<code>done</code>channel，从而将一个信号让所有监听的地方收到；同时还会遍历当前context的&rsquo;children&rsquo;，去<code>cancel</code>掉所有的child context，致使所有监听child context的<code>done</code>channel的地方收到信号。</p>
+    </div>
+
+    
+<footer class="post-footer">
+      <div class="post-tags">
+          <a href="/tags/go/">go</a>
+          </div>
+      <nav class="post-nav">
+        <a class="prev" href="/post/blog-ci-cd/">
+            <i class="iconfont icon-left"></i>
+            <span class="prev-text nav-default">博客的CI/CD方案</span>
+            <span class="prev-text nav-mobile">Prev</span>
+          </a>
+        <a class="next" href="/post/protobuf-import/">
+            <span class="next-text nav-default">Protobuf Import 路径问题</span>
+            <span class="next-text nav-mobile">Next</span>
+            <i class="iconfont icon-right"></i>
+          </a>
+      </nav>
+    </footer>
+  </article>
+        </div>
+        
+
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="social-links">
+      <a href="mailto:hanglinux@163.com" class="iconfont icon-email" title="email"></a>
+      <a href="https://github.com/fridayhub" class="iconfont icon-github" title="github"></a>
+  <a href="https://fridayhub.github.io/index.xml" type="application/rss+xml" class="iconfont icon-rss" title="rss"></a>
+</div>
+
+<div class="copyright">
+  <span class="power-by">
+    Powered by <a class="hexo-link" href="https://gohugo.io">Hugo</a>
+  </span>
+  <span class="division">|</span>
+  <span class="theme-info">
+    Theme - 
+    <a class="theme-link" href="https://github.com/olOwOlo/hugo-theme-even">Even</a>
+  </span>
+
+  
+
+  <span class="copyright-year">
+    &copy; 
+    2017 - 
+    2020
+    <span class="heart">
+      <i class="iconfont icon-heart"></i>
+    </span>
+    <span class="author">hulb</span>
+  </span>
+</div>
+    </footer>
+
+    <div class="back-to-top" id="back-to-top">
+      <i class="iconfont icon-up"></i>
+    </div>
+  </div>
+  
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.2.1/dist/jquery.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/slideout@1.0.1/dist/slideout.min.js" integrity="sha256-t+zJ/g8/KXIJMjSVQdnibt4dlaDxc9zXr/9oNPeWqdg=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.js" integrity="sha256-XVLffZaxoWfGUEbdzuLi7pwaUJv1cecsQJQqGLe7axY=" crossorigin="anonymous"></script>
+
+
+
+<script type="text/javascript" src="/js/main.min.d7b7ada643c9c1a983026e177f141f7363b4640d619caf01d8831a6718cd44ea.js"></script>
+
+
+
+
+
+
+
+
+</body>
+</html>

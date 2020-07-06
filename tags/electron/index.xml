@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>electron on Friday - Here I record my experience</title>
+    <link>https://fridayhub.github.io/tags/electron/</link>
+    <description>Recent content in electron on Friday - Here I record my experience</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>zh-CN</language>
+    <lastBuildDate>Mon, 14 May 2018 13:01:03 +0800</lastBuildDate>
+    
+	<atom:link href="https://fridayhub.github.io/tags/electron/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Electron 框架学习(一)</title>
+      <link>https://fridayhub.github.io/post/electron-learning-1/</link>
+      <pubDate>Mon, 14 May 2018 13:01:03 +0800</pubDate>
+      
+      <guid>https://fridayhub.github.io/post/electron-learning-1/</guid>
+      <description>&lt;p&gt;最近一个需求需要做一个windows客户端，第一时间想到了electron，遂简单学习了一下。&lt;/p&gt;</description>
+    </item>
+    
+  </channel>
+</rss>

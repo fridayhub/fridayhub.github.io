@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <title>对python上下文管理器的认识 - Friday - Here I record my experience</title>
+  <meta name="renderer" content="webkit" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+<meta name="theme-color" content="#f8f5ec" />
+<meta name="msapplication-navbutton-color" content="#f8f5ec">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="#f8f5ec">
+
+
+<meta name="author" content="hulb" /><meta name="description" content="odoo框架给我们单元测试提供了BaseCase.assertRaises之类的方法去assert异常类型，一直在使用从未探究过其实现。今天突然来了兴趣，仔细看看收获不少。
+" /><meta name="keywords" content="python, with, contextmanager" />
+
+
+
+
+
+
+<meta name="generator" content="Hugo 0.68.3 with theme even" />
+
+
+<link rel="canonical" href="https://fridayhub.github.io/post/python-with-context-manager/" />
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+<link rel="manifest" href="/manifest.json">
+<link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5">
+
+
+
+<link href="/sass/main.min.e861d9ade66fcc0257009476263fc9ff874695b6028dadc923a84c98b842034b.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.css" integrity="sha256-7TyXnr2YU040zfSP+rEcz29ggW4j56/ujTPwjMzyqFY=" crossorigin="anonymous">
+
+
+<meta property="og:title" content="对python上下文管理器的认识" />
+<meta property="og:description" content="odoo框架给我们单元测试提供了BaseCase.assertRaises之类的方法去assert异常类型，一直在使用从未探究过其实现。今天突然来了兴趣，仔细看看收获不少。" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://fridayhub.github.io/post/python-with-context-manager/" />
+<meta property="article:published_time" content="2018-06-11T15:59:40+08:00" />
+<meta property="article:modified_time" content="2018-06-11T15:59:40+08:00" />
+<meta itemprop="name" content="对python上下文管理器的认识">
+<meta itemprop="description" content="odoo框架给我们单元测试提供了BaseCase.assertRaises之类的方法去assert异常类型，一直在使用从未探究过其实现。今天突然来了兴趣，仔细看看收获不少。">
+<meta itemprop="datePublished" content="2018-06-11T15:59:40&#43;08:00" />
+<meta itemprop="dateModified" content="2018-06-11T15:59:40&#43;08:00" />
+<meta itemprop="wordCount" content="3064">
+
+
+
+<meta itemprop="keywords" content="python,contextmanager," /><meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="对python上下文管理器的认识"/>
+<meta name="twitter:description" content="odoo框架给我们单元测试提供了BaseCase.assertRaises之类的方法去assert异常类型，一直在使用从未探究过其实现。今天突然来了兴趣，仔细看看收获不少。"/>
+
+<!--[if lte IE 9]>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/classlist/1.1.20170427/classList.min.js"></script>
+<![endif]-->
+
+<!--[if lt IE 9]>
+  <script src="https://cdn.jsdelivr.net/npm/html5shiv@3.7.3/dist/html5shiv.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/respond.js@1.4.2/dest/respond.min.js"></script>
+<![endif]-->
+
+</head>
+<body>
+  <div id="mobile-navbar" class="mobile-navbar">
+  <div class="mobile-header-logo">
+    <a href="/" class="logo">Friday</a>
+  </div>
+  <div class="mobile-navbar-icon">
+    <span></span>
+    <span></span>
+    <span></span>
+  </div>
+</div>
+<nav id="mobile-menu" class="mobile-menu slideout-menu">
+  <ul class="mobile-menu-list">
+    <a href="/">
+        <li class="mobile-menu-item">Home</li>
+      </a><a href="/post/">
+        <li class="mobile-menu-item">Archives</li>
+      </a><a href="/tags/">
+        <li class="mobile-menu-item">Tags</li>
+      </a><a href="/categories/">
+        <li class="mobile-menu-item">Categories</li>
+      </a><a href="/about/">
+        <li class="mobile-menu-item">About</li>
+      </a>
+  </ul>
+</nav>
+  <div class="container" id="mobile-panel">
+    <header id="header" class="header">
+        <div class="logo-wrapper">
+  <a href="/" class="logo">Friday</a>
+</div>
+
+<nav class="site-navbar">
+  <ul id="menu" class="menu">
+    <li class="menu-item">
+        <a class="menu-item-link" href="/">Home</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="/post/">Archives</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="/tags/">Tags</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="/categories/">Categories</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="/about/">About</a>
+      </li>
+  </ul>
+</nav>
+    </header>
+
+    <main id="main" class="main">
+      <div class="content-wrapper">
+        <div id="content" class="content">
+          <article class="post">
+    
+    <header class="post-header">
+      <h1 class="post-title">对python上下文管理器的认识</h1>
+
+      <div class="post-meta">
+        <span class="post-time"> 2018-06-11 15:59:40 </span>
+        <div class="post-category">
+            <a href="/categories/python/"> python </a>
+            </div>
+          <span class="more-meta"> 3064 words </span>
+          <span class="more-meta"> 7 mins read </span>
+        
+      </div>
+    </header>
+
+    
+    <div class="post-content">
+      <p>odoo框架给我们单元测试提供了BaseCase.assertRaises之类的方法去assert异常类型，一直在使用从未探究过其实现。今天突然来了兴趣，仔细看看收获不少。</p>
+<p>我们在断言一种异常时，经常这样用:</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-python" data-lang="python"><span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">assertRaises</span><span class="p">(</span><span class="n">ValidateError</span><span class="p">):</span>
+    <span class="n">do_something</span><span class="p">()</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>这里如果do_something方法执行抛出异常，而异常类型为ValidateError,就会被识别到，从而断言为True。这里是如何捕获到这个异常，进而实现断言的呢？
+这里就要提到<a href="https://docs.python.org/2.5/whatsnew/pep-343.html">&ldquo;with&quot;这个关键字和python提供的上下文管理器</a>。</p>
+<p>关于with的解释网络上很多，简单来说就是实现了____enter____和____exit____方法的对象就叫做“上下文管理器(context manager)”，可以用with，举个数据库连接的例子：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span><span class="lnt">8
+</span><span class="lnt">9
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-python" data-lang="python"><span class="k">class</span> <span class="nc">Connnection</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__enter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="k">def</span> <span class="fm">__exit__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">err_type</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">traceback</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+<span class="k">with</span> <span class="n">Connnection</span><span class="p">()</span> <span class="k">as</span> <span class="n">con</span><span class="p">:</span>
+    <span class="n">do_something</span><span class="p">()</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>可以看到有了with就不用繁琐地写try/finaly了。执行的顺序是先执行Connection()得到一个实例，然后执行Connection类的____enter____返回这个实例，由于存在as，这个实例会被赋值给con，然后执行do_something()，完成后最后执行Connection类的____exit____方法。同时可以看到____exit____方法有三个参数，这是因为当do_something执行抛出异常的时候，如果do_something后面还有代码，就不会执行了，而会直接进入到____exit____，其中err_type是异常的类型，value是异常具体对象，traceback是异常时的堆栈，对于接下来的处理，如果____exit____返回False则异常会继续往上抛，如果返回True则不在继续抛。这就是一个catch机制嘛，难怪可以替代try啦。</p>
+<p>在看看BaseCase.assertRaises的实现:</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-python" data-lang="python"><span class="nd">@contextmanager</span>
+<span class="k">def</span> <span class="nf">_assertRaises</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exception</span><span class="p">):</span>
+    <span class="s2">&#34;&#34;&#34; Context manager that clears the environment upon failure. &#34;&#34;&#34;</span>
+    <span class="k">with</span> <span class="nb">super</span><span class="p">(</span><span class="n">BaseCase</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">assertRaises</span><span class="p">(</span><span class="n">exception</span><span class="p">)</span> <span class="k">as</span> <span class="n">cm</span><span class="p">:</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">clear_upon_failure</span><span class="p">():</span>
+            <span class="k">yield</span> <span class="n">cm</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>这里出现了一个contextmanager装饰器。讲python的上下文管理器，contextlib.contextmanager是一定会被提到的。它作用到一个generator上使得实现上下文管理器的过程更简化了。被contextlib.contextmanager装饰的generator，yield之前的部分作为____enter____方法，yield之后的部分作为____exit____方法。执行到yield时就执行with包围的do_something的内容。但需要注意的是这个generator只能输出一个值，如果是多个值就不能用contextlib.contextmanager。那么之前的数据库连接的例子就可以改为:</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-python" data-lang="python"><span class="k">class</span> <span class="nc">Connection</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="k">pass</span>
+
+<span class="k">def</span> <span class="nf">get_con</span><span class="p">():</span>
+    <span class="n">con</span> <span class="o">=</span> <span class="n">Connection</span><span class="p">()</span>
+    <span class="k">yield</span> <span class="n">con</span>
+    <span class="n">con</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+<span class="k">with</span> <span class="n">get_con</span><span class="p">()</span> <span class="k">as</span> <span class="n">con</span><span class="p">:</span>
+    <span class="n">do_something</span><span class="p">()</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>这样就不必每个想要用with的对象都要实现一遍____enter____和____exit____。接下来看看让我产生兴趣的一个地方，关于with的嵌套。我把异常断言用到的主要代码列出来:</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span><span class="lnt">47
+</span><span class="lnt">48
+</span><span class="lnt">49
+</span><span class="lnt">50
+</span><span class="lnt">51
+</span><span class="lnt">52
+</span><span class="lnt">53
+</span><span class="lnt">54
+</span><span class="lnt">55
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-python" data-lang="python"><span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">assertRaises</span><span class="p">(</span><span class="n">ValidateError</span><span class="p">):</span> <span class="c1"># 1.由于assertRaises是一个generator，这里获取到这个generator对象后就会进入这个对象的__enter__方法，就是执行assertRaises方法yield之前的部分</span>
+    <span class="n">do_something</span><span class="p">()</span> <span class="c1"># 4.</span>
+<span class="o">...</span>
+
+<span class="nd">@contextmanager</span>
+<span class="k">def</span> <span class="nf">_assertRaises</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exception</span><span class="p">):</span>
+    <span class="s2">&#34;&#34;&#34; Context manager that clears the environment upon failure. &#34;&#34;&#34;</span>
+    <span class="k">with</span> <span class="nb">super</span><span class="p">(</span><span class="n">BaseCase</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">assertRaises</span><span class="p">(</span><span class="n">exception</span><span class="p">)</span> <span class="k">as</span> <span class="n">cm</span><span class="p">:</span>   <span class="c1">#  2.执行到这里的时候可以看到super(BaseCase, self).assertRaises(exception)返回的是一个_AssertRaisesContext对象，它实现了__enter__和__exit__方法</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">clear_upon_failure</span><span class="p">():</span> <span class="c1"># 3.执行到这里的时候由于clear_upon_failure方法是一个generator，所以会执行yield之前的部分(啥也没有)，然后到8, 然后完成3这一层with的&#34;__enter__&#34;，执行下一句5直接是yield，那么对于_assertRaises来说，其yield方法已经执行完了，那么回到最开始的with，开始执行do_something方法4</span>
+            <span class="k">yield</span> <span class="n">cm</span>    <span class="c1"># 5.</span>
+<span class="o">...</span>
+
+<span class="k">class</span> <span class="nc">_AssertRaisesContext</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="s2">&#34;&#34;&#34;A context manager used to implement TestCase.assertRaises* methods.&#34;&#34;&#34;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">expected</span><span class="p">,</span> <span class="n">test_case</span><span class="p">,</span> <span class="n">expected_regexp</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">expected</span> <span class="o">=</span> <span class="n">expected</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">failureException</span> <span class="o">=</span> <span class="n">test_case</span><span class="o">.</span><span class="n">failureException</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">expected_regexp</span> <span class="o">=</span> <span class="n">expected_regexp</span>
+
+    <span class="k">def</span> <span class="fm">__enter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>    <span class="c1"># 6.</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="k">def</span> <span class="fm">__exit__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exc_type</span><span class="p">,</span> <span class="n">exc_value</span><span class="p">,</span> <span class="n">tb</span><span class="p">):</span> <span class="c1"># 7.这里是异常类型断言的核心逻辑，通过在__exit__里判断异常类型与expected是否一致来决定是返回True还是False来决定异常断言的结果</span>
+        <span class="k">if</span> <span class="n">exc_type</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">exc_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">expected</span><span class="o">.</span><span class="vm">__name__</span>
+            <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+                <span class="n">exc_name</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">expected</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">failureException</span><span class="p">(</span>
+                <span class="s2">&#34;{0} not raised&#34;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">exc_name</span><span class="p">))</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">exc_type</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">expected</span><span class="p">):</span>
+            <span class="c1"># let unexpected exceptions pass through</span>
+            <span class="k">return</span> <span class="bp">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">exception</span> <span class="o">=</span> <span class="n">exc_value</span> <span class="c1"># store for later retrieval</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">expected_regexp</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">True</span>
+
+        <span class="n">expected_regexp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">expected_regexp</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">expected_regexp</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">exc_value</span><span class="p">)):</span>
+            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">failureException</span><span class="p">(</span><span class="s1">&#39;&#34;</span><span class="si">%s</span><span class="s1">&#34; does not match &#34;</span><span class="si">%s</span><span class="s1">&#34;&#39;</span> <span class="o">%</span>
+                     <span class="p">(</span><span class="n">expected_regexp</span><span class="o">.</span><span class="n">pattern</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">exc_value</span><span class="p">)))</span>
+        <span class="k">return</span> <span class="bp">True</span>
+<span class="o">...</span>
+
+<span class="nd">@contextmanager</span>
+<span class="k">def</span> <span class="nf">clear_upon_failure</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="s2">&#34;&#34;&#34; Context manager that clears the environments (caches and fields to
+</span><span class="s2">        recompute) upon exception.
+</span><span class="s2">    &#34;&#34;&#34;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">yield</span>   <span class="c1">#  8.</span>
+    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>    <span class="c1">#9.</span>
+        <span class="k">raise</span>   <span class="c1"># 10.</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>这里要注意，如果是实现了____enter____和____exit____的对象，当do_something执行异常后会进入____exit____，但对于用contextlib.contextmanager装饰的generator来说，do_something异常之后并不会再执行yield之后的内容，所以在4执行异常的时候，异常被3这一层with机制捕获，接着进入clear_upon_failure的异常捕获逻辑，执行9，做一个资源清理，然后10将异常往外抛被2这一层的with机制捕获进入到7这个____exit____逻辑，在这里通过对比异常类型，如果这不是期待的类型，则抛出“不匹配”的异常，如果是期待的类型则返回True，异常不继续往上抛。</p>
+<p>这就是这个异常断言的实现机制，可以这个过程中with的嵌套分两种：</p>
+<p>一种是对于1来说，assertRaises方法得到的是一个generator，所以它的____enter____是整个assertRaises方法yield之前的内容，可以理解为一直执行到assertRaises方法yield了才算完，这里在某些情况下可以不仅仅只执行到5。</p>
+<p>而且如果4执行没有异常，这时候就要执行assertRaises方法yield后面的内容，而5这里yield后没有东西了，但并不意味着assertRaises方法的yield后面的内容执行完了，还需要执行完3这一层with的&rdquo;<strong><strong>exit</strong></strong>&ldquo;以及2这一层的&rdquo;<strong><strong>exit</strong></strong>&quot;，而执行3这一层的&rdquo;<strong><strong>exit</strong></strong>&ldquo;时，由于clear_upon_failure是一个generator,会要执行clear_upon_failure方法yield后面的内容，也是什么都没有，于是3这一层的with执行完了；2这层with也是一样会执行到7这里的____exit____，然后没有异常所以返回False，至此整个assertRaises方法执行完了，也是1这个with的&rdquo;____exit____&ldquo;过程执行完了。整个过程就完了。</p>
+<p>另一种其实在第一种的过程中包含了。在执行1的&rdquo;<strong><strong>enter</strong></strong>&ldquo;过程的时候，进入到assertRaises，现执行外层with的&rdquo;<strong><strong>enter</strong></strong>&ldquo;过程，然后执行外层with的&quot;do_something&quot;过程时执行到内层with的&rdquo;<strong><strong>enter</strong></strong>&ldquo;过程。执行完内层的&quot;do_something&quot;过程后先执行内层with的&rdquo;<strong><strong>exit</strong></strong>&ldquo;过程。</p>
+    </div>
+
+    
+<footer class="post-footer">
+      <div class="post-tags">
+          <a href="/tags/python/">python</a>
+          <a href="/tags/contextmanager/">contextmanager</a>
+          </div>
+      <nav class="post-nav">
+        <a class="prev" href="/post/odoo-web-server-explore/">
+            <i class="iconfont icon-left"></i>
+            <span class="prev-text nav-default">Odoo Web Server初探</span>
+            <span class="prev-text nav-mobile">Prev</span>
+          </a>
+        <a class="next" href="/post/tcp-handshake/">
+            <span class="next-text nav-default">TCP Handshake</span>
+            <span class="next-text nav-mobile">Next</span>
+            <i class="iconfont icon-right"></i>
+          </a>
+      </nav>
+    </footer>
+  </article>
+        </div>
+        
+
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="social-links">
+      <a href="mailto:hanglinux@163.com" class="iconfont icon-email" title="email"></a>
+      <a href="https://github.com/fridayhub" class="iconfont icon-github" title="github"></a>
+  <a href="https://fridayhub.github.io/index.xml" type="application/rss+xml" class="iconfont icon-rss" title="rss"></a>
+</div>
+
+<div class="copyright">
+  <span class="power-by">
+    Powered by <a class="hexo-link" href="https://gohugo.io">Hugo</a>
+  </span>
+  <span class="division">|</span>
+  <span class="theme-info">
+    Theme - 
+    <a class="theme-link" href="https://github.com/olOwOlo/hugo-theme-even">Even</a>
+  </span>
+
+  
+
+  <span class="copyright-year">
+    &copy; 
+    2017 - 
+    2020
+    <span class="heart">
+      <i class="iconfont icon-heart"></i>
+    </span>
+    <span class="author">hulb</span>
+  </span>
+</div>
+    </footer>
+
+    <div class="back-to-top" id="back-to-top">
+      <i class="iconfont icon-up"></i>
+    </div>
+  </div>
+  
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.2.1/dist/jquery.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/slideout@1.0.1/dist/slideout.min.js" integrity="sha256-t+zJ/g8/KXIJMjSVQdnibt4dlaDxc9zXr/9oNPeWqdg=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.js" integrity="sha256-XVLffZaxoWfGUEbdzuLi7pwaUJv1cecsQJQqGLe7axY=" crossorigin="anonymous"></script>
+
+
+
+<script type="text/javascript" src="/js/main.min.d7b7ada643c9c1a983026e177f141f7363b4640d619caf01d8831a6718cd44ea.js"></script>
+
+
+
+
+
+
+
+
+</body>
+</html>

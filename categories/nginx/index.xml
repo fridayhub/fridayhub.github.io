@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>nginx on Friday - Here I record my experience</title>
+    <link>https://fridayhub.github.io/categories/nginx/</link>
+    <description>Recent content in nginx on Friday - Here I record my experience</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>zh-CN</language>
+    <lastBuildDate>Thu, 13 Jun 2019 16:54:51 +0800</lastBuildDate>
+    
+	<atom:link href="https://fridayhub.github.io/categories/nginx/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Nginx 配置多个子域名</title>
+      <link>https://fridayhub.github.io/post/nginx-multi-subdomain/</link>
+      <pubDate>Thu, 13 Jun 2019 16:54:51 +0800</pubDate>
+      
+      <guid>https://fridayhub.github.io/post/nginx-multi-subdomain/</guid>
+      <description>&lt;p&gt;查了很多资料，终于给网站加了多个子域名，这样以后就可以有很多玩法了。这里记录一下。&lt;/p&gt;</description>
+    </item>
+    
+  </channel>
+</rss>
