@@ -1,0 +1,60 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta http-equiv=x-ua-compatible content="IE=edge,chrome=1"><title>用travis自动构建Hugo的Github Pages[转] - Friday - Here I record my experience</title><meta name=renderer content="webkit"><meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1"><meta http-equiv=cache-control content="no-transform"><meta http-equiv=cache-control content="no-siteapp"><meta name=theme-color content="#f8f5ec"><meta name=msapplication-navbutton-color content="#f8f5ec"><meta name=apple-mobile-web-app-capable content="yes"><meta name=apple-mobile-web-app-status-bar-style content="#f8f5ec"><meta name=author content="hulb"><meta name=description content="博客搭建好后，一个重要的问题就是每次有新写的md文件难道要手动执行hugo，然后将public文件夹推送到github pages仓库？显然这不是我想要的。"><meta name=keywords content="CI,travis"><meta name=generator content="Hugo 0.73.0 with theme even"><link rel=canonical href=https://fridayhub.github.io/post/hugo-travis-github-pages/><link rel=apple-touch-icon sizes=180x180 href=/apple-touch-icon.png><link rel=icon type=image/png sizes=32x32 href=/favicon-32x32.png><link rel=icon type=image/png sizes=16x16 href=/favicon-16x16.png><link rel=manifest href=/manifest.json><link rel=mask-icon href=/safari-pinned-tab.svg color=#5bbad5><link href=/sass/main.min.8c3cbcb0324c2bb4875ceccba4007cbad4b4ac8377f33af9953c3e7684534a50.css rel=stylesheet><link rel=stylesheet href=https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.css integrity="sha256-7TyXnr2YU040zfSP+rEcz29ggW4j56/ujTPwjMzyqFY=" crossorigin=anonymous><meta property="og:title" content="用travis自动构建Hugo的Github Pages[转]"><meta property="og:description" content="博客搭建好后，一个重要的问题就是每次有新写的md文件难道要手动执行hugo，然后将public文件夹推送到github pages仓库？显然这不是我想要的。"><meta property="og:type" content="article"><meta property="og:url" content="https://fridayhub.github.io/post/hugo-travis-github-pages/"><meta property="article:published_time" content="2017-12-20T23:59:24+08:00"><meta property="article:modified_time" content="2017-12-20T23:59:24+08:00"><meta itemprop=name content="用travis自动构建Hugo的Github Pages[转]"><meta itemprop=description content="博客搭建好后，一个重要的问题就是每次有新写的md文件难道要手动执行hugo，然后将public文件夹推送到github pages仓库？显然这不是我想要的。"><meta itemprop=datePublished content="2017-12-20T23:59:24+08:00"><meta itemprop=dateModified content="2017-12-20T23:59:24+08:00"><meta itemprop=wordCount content="770"><meta itemprop=keywords content="travis,CI,"><meta name=twitter:card content="summary"><meta name=twitter:title content="用travis自动构建Hugo的Github Pages[转]"><meta name=twitter:description content="博客搭建好后，一个重要的问题就是每次有新写的md文件难道要手动执行hugo，然后将public文件夹推送到github pages仓库？显然这不是我想要的。"><!--[if lte IE 9]><script src=https://cdnjs.cloudflare.com/ajax/libs/classlist/1.1.20170427/classList.min.js></script><![endif]--><!--[if lt IE 9]><script src=https://cdn.jsdelivr.net/npm/html5shiv@3.7.3/dist/html5shiv.min.js></script><script src=https://cdn.jsdelivr.net/npm/respond.js@1.4.2/dest/respond.min.js></script><![endif]--></head><body><div id=mobile-navbar class=mobile-navbar><div class=mobile-header-logo><a href=/ class=logo>Friday</a></div><div class=mobile-navbar-icon><span></span><span></span><span></span></div></div><nav id=mobile-menu class="mobile-menu slideout-menu"><ul class=mobile-menu-list><a href=/><li class=mobile-menu-item>Home</li></a><a href=/post/><li class=mobile-menu-item>Archives</li></a><a href=/tags/><li class=mobile-menu-item>Tags</li></a><a href=/categories/><li class=mobile-menu-item>Categories</li></a><a href=/about/><li class=mobile-menu-item>About</li></a></ul></nav><div class=container id=mobile-panel><header id=header class=header><div class=logo-wrapper><a href=/ class=logo>Friday</a></div><nav class=site-navbar><ul id=menu class=menu><li class=menu-item><a class=menu-item-link href=/>Home</a></li><li class=menu-item><a class=menu-item-link href=/post/>Archives</a></li><li class=menu-item><a class=menu-item-link href=/tags/>Tags</a></li><li class=menu-item><a class=menu-item-link href=/categories/>Categories</a></li><li class=menu-item><a class=menu-item-link href=/about/>About</a></li></ul></nav></header><main id=main class=main><div class=content-wrapper><div id=content class=content><article class=post><header class=post-header><h1 class=post-title>用travis自动构建Hugo的Github Pages[转]</h1><div class=post-meta><span class=post-time>2017-12-20 23:59:24</span><div class=post-category><a href=/categories/ci/>CI</a></div><span class=more-meta>770 words</span>
+<span class=more-meta>2 mins read</span></div></header><div class=post-content><p>博客搭建好后，一个重要的问题就是每次有新写的md文件难道要手动执行hugo，然后将public文件夹推送到github pages仓库？显然这不是我想要的。</p><p>在网络上搜索了一下，发现可以借助一些CI/CD工具来帮助我完成这件事。CI/CD全称Continuous Integration and Delivery，中文翻译过来就是持续集成和交付。原理是借助git的hook功能，监控git仓库的提交，然后触发自动构建，自动部署。</p><p>其中，travis.io是在线的用的比较多的一个CI/CD工具，而且可以免费使用。使用方法还算简单，就是在项目根目录创建一个.travis.yml文件，文件中按照其语法，声明项目运行的环境和构建脚本。
+以下是我的博客的构建脚本</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span><span class=lnt>22
+</span></code></pre></td><td class=lntd><pre class=chroma><code class=language-yml data-lang=yml><span class=w>  </span><span class=k>langguage</span><span class=p>:</span><span class=w> </span>go<span class=w>
+</span><span class=w>
+</span><span class=w>  </span><span class=k>go</span><span class=p>:</span><span class=w>
+</span><span class=w>    </span>- master<span class=w>
+</span><span class=w>  </span><span class=k>install</span><span class=p>:</span><span class=w>
+</span><span class=w>    </span>- wget<span class=w> </span>https<span class=p>:</span>//github.com/gohugoio/hugo/releases/download/v0<span class=m>.31.1</span>/hugo_0<span class=m>.31</span>.1_Linux-64bit.tar.gz<span class=w>
+</span><span class=w>    </span>- tar<span class=w> </span>-zxf<span class=w> </span>hugo_0<span class=m>.31</span>.1_Linux-64bit.tar.gz<span class=w>
+</span><span class=w>    </span>- chmod<span class=w> </span>a+x<span class=w> </span>hugo<span class=w>
+</span><span class=w>
+</span><span class=w>  </span><span class=k>script</span><span class=p>:</span><span class=w>
+</span><span class=w>    </span>- ./hugo<span class=w>
+</span><span class=w>
+</span><span class=w>  </span><span class=k>deploy</span><span class=p>:</span><span class=w>
+</span><span class=w>    </span><span class=k>provider</span><span class=p>:</span><span class=w> </span>pages<span class=w>
+</span><span class=w>    </span><span class=k>skip_cleanup</span><span class=p>:</span><span class=w> </span><span class=kc>true</span><span class=w>
+</span><span class=w>    </span><span class=k>github_token</span><span class=p>:</span><span class=w> </span>$GITHUB_TOKEN<span class=w>
+</span><span class=w>    </span><span class=k>on</span><span class=p>:</span><span class=w>
+</span><span class=w>      </span><span class=k>branch</span><span class=p>:</span><span class=w> </span>master<span class=w>
+</span><span class=w>    </span><span class=k>local_dir</span><span class=p>:</span><span class=w> </span>./public<span class=w>
+</span><span class=w>    </span><span class=k>repo</span><span class=p>:</span><span class=w> </span>hulb/hulb.github.io<span class=w>
+</span><span class=w>    </span><span class=k>email</span><span class=p>:</span><span class=w> </span>hanglinux@<span class=m>163.</span>com<span class=w>
+</span><span class=w>    </span><span class=k>target_branch</span><span class=p>:</span><span class=w> </span>master<span class=w>
+</span></code></pre></td></tr></table></div></div><p>以上是表示使用go的运行环境，go版本选择为master版本，这是从<a href=https://docs.travis-ci.com/user/languages/go/ title=travis文档>travis文档</a>学习来的。</p><p>使用travis我们可以自动对Push到博客仓库的md文件执行hugo，生成public文件夹，那么如何把这个文件夹推送到对应的pages仓库呢？这就需要用到github的access token。在github的setting->developer setting中有一个personal access token，根据travis文档教程生成一个新的access token，填入travis环境变量里，然后我们在.travis.yml中就可以用到，就如上面的@GITHUB_TOKEN。</p><p>接下来设置部署的命令，就是deploy这一节。根据<a href=https://docs.travis-ci.com/user/deployment/pages/>travis有关github pages的文档</a>填入一些配置，这里有个坑，repo只用写你的github用户名/项目名就行了，不用写完成的git clone的地址，一直在这个地方搞错了好几次。
+然后就是推送一个更新到博客源文件仓库，触发自动构建和部署。</p></div><footer class=post-footer><div class=post-tags><a href=/tags/travis/>travis</a>
+<a href=/tags/ci/>CI</a></div><nav class=post-nav><a class=prev href=/post/tcp-handshake/><i class="iconfont icon-left"></i><span class="prev-text nav-default">TCP Handshake[转]</span>
+<span class="prev-text nav-mobile">Prev</span></a>
+<a class=next href=/post/syntax-highlighting/><span class="next-text nav-default">Syntax Highlighting</span>
+<span class="next-text nav-mobile">Next</span>
+<i class="iconfont icon-right"></i></a></nav></footer></article></div></div></main><footer id=footer class=footer><div class=social-links><a href=mailto:hanglinux@163.com class="iconfont icon-email" title=email></a><a href=https://github.com/fridayhub class="iconfont icon-github" title=github></a><a href=https://fridayhub.github.io/index.xml type=application/rss+xml class="iconfont icon-rss" title=rss></a></div><div class=copyright><span class=power-by>Powered by <a class=hexo-link href=https://gohugo.io>Hugo</a></span>
+<span class=division>|</span>
+<span class=theme-info>Theme -
+<a class=theme-link href=https://github.com/olOwOlo/hugo-theme-even>Even</a></span>
+<span class=copyright-year>&copy;
+2017 -
+2020
+<span class=heart><i class="iconfont icon-heart"></i></span><span class=author>friday</span></span></div></footer><div class=back-to-top id=back-to-top><i class="iconfont icon-up"></i></div></div><script src=https://cdn.jsdelivr.net/npm/jquery@3.2.1/dist/jquery.min.js integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin=anonymous></script><script src=https://cdn.jsdelivr.net/npm/slideout@1.0.1/dist/slideout.min.js integrity="sha256-t+zJ/g8/KXIJMjSVQdnibt4dlaDxc9zXr/9oNPeWqdg=" crossorigin=anonymous></script><script src=https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.js integrity="sha256-XVLffZaxoWfGUEbdzuLi7pwaUJv1cecsQJQqGLe7axY=" crossorigin=anonymous></script><script type=text/javascript src=/js/main.min.d7b7ada643c9c1a983026e177f141f7363b4640d619caf01d8831a6718cd44ea.js></script></body></html>
