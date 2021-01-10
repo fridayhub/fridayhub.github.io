@@ -1,0 +1,50 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta http-equiv=x-ua-compatible content="IE=edge,chrome=1"><title>Kvm迁移 - Friday - Here I record my experience</title><meta name=renderer content="webkit"><meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1"><meta http-equiv=cache-control content="no-transform"><meta http-equiv=cache-control content="no-siteapp"><meta name=theme-color content="#f8f5ec"><meta name=msapplication-navbutton-color content="#f8f5ec"><meta name=apple-mobile-web-app-capable content="yes"><meta name=apple-mobile-web-app-status-bar-style content="#f8f5ec"><meta name=author content="friday"><meta name=description content><meta name=keywords content="Friday,Hugo,theme,even"><meta name=generator content="Hugo 0.73.0 with theme even"><link rel=canonical href=https://fridayhub.github.io/post/kvm%E8%BF%81%E7%A7%BB%E5%B9%B6%E5%90%AF%E5%8A%A8vnc/><link rel=apple-touch-icon sizes=180x180 href=/apple-touch-icon.png><link rel=icon type=image/png sizes=32x32 href=/favicon-32x32.png><link rel=icon type=image/png sizes=16x16 href=/favicon-16x16.png><link rel=manifest href=/manifest.json><link rel=mask-icon href=/safari-pinned-tab.svg color=#5bbad5><link href=/sass/main.min.8c3cbcb0324c2bb4875ceccba4007cbad4b4ac8377f33af9953c3e7684534a50.css rel=stylesheet><link rel=stylesheet href=https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.css integrity="sha256-7TyXnr2YU040zfSP+rEcz29ggW4j56/ujTPwjMzyqFY=" crossorigin=anonymous><meta property="og:title" content="Kvm迁移"><meta property="og:description" content><meta property="og:type" content="article"><meta property="og:url" content="https://fridayhub.github.io/post/kvm%E8%BF%81%E7%A7%BB%E5%B9%B6%E5%90%AF%E5%8A%A8vnc/"><meta property="article:published_time" content="2021-01-10T15:16:56+08:00"><meta property="article:modified_time" content="2021-01-10T15:16:56+08:00"><meta itemprop=name content="Kvm迁移"><meta itemprop=description content><meta itemprop=datePublished content="2021-01-10T15:16:56+08:00"><meta itemprop=dateModified content="2021-01-10T15:16:56+08:00"><meta itemprop=wordCount content="446"><meta itemprop=keywords content><meta name=twitter:card content="summary"><meta name=twitter:title content="Kvm迁移"><meta name=twitter:description content><!--[if lte IE 9]><script src=https://cdnjs.cloudflare.com/ajax/libs/classlist/1.1.20170427/classList.min.js></script><![endif]--><!--[if lt IE 9]><script src=https://cdn.jsdelivr.net/npm/html5shiv@3.7.3/dist/html5shiv.min.js></script><script src=https://cdn.jsdelivr.net/npm/respond.js@1.4.2/dest/respond.min.js></script><![endif]--></head><body><div id=mobile-navbar class=mobile-navbar><div class=mobile-header-logo><a href=/ class=logo>Friday</a></div><div class=mobile-navbar-icon><span></span><span></span><span></span></div></div><nav id=mobile-menu class="mobile-menu slideout-menu"><ul class=mobile-menu-list><a href=/><li class=mobile-menu-item>Home</li></a><a href=/post/><li class=mobile-menu-item>Archives</li></a><a href=/tags/><li class=mobile-menu-item>Tags</li></a><a href=/categories/><li class=mobile-menu-item>Categories</li></a><a href=/about/><li class=mobile-menu-item>About</li></a></ul></nav><div class=container id=mobile-panel><header id=header class=header><div class=logo-wrapper><a href=/ class=logo>Friday</a></div><nav class=site-navbar><ul id=menu class=menu><li class=menu-item><a class=menu-item-link href=/>Home</a></li><li class=menu-item><a class=menu-item-link href=/post/>Archives</a></li><li class=menu-item><a class=menu-item-link href=/tags/>Tags</a></li><li class=menu-item><a class=menu-item-link href=/categories/>Categories</a></li><li class=menu-item><a class=menu-item-link href=/about/>About</a></li></ul></nav></header><main id=main class=main><div class=content-wrapper><div id=content class=content><article class=post><header class=post-header><h1 class=post-title>Kvm迁移</h1><div class=post-meta><span class=post-time>2021-01-10 15:16:56</span>
+<span class=more-meta>446 words</span>
+<span class=more-meta>1 min read</span></div></header><div class=post-content><p>将一台机器中的kvm虚拟机迁移到另一台机器的大概步骤：</p><p>1、拷贝img镜像到制定机器</p><p>2、拷贝虚拟机配置文件: /etc/libvirt/qemu/win7.xml 到目的机器的home目录</p><p>3、修改win7.xml中的CPU架构
+架构不同报错如下：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span></code></pre></td><td class=lntd><pre class=chroma><code class=language-bash data-lang=bash>error: Failed to start domain win7
+error: the CPU is incompatible with host CPU: Host CPU does not provide required features: fma, pcid, aes, xsave, avx, fsgsbase, bmi1, avx2, bmi2, invpcid, rdseed, adx, smap
+</code></pre></td></tr></table></div></div><p>查看kvm支持的cpu架构：
+<code>kvm -cpu ?</code></p><p>如果宿主机使用是不同的cpu架构，这里需要修改
+使用<code>lscpu</code> 找到<code>Model name</code> ,修改下面的conroe为对应的model</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span></code></pre></td><td class=lntd><pre class=chroma><code class=language-xml data-lang=xml><span class=nt>&lt;cpu</span> <span class=na>mode=</span><span class=s>&#39;custom&#39;</span> <span class=na>match=</span><span class=s>&#39;exact&#39;</span> <span class=na>check=</span><span class=s>&#39;partial&#39;</span><span class=nt>&gt;</span>
+    <span class=nt>&lt;model</span> <span class=na>fallback=</span><span class=s>&#39;allow&#39;</span><span class=nt>&gt;</span>Conroe<span class=nt>&lt;/model&gt;</span>
+  <span class=nt>&lt;/cpu&gt;</span>
+</code></pre></td></tr></table></div></div><p>4、增加vnc
+修改win7.xml中的graph选项如下：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span></code></pre></td><td class=lntd><pre class=chroma><code class=language-xml data-lang=xml> <span class=nt>&lt;graphics</span> <span class=na>type=</span><span class=s>&#39;vnc&#39;</span> <span class=na>port=</span><span class=s>&#39;-1&#39;</span> <span class=na>autoport=</span><span class=s>&#39;yes&#39;</span> <span class=na>listen=</span><span class=s>&#39;0.0.0.0&#39;</span><span class=nt>&gt;</span>
+      <span class=nt>&lt;listen</span> <span class=na>type=</span><span class=s>&#39;address&#39;</span> <span class=na>address=</span><span class=s>&#39;0.0.0.0&#39;</span><span class=nt>/&gt;</span>
+    <span class=nt>&lt;/graphics&gt;</span>
+</code></pre></td></tr></table></div></div><p>因为vnc默认只监听127.0.0.1地址，所以需要做相应修改：</p><p><code>sudo vim /etc/libvirt/qemu.conf</code></p><p>修改如下字段：</p><p><code>vnc_listen = "0.0.0.0"</code></p><p>重启服务生效：</p><p><code>sudo systemctl restart libvirtd</code></p><p>5、vnc连接遇到的问题</p><p><code>RFB protocol error: invalid message type ...</code></p><p>解决办法：</p><p>在 Options 设置中，将 Picture quality 设置为 High，设置为 Automatic 是无法识别</p><p>6、配置完毕，导入img到virsh中</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span><span class=lnt>5
+</span><span class=lnt>6
+</span><span class=lnt>7
+</span><span class=lnt>8
+</span><span class=lnt>9
+</span></code></pre></td><td class=lntd><pre class=chroma><code class=language-bash data-lang=bash><span class=c1># 导入</span>
+sudo virsh define win7.xml
+
+<span class=c1>#启动</span>
+sudo virsh start win7
+
+<span class=c1>#查看vnc端口</span>
+sudo virsh vncdisplay win7
+<span class=c1># 显示 :0 vnc端口从5900开始，所以对外暴露的端口为： 5900+0</span>
+</code></pre></td></tr></table></div></div></div><footer class=post-footer><nav class=post-nav><a class=next href=/post/%E6%BA%90%E7%A0%81%E7%BC%96%E8%AF%91%E5%AE%89%E8%A3%85kubernetes/><span class="next-text nav-default">源码编译安装kubernetes</span>
+<span class="next-text nav-mobile">Next</span>
+<i class="iconfont icon-right"></i></a></nav></footer></article></div></div></main><footer id=footer class=footer><div class=social-links><a href=mailto:hanglinux@163.com class="iconfont icon-email" title=email></a><a href=https://github.com/fridayhub class="iconfont icon-github" title=github></a><a href=https://fridayhub.github.io/index.xml type=application/rss+xml class="iconfont icon-rss" title=rss></a></div><div class=copyright><span class=power-by>Powered by <a class=hexo-link href=https://gohugo.io>Hugo</a></span>
+<span class=division>|</span>
+<span class=theme-info>Theme -
+<a class=theme-link href=https://github.com/olOwOlo/hugo-theme-even>Even</a></span>
+<span class=copyright-year>&copy;
+2017 -
+2021
+<span class=heart><i class="iconfont icon-heart"></i></span><span class=author>friday</span></span></div></footer><div class=back-to-top id=back-to-top><i class="iconfont icon-up"></i></div></div><script src=https://cdn.jsdelivr.net/npm/jquery@3.2.1/dist/jquery.min.js integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin=anonymous></script><script src=https://cdn.jsdelivr.net/npm/slideout@1.0.1/dist/slideout.min.js integrity="sha256-t+zJ/g8/KXIJMjSVQdnibt4dlaDxc9zXr/9oNPeWqdg=" crossorigin=anonymous></script><script src=https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.js integrity="sha256-XVLffZaxoWfGUEbdzuLi7pwaUJv1cecsQJQqGLe7axY=" crossorigin=anonymous></script><script type=text/javascript src=/js/main.min.d7b7ada643c9c1a983026e177f141f7363b4640d619caf01d8831a6718cd44ea.js></script></body></html>
