@@ -1,0 +1,174 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta http-equiv=x-ua-compatible content="IE=edge,chrome=1"><title>Go Map 遍历修改 - Friday - Here I record my experience</title><meta name=renderer content="webkit"><meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1"><meta http-equiv=cache-control content="no-transform"><meta http-equiv=cache-control content="no-siteapp"><meta name=theme-color content="#f8f5ec"><meta name=msapplication-navbutton-color content="#f8f5ec"><meta name=apple-mobile-web-app-capable content="yes"><meta name=apple-mobile-web-app-status-bar-style content="#f8f5ec"><meta name=author content="friday"><meta name=description content><meta name=keywords content="Friday,Hugo,theme,even"><meta name=generator content="Hugo 0.80.0 with theme even"><link rel=canonical href=https://fridayhub.github.io/post/go-map/><link rel=apple-touch-icon sizes=180x180 href=/apple-touch-icon.png><link rel=icon type=image/png sizes=32x32 href=/favicon-32x32.png><link rel=icon type=image/png sizes=16x16 href=/favicon-16x16.png><link rel=manifest href=/manifest.json><link rel=mask-icon href=/safari-pinned-tab.svg color=#5bbad5><script async src=//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js></script><meta name=referrer content="no-referrer-when-downgrade"><link href=/sass/main.min.e861d9ade66fcc0257009476263fc9ff874695b6028dadc923a84c98b842034b.css rel=stylesheet><link rel=stylesheet href=https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.css integrity="sha256-7TyXnr2YU040zfSP+rEcz29ggW4j56/ujTPwjMzyqFY=" crossorigin=anonymous><meta property="og:title" content="Go Map 遍历修改"><meta property="og:description" content><meta property="og:type" content="article"><meta property="og:url" content="https://fridayhub.github.io/post/go-map/"><meta property="article:published_time" content="2021-01-29T21:38:01+08:00"><meta property="article:modified_time" content="2021-01-29T21:38:01+08:00"><meta itemprop=name content="Go Map 遍历修改"><meta itemprop=description content><meta itemprop=datePublished content="2021-01-29T21:38:01+08:00"><meta itemprop=dateModified content="2021-01-29T21:38:01+08:00"><meta itemprop=wordCount content="329"><meta itemprop=keywords content><meta name=twitter:card content="summary"><meta name=twitter:title content="Go Map 遍历修改"><meta name=twitter:description content><!--[if lte IE 9]><script src=https://cdnjs.cloudflare.com/ajax/libs/classlist/1.1.20170427/classList.min.js></script><![endif]--><!--[if lt IE 9]><script src=https://cdn.jsdelivr.net/npm/html5shiv@3.7.3/dist/html5shiv.min.js></script><script src=https://cdn.jsdelivr.net/npm/respond.js@1.4.2/dest/respond.min.js></script><![endif]--></head><body><div id=mobile-navbar class=mobile-navbar><div class=mobile-header-logo><a href=/ class=logo>Friday</a></div><div class=mobile-navbar-icon><span></span><span></span><span></span></div></div><nav id=mobile-menu class="mobile-menu slideout-menu"><ul class=mobile-menu-list><a href=/><li class=mobile-menu-item>Home</li></a><a href=/post/><li class=mobile-menu-item>Archives</li></a><a href=/tags/><li class=mobile-menu-item>Tags</li></a><a href=/categories/><li class=mobile-menu-item>Categories</li></a><a href=/about/><li class=mobile-menu-item>About</li></a></ul></nav><div class=container id=mobile-panel><header id=header class=header><div class=logo-wrapper><a href=/ class=logo>Friday</a></div><nav class=site-navbar><ul id=menu class=menu><li class=menu-item><a class=menu-item-link href=/>Home</a></li><li class=menu-item><a class=menu-item-link href=/post/>Archives</a></li><li class=menu-item><a class=menu-item-link href=/tags/>Tags</a></li><li class=menu-item><a class=menu-item-link href=/categories/>Categories</a></li><li class=menu-item><a class=menu-item-link href=/about/>About</a></li></ul></nav></header><main id=main class=main><div class=content-wrapper><div id=content class=content><article class=post><header class=post-header><h1 class=post-title>Go Map 遍历修改</h1><div class=post-meta><span class=post-time>2021-01-29 21:38:01</span>
+<span class=more-meta>329 words</span>
+<span class=more-meta>1 min read</span>
+<span id=busuanzi_container_page_pv class=more-meta><span id=busuanzi_value_page_pv><img src=/img/spinner.svg alt=spinner.svg></span> times read</span></div></header><div class=post-content><h3 id=1-map指针数组>1. map指针数组</h3><h4 id=代码>代码</h4><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span></code></pre></td><td class=lntd><pre class=chroma><code class=language-go data-lang=go><span class=kd>type</span> <span class=nx>As</span> <span class=kd>struct</span> <span class=p>{</span>
+	<span class=nx>A</span> <span class=kt>int</span>
+	<span class=nx>B</span> <span class=kt>string</span>
+<span class=p>}</span>
+</code></pre></td></tr></table></div></div><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span></code></pre></td><td class=lntd><pre class=chroma><code class=language-go data-lang=go><span class=kd>func</span> <span class=nf>NewMapPointSlice</span><span class=p>()</span> <span class=p>(</span><span class=nx>r</span> <span class=p>[]</span><span class=o>*</span><span class=nx>As</span><span class=p>)</span> <span class=p>{</span>
+	<span class=nx>i</span> <span class=o>:=</span> <span class=mi>0</span>
+	<span class=k>for</span> <span class=nx>i</span><span class=p>=</span><span class=mi>0</span><span class=p>;</span> <span class=nx>i</span> <span class=p>&lt;</span> <span class=mi>5</span><span class=p>;</span> <span class=nx>i</span><span class=o>++</span> <span class=p>{</span>
+		<span class=nx>a</span> <span class=o>:=</span> <span class=o>&amp;</span><span class=nx>As</span><span class=p>{</span>
+			<span class=nx>A</span><span class=p>:</span> <span class=nx>i</span><span class=p>,</span>
+			<span class=nx>B</span><span class=p>:</span> <span class=nx>fmt</span><span class=p>.</span><span class=nf>Sprintf</span><span class=p>(</span><span class=s>&#34;aaa:%d&#34;</span><span class=p>,</span> <span class=nx>i</span><span class=p>),</span>
+		<span class=p>}</span>
+		<span class=nx>r</span> <span class=p>=</span> <span class=nb>append</span><span class=p>(</span><span class=nx>r</span><span class=p>,</span> <span class=nx>a</span><span class=p>)</span>
+	<span class=p>}</span>
+	<span class=k>return</span>
+<span class=p>}</span>
+</code></pre></td></tr></table></div></div><h4 id=test测试>test测试:</h4><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span></code></pre></td><td class=lntd><pre class=chroma><code class=language-go data-lang=go><span class=kd>func</span> <span class=nf>TestNewMapPointSlice</span><span class=p>(</span><span class=nx>t</span> <span class=o>*</span><span class=nx>testing</span><span class=p>.</span><span class=nx>T</span><span class=p>)</span> <span class=p>{</span>
+	<span class=nx>as</span> <span class=o>:=</span> <span class=nf>NewMapPointSlice</span><span class=p>()</span>
+	<span class=k>for</span> <span class=nx>i</span><span class=p>,</span> <span class=nx>a</span> <span class=o>:=</span> <span class=k>range</span> <span class=nx>as</span> <span class=p>{</span>
+		<span class=nx>t</span><span class=p>.</span><span class=nf>Log</span><span class=p>(</span><span class=nx>a</span><span class=p>)</span>
+		<span class=nx>a</span><span class=p>.</span><span class=nx>A</span> <span class=p>=</span> <span class=nx>i</span><span class=o>+</span><span class=mi>8</span>
+	<span class=p>}</span>
+	<span class=nx>t</span><span class=p>.</span><span class=nf>Log</span><span class=p>(</span><span class=s>&#34;\n============ \n&#34;</span><span class=p>)</span>
+	<span class=k>for</span> <span class=nx>_</span><span class=p>,</span> <span class=nx>a</span> <span class=o>:=</span> <span class=k>range</span> <span class=nx>as</span> <span class=p>{</span>
+		<span class=nx>t</span><span class=p>.</span><span class=nf>Log</span><span class=p>(</span><span class=nx>a</span><span class=p>)</span>
+	<span class=p>}</span>
+<span class=p>}</span>
+</code></pre></td></tr></table></div></div><h4 id=结果>结果</h4><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span></code></pre></td><td class=lntd><pre class=chroma><code class=language-bash data-lang=bash><span class=o>==</span> RUN   TestNewMapPointSlice
+    fuck_test.go:8: <span class=p>&amp;</span><span class=o>{</span><span class=m>0</span> aaa:0<span class=o>}</span>
+    fuck_test.go:8: <span class=p>&amp;</span><span class=o>{</span><span class=m>1</span> aaa:1<span class=o>}</span>
+    fuck_test.go:8: <span class=p>&amp;</span><span class=o>{</span><span class=m>2</span> aaa:2<span class=o>}</span>
+    fuck_test.go:8: <span class=p>&amp;</span><span class=o>{</span><span class=m>3</span> aaa:3<span class=o>}</span>
+    fuck_test.go:8: <span class=p>&amp;</span><span class=o>{</span><span class=m>4</span> aaa:4<span class=o>}</span>
+    fuck_test.go:11: 
+        <span class=o>============</span> 
+        
+    fuck_test.go:13: <span class=p>&amp;</span><span class=o>{</span><span class=m>8</span> aaa:0<span class=o>}</span>
+    fuck_test.go:13: <span class=p>&amp;</span><span class=o>{</span><span class=m>9</span> aaa:1<span class=o>}</span>
+    fuck_test.go:13: <span class=p>&amp;</span><span class=o>{</span><span class=m>10</span> aaa:2<span class=o>}</span>
+    fuck_test.go:13: <span class=p>&amp;</span><span class=o>{</span><span class=m>11</span> aaa:3<span class=o>}</span>
+    fuck_test.go:13: <span class=p>&amp;</span><span class=o>{</span><span class=m>12</span> aaa:4<span class=o>}</span>
+--- PASS: TestNewMapPointSlice <span class=o>(</span>0.00s<span class=o>)</span>
+PASS
+</code></pre></td></tr></table></div></div><h3 id=2-map数组>2. map数组</h3><h4 id=代码-1>代码</h4><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span></code></pre></td><td class=lntd><pre class=chroma><code class=language-go data-lang=go><span class=kd>func</span> <span class=nf>NewMapSlice</span><span class=p>()</span> <span class=p>(</span><span class=nx>r</span> <span class=p>[]</span><span class=nx>As</span><span class=p>)</span> <span class=p>{</span>
+	<span class=nx>i</span> <span class=o>:=</span> <span class=mi>0</span>
+	<span class=k>for</span> <span class=nx>i</span><span class=p>=</span><span class=mi>0</span><span class=p>;</span> <span class=nx>i</span> <span class=p>&lt;</span> <span class=mi>5</span><span class=p>;</span> <span class=nx>i</span><span class=o>++</span> <span class=p>{</span>
+		<span class=nx>a</span> <span class=o>:=</span> <span class=nx>As</span><span class=p>{</span>
+			<span class=nx>A</span><span class=p>:</span> <span class=nx>i</span><span class=p>,</span>
+			<span class=nx>B</span><span class=p>:</span> <span class=nx>fmt</span><span class=p>.</span><span class=nf>Sprintf</span><span class=p>(</span><span class=s>&#34;aaa:%d&#34;</span><span class=p>,</span> <span class=nx>i</span><span class=p>),</span>
+		<span class=p>}</span>
+		<span class=nx>r</span> <span class=p>=</span> <span class=nb>append</span><span class=p>(</span><span class=nx>r</span><span class=p>,</span> <span class=nx>a</span><span class=p>)</span>
+	<span class=p>}</span>
+	<span class=k>return</span>
+<span class=p>}</span>
+</code></pre></td></tr></table></div></div><h4 id=test测试-1>test测试:</h4><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span></code></pre></td><td class=lntd><pre class=chroma><code class=language-go data-lang=go><span class=kd>func</span> <span class=nf>TestNewMapSlice</span><span class=p>(</span><span class=nx>t</span> <span class=o>*</span><span class=nx>testing</span><span class=p>.</span><span class=nx>T</span><span class=p>)</span> <span class=p>{</span>
+	<span class=nx>as</span> <span class=o>:=</span> <span class=nf>NewMapSlice</span><span class=p>()</span>
+	<span class=k>for</span> <span class=nx>i</span><span class=p>,</span> <span class=nx>a</span> <span class=o>:=</span> <span class=k>range</span> <span class=nx>as</span> <span class=p>{</span>
+		<span class=nx>t</span><span class=p>.</span><span class=nf>Log</span><span class=p>(</span><span class=nx>a</span><span class=p>)</span>
+		<span class=nx>a</span><span class=p>.</span><span class=nx>A</span> <span class=p>=</span> <span class=nx>i</span><span class=o>+</span><span class=mi>8</span>
+	<span class=p>}</span>
+	<span class=nx>t</span><span class=p>.</span><span class=nf>Log</span><span class=p>(</span><span class=s>&#34;\n============ \n&#34;</span><span class=p>)</span>
+	<span class=k>for</span> <span class=nx>_</span><span class=p>,</span> <span class=nx>a</span> <span class=o>:=</span> <span class=k>range</span> <span class=nx>as</span> <span class=p>{</span>
+		<span class=nx>t</span><span class=p>.</span><span class=nf>Log</span><span class=p>(</span><span class=nx>a</span><span class=p>)</span>
+	<span class=p>}</span>
+<span class=p>}</span>
+</code></pre></td></tr></table></div></div><h4 id=结果-1>结果</h4><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span></code></pre></td><td class=lntd><pre class=chroma><code class=language-bash data-lang=bash><span class=o>===</span> RUN   TestNewMapSlice
+    fuck_test.go:20: <span class=o>{</span><span class=m>0</span> aaa:0<span class=o>}</span>
+    fuck_test.go:20: <span class=o>{</span><span class=m>1</span> aaa:1<span class=o>}</span>
+    fuck_test.go:20: <span class=o>{</span><span class=m>2</span> aaa:2<span class=o>}</span>
+    fuck_test.go:20: <span class=o>{</span><span class=m>3</span> aaa:3<span class=o>}</span>
+    fuck_test.go:20: <span class=o>{</span><span class=m>4</span> aaa:4<span class=o>}</span>
+    fuck_test.go:23: 
+        <span class=o>============</span> 
+        
+    fuck_test.go:25: <span class=o>{</span><span class=m>0</span> aaa:0<span class=o>}</span>
+    fuck_test.go:25: <span class=o>{</span><span class=m>1</span> aaa:1<span class=o>}</span>
+    fuck_test.go:25: <span class=o>{</span><span class=m>2</span> aaa:2<span class=o>}</span>
+    fuck_test.go:25: <span class=o>{</span><span class=m>3</span> aaa:3<span class=o>}</span>
+    fuck_test.go:25: <span class=o>{</span><span class=m>4</span> aaa:4<span class=o>}</span>
+--- PASS: TestNewMapSlice <span class=o>(</span>0.00s<span class=o>)</span>
+PASS
+</code></pre></td></tr></table></div></div></div><footer class=post-footer><nav class=post-nav><a class=next href=/post/zfs-raidz-luks-encrypt/><span class="next-text nav-default">Zfs Raidz Luks Encrypt</span>
+<span class="next-text nav-mobile">Next</span>
+<i class="iconfont icon-right"></i></a></nav></footer></article></div><div id=vcomments></div><script src=//cdn1.lncld.net/static/js/3.0.4/av-min.js></script><script src=//unpkg.com/valine/dist/Valine.min.js></script><script type=text/javascript>new Valine({el:'#vcomments',appId:'fb6qCfVYGmIrC87K3STOS3V8-gzGzoHsz',appKey:'FilghKK7HHC4hMQHxhR90dDE',notify:false,verify:false,avatar:'mm',placeholder:'说点什么吧...',visitor:false});</script></div></main><footer id=footer class=footer><div class=social-links><a href=mailto:hanglinux@163.com class="iconfont icon-email" title=email></a><a href=https://github.com/fridayhub class="iconfont icon-github" title=github></a><a href=https://fridayhub.github.io/index.xml type=application/rss+xml class="iconfont icon-rss" title=rss></a></div><div class=copyright><span class=power-by>Powered by <a class=hexo-link href=https://gohugo.io>Hugo</a></span>
+<span class=division>|</span>
+<span class=theme-info>Theme -
+<a class=theme-link href=https://github.com/olOwOlo/hugo-theme-even>Even</a></span><div class=busuanzi-footer><span id=busuanzi_container_site_pv>site pv: <span id=busuanzi_value_site_pv><img src=/img/spinner.svg alt=spinner.svg></span></span>
+<span class=division>|</span>
+<span id=busuanzi_container_site_uv>site uv: <span id=busuanzi_value_site_uv><img src=/img/spinner.svg alt=spinner.svg></span></span></div><span class=copyright-year>&copy;
+2017 -
+2021
+<span class=heart><i class="iconfont icon-heart"></i></span><span class=author>friday</span></span></div></footer><div class=back-to-top id=back-to-top><i class="iconfont icon-up"></i></div></div><script src=https://cdn.jsdelivr.net/npm/jquery@3.2.1/dist/jquery.min.js integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin=anonymous></script><script src=https://cdn.jsdelivr.net/npm/slideout@1.0.1/dist/slideout.min.js integrity="sha256-t+zJ/g8/KXIJMjSVQdnibt4dlaDxc9zXr/9oNPeWqdg=" crossorigin=anonymous></script><script src=https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.js integrity="sha256-XVLffZaxoWfGUEbdzuLi7pwaUJv1cecsQJQqGLe7axY=" crossorigin=anonymous></script><script type=text/javascript src=/js/main.min.d7b7ada643c9c1a983026e177f141f7363b4640d619caf01d8831a6718cd44ea.js></script></body></html>
