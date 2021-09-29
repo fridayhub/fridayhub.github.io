@@ -1,40 +1,186 @@
-<!doctype html><html lang=en><head><meta charset=utf-8><meta http-equiv=x-ua-compatible content="IE=edge,chrome=1"><title>Zfs Raidz Luks Encrypt - Friday - Here I record my experience</title><meta name=renderer content="webkit"><meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1"><meta http-equiv=cache-control content="no-transform"><meta http-equiv=cache-control content="no-siteapp"><meta name=theme-color content="#f8f5ec"><meta name=msapplication-navbutton-color content="#f8f5ec"><meta name=apple-mobile-web-app-capable content="yes"><meta name=apple-mobile-web-app-status-bar-style content="#f8f5ec"><meta name=author content="friday"><meta name=description content><meta name=keywords content="zfs"><meta name=generator content="Hugo 0.81.0 with theme even"><link rel=canonical href=https://fridayhub.github.io/post/zfs-raidz-luks-encrypt/><link rel=apple-touch-icon sizes=180x180 href=/apple-touch-icon.png><link rel=icon type=image/png sizes=32x32 href=/favicon-32x32.png><link rel=icon type=image/png sizes=16x16 href=/favicon-16x16.png><link rel=manifest href=/manifest.json><link rel=mask-icon href=/safari-pinned-tab.svg color=#5bbad5><script async src=//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js></script><meta name=referrer content="no-referrer-when-downgrade"><link href=/sass/main.min.7f20e8e540ac312c94e8a1de98fd097221503ec8c2c30a4aa8c0ad02fc8bd400.css rel=stylesheet><link rel=stylesheet href=https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.css integrity="sha256-7TyXnr2YU040zfSP+rEcz29ggW4j56/ujTPwjMzyqFY=" crossorigin=anonymous><meta property="og:title" content="Zfs Raidz Luks Encrypt"><meta property="og:description" content><meta property="og:type" content="article"><meta property="og:url" content="https://fridayhub.github.io/post/zfs-raidz-luks-encrypt/"><meta property="article:section" content="post"><meta property="article:published_time" content="2021-01-13T23:37:48+08:00"><meta property="article:modified_time" content="2021-01-13T23:37:48+08:00"><meta itemprop=name content="Zfs Raidz Luks Encrypt"><meta itemprop=description content><meta itemprop=datePublished content="2021-01-13T23:37:48+08:00"><meta itemprop=dateModified content="2021-01-13T23:37:48+08:00"><meta itemprop=wordCount content="588"><meta itemprop=keywords content="zfs,"><meta name=twitter:card content="summary"><meta name=twitter:title content="Zfs Raidz Luks Encrypt"><meta name=twitter:description content><!--[if lte IE 9]><script src=https://cdnjs.cloudflare.com/ajax/libs/classlist/1.1.20170427/classList.min.js></script><![endif]--><!--[if lt IE 9]><script src=https://cdn.jsdelivr.net/npm/html5shiv@3.7.3/dist/html5shiv.min.js></script><script src=https://cdn.jsdelivr.net/npm/respond.js@1.4.2/dest/respond.min.js></script><![endif]--></head><body><div id=mobile-navbar class=mobile-navbar><div class=mobile-header-logo><a href=/ class=logo>Friday</a></div><div class=mobile-navbar-icon><span></span><span></span><span></span></div></div><nav id=mobile-menu class="mobile-menu slideout-menu"><ul class=mobile-menu-list><a href=/><li class=mobile-menu-item>Home</li></a><a href=/post/><li class=mobile-menu-item>Archives</li></a><a href=/tags/><li class=mobile-menu-item>Tags</li></a><a href=/categories/><li class=mobile-menu-item>Categories</li></a><a href=/about/><li class=mobile-menu-item>About</li></a></ul></nav><div class=container id=mobile-panel><header id=header class=header><div class=logo-wrapper><a href=/ class=logo>Friday</a></div><nav class=site-navbar><ul id=menu class=menu><li class=menu-item><a class=menu-item-link href=/>Home</a></li><li class=menu-item><a class=menu-item-link href=/post/>Archives</a></li><li class=menu-item><a class=menu-item-link href=/tags/>Tags</a></li><li class=menu-item><a class=menu-item-link href=/categories/>Categories</a></li><li class=menu-item><a class=menu-item-link href=/about/>About</a></li></ul></nav></header><main id=main class=main><div class=content-wrapper><div id=content class=content><article class=post><header class=post-header><h1 class=post-title>Zfs Raidz Luks Encrypt</h1><div class=post-meta><span class=post-time>2021-01-13 23:37:48</span><div class=post-category><a href=/categories/zfs/>zfs</a></div><span class=more-meta>588 words</span>
-<span class=more-meta>2 mins read</span>
-<span id=busuanzi_container_page_pv class=more-meta><span id=busuanzi_value_page_pv><img src=/img/spinner.svg alt=spinner.svg></span> times read</span></div></header><div class=post-toc id=post-toc><h2 class=post-toc-title>Contents</h2><div class="post-toc-content always-active"><nav id=TableOfContents></nav></div></div><div class=post-content><p>1.查询磁盘</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre class=chroma><code><span class=lnt>1
+<!doctype html><html lang=en>
+<head>
+<meta charset=utf-8>
+<meta http-equiv=x-ua-compatible content="IE=edge,chrome=1">
+<title>Zfs Raidz Luks Encrypt - Friday - Here I record my experience</title>
+<meta name=renderer content="webkit">
+<meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1">
+<meta http-equiv=cache-control content="no-transform">
+<meta http-equiv=cache-control content="no-siteapp">
+<meta name=theme-color content="#f8f5ec">
+<meta name=msapplication-navbutton-color content="#f8f5ec">
+<meta name=apple-mobile-web-app-capable content="yes">
+<meta name=apple-mobile-web-app-status-bar-style content="#f8f5ec">
+<meta name=author content="friday"><meta name=description content><meta name=keywords content="zfs">
+<meta name=generator content="Hugo 0.88.1 with theme even">
+<link rel=canonical href=https://fridayhub.github.io/post/zfs-raidz-luks-encrypt/>
+<link rel=apple-touch-icon sizes=180x180 href=/apple-touch-icon.png>
+<link rel=icon type=image/png sizes=32x32 href=/favicon-32x32.png>
+<link rel=icon type=image/png sizes=16x16 href=/favicon-16x16.png>
+<link rel=manifest href=/manifest.json>
+<link rel=mask-icon href=/safari-pinned-tab.svg color=#5bbad5>
+<script async src=//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js></script>
+<meta name=referrer content="no-referrer-when-downgrade">
+<link href=/sass/main.min.c2803d17ea439bb194b104ce262b40c9118b45b7b108e27dadf43e96dd6664a3.css rel=stylesheet>
+<link rel=stylesheet href=https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.css integrity="sha256-7TyXnr2YU040zfSP+rEcz29ggW4j56/ujTPwjMzyqFY=" crossorigin=anonymous>
+<meta property="og:title" content="Zfs Raidz Luks Encrypt">
+<meta property="og:description" content>
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://fridayhub.github.io/post/zfs-raidz-luks-encrypt/"><meta property="article:section" content="post">
+<meta property="article:published_time" content="2021-01-13T23:37:48+08:00">
+<meta property="article:modified_time" content="2021-01-13T23:37:48+08:00">
+<meta itemprop=name content="Zfs Raidz Luks Encrypt">
+<meta itemprop=description content><meta itemprop=datePublished content="2021-01-13T23:37:48+08:00">
+<meta itemprop=dateModified content="2021-01-13T23:37:48+08:00">
+<meta itemprop=wordCount content="588">
+<meta itemprop=keywords content="zfs,"><meta name=twitter:card content="summary">
+<meta name=twitter:title content="Zfs Raidz Luks Encrypt">
+<meta name=twitter:description content><!--[if lte IE 9]><script src=https://cdnjs.cloudflare.com/ajax/libs/classlist/1.1.20170427/classList.min.js></script><![endif]--><!--[if lt IE 9]><script src=https://cdn.jsdelivr.net/npm/html5shiv@3.7.3/dist/html5shiv.min.js></script>
+<script src=https://cdn.jsdelivr.net/npm/respond.js@1.4.2/dest/respond.min.js></script><![endif]-->
+</head>
+<body>
+<div id=mobile-navbar class=mobile-navbar>
+<div class=mobile-header-logo>
+<a href=/ class=logo>Friday</a>
+</div>
+<div class=mobile-navbar-icon>
+<span></span>
+<span></span>
+<span></span>
+</div>
+</div>
+<nav id=mobile-menu class="mobile-menu slideout-menu">
+<ul class=mobile-menu-list>
+<a href=/>
+<li class=mobile-menu-item>Home</li>
+</a><a href=/post/>
+<li class=mobile-menu-item>Archives</li>
+</a><a href=/tags/>
+<li class=mobile-menu-item>Tags</li>
+</a><a href=/categories/>
+<li class=mobile-menu-item>Categories</li>
+</a><a href=/about/>
+<li class=mobile-menu-item>About</li>
+</a>
+</ul>
+</nav>
+<div class=container id=mobile-panel>
+<header id=header class=header>
+<div class=logo-wrapper>
+<a href=/ class=logo>Friday</a>
+</div>
+<nav class=site-navbar>
+<ul id=menu class=menu>
+<li class=menu-item>
+<a class=menu-item-link href=/>Home</a>
+</li><li class=menu-item>
+<a class=menu-item-link href=/post/>Archives</a>
+</li><li class=menu-item>
+<a class=menu-item-link href=/tags/>Tags</a>
+</li><li class=menu-item>
+<a class=menu-item-link href=/categories/>Categories</a>
+</li><li class=menu-item>
+<a class=menu-item-link href=/about/>About</a>
+</li>
+</ul>
+</nav>
+</header>
+<main id=main class=main>
+<div class=content-wrapper>
+<div id=content class=content>
+<article class=post>
+<header class=post-header>
+<h1 class=post-title>Zfs Raidz Luks Encrypt</h1>
+<div class=post-meta>
+<span class=post-time> 2021-01-13 23:37:48 </span>
+<div class=post-category>
+<a href=/categories/zfs/> zfs </a>
+</div>
+<span class=more-meta> 588 words </span>
+<span class=more-meta> 2 mins read </span>
+<span id=busuanzi_container_page_pv class=more-meta> <span id=busuanzi_value_page_pv><img src=/img/spinner.svg alt=spinner.svg></span> times read </span>
+</div>
+</header>
+<div class=post-toc id=post-toc>
+<h2 class=post-toc-title>Contents</h2>
+<div class="post-toc-content always-active">
+<nav id=TableOfContents></nav>
+</div>
+</div>
+<div class=post-content>
+<p>1.查询磁盘</p>
+<div class=highlight><div class=chroma>
+<table class=lntable><tr><td class=lntd>
+<pre tabindex=0 class=chroma><code><span class=lnt>1
 </span><span class=lnt>2
 </span><span class=lnt>3
 </span><span class=lnt>4
-</span></code></pre></td><td class=lntd><pre class=chroma><code class=language-bash data-lang=bash>ls /dev/disk/by-id
+</span></code></pre></td>
+<td class=lntd>
+<pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>ls /dev/disk/by-id
 ata-WD8SLDL988SLA998-8LWL1882_CCC000 -&gt; ../../sdc
 ata-WD8SLDL988SLA998-8LWL1882_AAA000 -&gt; ../../sdb
 ata-WD8SLDL988SLA998-8LWL1882_BBB000 -&gt; ../../sdd
-</code></pre></td></tr></table></div></div><p>2.生成秘钥</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre class=chroma><code><span class=lnt>1
+</code></pre></td></tr></table>
+</div>
+</div><p>2.生成秘钥</p>
+<div class=highlight><div class=chroma>
+<table class=lntable><tr><td class=lntd>
+<pre tabindex=0 class=chroma><code><span class=lnt>1
 </span><span class=lnt>2
 </span><span class=lnt>3
-</span></code></pre></td><td class=lntd><pre class=chroma><code class=language-bash data-lang=bash>dd <span class=k>if</span><span class=o>=</span>/dev/urandom <span class=nv>of</span><span class=o>=</span>/root/CCC000.key <span class=nv>bs</span><span class=o>=</span><span class=m>1024</span> <span class=nv>count</span><span class=o>=</span><span class=m>64</span>
+</span></code></pre></td>
+<td class=lntd>
+<pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>dd <span class=k>if</span><span class=o>=</span>/dev/urandom <span class=nv>of</span><span class=o>=</span>/root/CCC000.key <span class=nv>bs</span><span class=o>=</span><span class=m>1024</span> <span class=nv>count</span><span class=o>=</span><span class=m>64</span>
 dd <span class=k>if</span><span class=o>=</span>/dev/urandom <span class=nv>of</span><span class=o>=</span>/root/AAA000.key <span class=nv>bs</span><span class=o>=</span><span class=m>1024</span> <span class=nv>count</span><span class=o>=</span><span class=m>64</span>
 dd <span class=k>if</span><span class=o>=</span>/dev/urandom <span class=nv>of</span><span class=o>=</span>/root/BBB000.key <span class=nv>bs</span><span class=o>=</span><span class=m>1024</span> <span class=nv>count</span><span class=o>=</span><span class=m>64</span>
-</code></pre></td></tr></table></div></div><p>3.用秘钥加密磁盘</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre class=chroma><code><span class=lnt>1
+</code></pre></td></tr></table>
+</div>
+</div><p>3.用秘钥加密磁盘</p>
+<div class=highlight><div class=chroma>
+<table class=lntable><tr><td class=lntd>
+<pre tabindex=0 class=chroma><code><span class=lnt>1
 </span><span class=lnt>2
 </span><span class=lnt>3
-</span></code></pre></td><td class=lntd><pre class=chroma><code class=language-bash data-lang=bash>cryptsetup luksFormat /dev/disk/by-id/ata-WD8SLDL988SLA998-8LWL1882_CCC000 /root/CCC000.key
+</span></code></pre></td>
+<td class=lntd>
+<pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>cryptsetup luksFormat /dev/disk/by-id/ata-WD8SLDL988SLA998-8LWL1882_CCC000 /root/CCC000.key
 cryptsetup luksFormat /dev/disk/by-id/ata-WD8SLDL988SLA998-8LWL1882_AAA000 /root/AAA000.key
 cryptsetup luksFormat /dev/disk/by-id/ata-WD8SLDL988SLA998-8LWL1882_BBB000 /root/BBB000.key
-</code></pre></td></tr></table></div></div><p>4.查找luks加密后的uuid</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre class=chroma><code><span class=lnt>1
+</code></pre></td></tr></table>
+</div>
+</div><p>4.查找luks加密后的uuid</p>
+<div class=highlight><div class=chroma>
+<table class=lntable><tr><td class=lntd>
+<pre tabindex=0 class=chroma><code><span class=lnt>1
 </span><span class=lnt>2
 </span><span class=lnt>3
 </span><span class=lnt>4
-</span></code></pre></td><td class=lntd><pre class=chroma><code class=language-bash data-lang=bash>root@jarvis:~# blkid <span class=p>|</span> grep <span class=s1>&#39;TYPE=&#34;crypto_LUKS&#34;&#39;</span>
+</span></code></pre></td>
+<td class=lntd>
+<pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>root@jarvis:~# blkid <span class=p>|</span> grep <span class=s1>&#39;TYPE=&#34;crypto_LUKS&#34;&#39;</span>
 /dev/sdb: <span class=nv>UUID</span><span class=o>=</span><span class=s2>&#34;8sfaa99s8-060b-40ee-8ed3-177fd5f85c8e&#34;</span> <span class=nv>TYPE</span><span class=o>=</span><span class=s2>&#34;crypto_LUKS&#34;</span>
 /dev/sdd: <span class=nv>UUID</span><span class=o>=</span><span class=s2>&#34;8sd8fax9-3fbb-454a-8ef2-45b38a35d9b6&#34;</span> <span class=nv>TYPE</span><span class=o>=</span><span class=s2>&#34;crypto_LUKS&#34;</span>
 /dev/sdc: <span class=nv>UUID</span><span class=o>=</span><span class=s2>&#34;f562f785-114c-4d51-8cd0-8a913a39ad16&#34;</span> <span class=nv>TYPE</span><span class=o>=</span><span class=s2>&#34;crypto_LUKS&#34;</span>
-</code></pre></td></tr></table></div></div><p>5.打开加密磁盘</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre class=chroma><code><span class=lnt>1
+</code></pre></td></tr></table>
+</div>
+</div><p>5.打开加密磁盘</p>
+<div class=highlight><div class=chroma>
+<table class=lntable><tr><td class=lntd>
+<pre tabindex=0 class=chroma><code><span class=lnt>1
 </span><span class=lnt>2
 </span><span class=lnt>3
-</span></code></pre></td><td class=lntd><pre class=chroma><code class=language-bash data-lang=bash>cryptsetup luksOpen <span class=nv>UUID</span><span class=o>=</span>8sfaa99s8-060b-40ee-8ed3-177fd5f85c8e --key-file /root/AAA000.key AAA000
+</span></code></pre></td>
+<td class=lntd>
+<pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>cryptsetup luksOpen <span class=nv>UUID</span><span class=o>=</span>8sfaa99s8-060b-40ee-8ed3-177fd5f85c8e --key-file /root/AAA000.key AAA000
 cryptsetup luksOpen <span class=nv>UUID</span><span class=o>=</span>8sd8fax9-3fbb-454a-8ef2-45b38a35d9b6 --key-file /root/BBB000.key BBB000
 cryptsetup luksOpen <span class=nv>UUID</span><span class=o>=</span>f562f785-114c-4d51-8cd0-8a913a39ad16 --key-file /root/CCC000.key CCC000
-</code></pre></td></tr></table></div></div><p>6.设置开机自动挂载</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre class=chroma><code><span class=lnt>1
+</code></pre></td></tr></table>
+</div>
+</div><p>6.设置开机自动挂载</p>
+<div class=highlight><div class=chroma>
+<table class=lntable><tr><td class=lntd>
+<pre tabindex=0 class=chroma><code><span class=lnt>1
 </span><span class=lnt>2
 </span><span class=lnt>3
 </span><span class=lnt>4
@@ -42,7 +188,9 @@ cryptsetup luksOpen <span class=nv>UUID</span><span class=o>=</span>f562f785-114
 </span><span class=lnt>6
 </span><span class=lnt>7
 </span><span class=lnt>8
-</span></code></pre></td><td class=lntd><pre class=chroma><code class=language-bash data-lang=bash>mkdir /path/somewhere/
+</span></code></pre></td>
+<td class=lntd>
+<pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>mkdir /path/somewhere/
 cp /root/CCC000.key /path/somewhere/
 cp /root/AAA000.key /path/somewhere/
 cp /root/BBB000.key /path/somewhere/
@@ -50,27 +198,56 @@ vim /etc/crypttab
 AAA000 <span class=nv>UUID</span><span class=o>=</span>8sfaa99s8-060b-40ee-8ed3-177fd5f85c8e /path/somewhere/AAA000.key luks
 BBB000 <span class=nv>UUID</span><span class=o>=</span>8sd8fax9-3fbb-454a-8ef2-45b38a35d9b6 /path/somewhere/BBB000.key luks
 CCC000 <span class=nv>UUID</span><span class=o>=</span>f562f785-114c-4d51-8cd0-8a913a39ad16 /path/somewhere/CCC000.key luks
-</code></pre></td></tr></table></div></div><p>7.找到加密分区</p><p>应该是以"dm-uuid-CRYPT" 开头</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre class=chroma><code><span class=lnt>1
+</code></pre></td></tr></table>
+</div>
+</div><p>7.找到加密分区</p>
+<p>应该是以"dm-uuid-CRYPT" 开头</p>
+<div class=highlight><div class=chroma>
+<table class=lntable><tr><td class=lntd>
+<pre tabindex=0 class=chroma><code><span class=lnt>1
 </span><span class=lnt>2
 </span><span class=lnt>3
 </span><span class=lnt>4
-</span></code></pre></td><td class=lntd><pre class=chroma><code class=language-bash data-lang=bash>ls /dev/disk/by-id
+</span></code></pre></td>
+<td class=lntd>
+<pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>ls /dev/disk/by-id
 dm-uuid-CRYPT-LUKS2-8sfaa99s8060b40ee8ed3177fd5f85c8e-AAA000
 dm-uuid-CRYPT-LUKS2-8sd8fax93fbb454a8ef245b38a35d9b6-BBB000
 dm-uuid-CRYPT-LUKS2-f562f785114c4d518cd08a913a39ad16-CCC000
-</code></pre></td></tr></table></div></div><p>8.创建zfs raidz</p><p>ashift=12 设置4k对齐</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre class=chroma><code><span class=lnt>1
-</span></code></pre></td><td class=lntd><pre class=chroma><code class=language-bash data-lang=bash>zpool create -o <span class=nv>ashift</span><span class=o>=</span><span class=m>12</span> fridaypool raidz /dev/disk/by-id/dm-uuid-CRYPT-LUKS2-8sfaa99s8060b40ee8ed3177fd5f85c8e-AAA000 /dev/disk/by-id/dm-uuid-CRYPT-LUKS2-8sd8fax93fbb454a8ef245b38a35d9b6-BBB000 /dev/disk/by-id/dm-uuid-CRYPT-LUKS2-f562f785114c4d518cd08a913a39ad16-CCC000
-</code></pre></td></tr></table></div></div><p>9.修改挂载点</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre class=chroma><code><span class=lnt>1
+</code></pre></td></tr></table>
+</div>
+</div><p>8.创建zfs raidz</p>
+<p>ashift=12 设置4k对齐</p>
+<div class=highlight><div class=chroma>
+<table class=lntable><tr><td class=lntd>
+<pre tabindex=0 class=chroma><code><span class=lnt>1
+</span></code></pre></td>
+<td class=lntd>
+<pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>zpool create -o <span class=nv>ashift</span><span class=o>=</span><span class=m>12</span> fridaypool raidz /dev/disk/by-id/dm-uuid-CRYPT-LUKS2-8sfaa99s8060b40ee8ed3177fd5f85c8e-AAA000 /dev/disk/by-id/dm-uuid-CRYPT-LUKS2-8sd8fax93fbb454a8ef245b38a35d9b6-BBB000 /dev/disk/by-id/dm-uuid-CRYPT-LUKS2-f562f785114c4d518cd08a913a39ad16-CCC000
+</code></pre></td></tr></table>
+</div>
+</div><p>9.修改挂载点</p>
+<div class=highlight><div class=chroma>
+<table class=lntable><tr><td class=lntd>
+<pre tabindex=0 class=chroma><code><span class=lnt>1
 </span><span class=lnt>2
 </span><span class=lnt>3
 </span><span class=lnt>4
 </span><span class=lnt>5
-</span></code></pre></td><td class=lntd><pre class=chroma><code class=language-bash data-lang=bash>zfs get mountpoint
+</span></code></pre></td>
+<td class=lntd>
+<pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>zfs get mountpoint
 NAME      PROPERTY    VALUE       SOURCE
 fridaypool  mountpoint  /fridaypool   default
 
 zfs <span class=nb>set</span> <span class=nv>mountpoint</span><span class=o>=</span>/home/samba fridaypool
-</code></pre></td></tr></table></div></div><p>10.更换损坏的硬盘</p><p>查看zfs状态：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre class=chroma><code><span class=lnt> 1
+</code></pre></td></tr></table>
+</div>
+</div><p>10.更换损坏的硬盘</p>
+<p>查看zfs状态：</p>
+<div class=highlight><div class=chroma>
+<table class=lntable><tr><td class=lntd>
+<pre tabindex=0 class=chroma><code><span class=lnt> 1
 </span><span class=lnt> 2
 </span><span class=lnt> 3
 </span><span class=lnt> 4
@@ -88,7 +265,9 @@ zfs <span class=nb>set</span> <span class=nv>mountpoint</span><span class=o>=</s
 </span><span class=lnt>16
 </span><span class=lnt>17
 </span><span class=lnt>18
-</span></code></pre></td><td class=lntd><pre class=chroma><code class=language-bash data-lang=bash>$ zpool status
+</span></code></pre></td>
+<td class=lntd>
+<pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>$ zpool status
   pool: fridaypool
  state: DEGRADED
 status: One or more devices could not be used because the label is missing or
@@ -106,7 +285,14 @@ config:
 	    <span class=m>17440926855258209948</span>                                           UNAVAIL      <span class=m>0</span>     <span class=m>0</span>     <span class=m>0</span>  was /dev/disk/by-id/dm-uuid-CRYPT-LUKS2-8sd8fax93fbb454a8ef245b38a35d9b6-BBB000
 	    dm-uuid-CRYPT-LUKS2-f562f785114c4d518cd08a913a39ad16-CCC000  ONLINE       <span class=m>0</span>     <span class=m>0</span>     <span class=m>0</span>
 
-</code></pre></td></tr></table></div></div><p>新增自盘，加密并挂载，执行替换命令：</p><p><code>zpool replace fridaypool 17440926855258209948 dm-uuid-CRYPT-LUKS2-7156ddb895174f0899450b343d8sfslaf-BBB000</code></p><p>查询状态：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre class=chroma><code><span class=lnt> 1
+</code></pre></td></tr></table>
+</div>
+</div><p>新增自盘，加密并挂载，执行替换命令：</p>
+<p><code>zpool replace fridaypool 17440926855258209948 dm-uuid-CRYPT-LUKS2-7156ddb895174f0899450b343d8sfslaf-BBB000</code></p>
+<p>查询状态：</p>
+<div class=highlight><div class=chroma>
+<table class=lntable><tr><td class=lntd>
+<pre tabindex=0 class=chroma><code><span class=lnt> 1
 </span><span class=lnt> 2
 </span><span class=lnt> 3
 </span><span class=lnt> 4
@@ -128,7 +314,9 @@ config:
 </span><span class=lnt>20
 </span><span class=lnt>21
 </span><span class=lnt>22
-</span></code></pre></td><td class=lntd><pre class=chroma><code class=language-bash data-lang=bash>$ zpool status -x
+</span></code></pre></td>
+<td class=lntd>
+<pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>$ zpool status -x
   pool: fridaypool
  state: DEGRADED
 status: One or more devices is currently being resilvered.  The pool will
@@ -150,20 +338,85 @@ config:
 
 errors: No known data errors
 
-</code></pre></td></tr></table></div></div><p>此时正在合并数据到新的磁盘。</p><p>稍等片刻查询状态：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre class=chroma><code><span class=lnt>1
+</code></pre></td></tr></table>
+</div>
+</div><p>此时正在合并数据到新的磁盘。</p>
+<p>稍等片刻查询状态：</p>
+<div class=highlight><div class=chroma>
+<table class=lntable><tr><td class=lntd>
+<pre tabindex=0 class=chroma><code><span class=lnt>1
 </span><span class=lnt>2
-</span></code></pre></td><td class=lntd><pre class=chroma><code class=language-bash data-lang=bash>$ zpool status -x
+</span></code></pre></td>
+<td class=lntd>
+<pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>$ zpool status -x
 all pools are healthy
-</code></pre></td></tr></table></div></div></div><footer class=post-footer><div class=post-tags><a href=/tags/zfs/>zfs</a></div><nav class=post-nav><a class=prev href=/post/go-map/><i class="iconfont icon-left"></i><span class="prev-text nav-default">Go Map 遍历修改</span>
-<span class="prev-text nav-mobile">Prev</span></a>
-<a class=next href=/post/linux-zfs/><span class="next-text nav-default">Linux Zfs</span>
+</code></pre></td></tr></table>
+</div>
+</div>
+</div>
+<footer class=post-footer>
+<div class=post-tags>
+<a href=/tags/zfs/>zfs</a>
+</div>
+<nav class=post-nav>
+<a class=prev href=/post/go-map/>
+<i class="iconfont icon-left"></i>
+<span class="prev-text nav-default">Go Map 遍历修改</span>
+<span class="prev-text nav-mobile">Prev</span>
+</a>
+<a class=next href=/post/linux-zfs/>
+<span class="next-text nav-default">Linux Zfs</span>
 <span class="next-text nav-mobile">Next</span>
-<i class="iconfont icon-right"></i></a></nav></footer></article></div><div id=vcomments></div><script src=//cdn1.lncld.net/static/js/3.0.4/av-min.js></script><script src=//unpkg.com/valine/dist/Valine.min.js></script><script type=text/javascript>new Valine({el:'#vcomments',appId:'fb6qCfVYGmIrC87K3STOS3V8-gzGzoHsz',appKey:'FilghKK7HHC4hMQHxhR90dDE',notify:!1,verify:!1,avatar:'mm',placeholder:'说点什么吧...',visitor:!1})</script></div></main><footer id=footer class=footer><div class=social-links><a href=mailto:hanglinux@163.com class="iconfont icon-email" title=email></a><a href=https://github.com/fridayhub class="iconfont icon-github" title=github></a><a href=https://fridayhub.github.io/index.xml type=application/rss+xml class="iconfont icon-rss" title=rss></a></div><div class=copyright><span class=power-by>Powered by <a class=hexo-link href=https://gohugo.io>Hugo</a></span>
+<i class="iconfont icon-right"></i>
+</a>
+</nav>
+</footer>
+</article>
+</div>
+<div id=vcomments></div>
+<script src=//cdn1.lncld.net/static/js/3.0.4/av-min.js></script>
+<script src=//unpkg.com/valine/dist/Valine.min.js></script>
+<script type=text/javascript>new Valine({el:'#vcomments',appId:'fb6qCfVYGmIrC87K3STOS3V8-gzGzoHsz',appKey:'FilghKK7HHC4hMQHxhR90dDE',notify:!1,verify:!1,avatar:'mm',placeholder:'说点什么吧...',visitor:!1})</script>
+</div>
+</main>
+<footer id=footer class=footer>
+<div class=social-links>
+<a href=mailto:hanglinux@163.com class="iconfont icon-email" title=email></a>
+<a href=https://github.com/fridayhub class="iconfont icon-github" title=github></a>
+<a href=https://fridayhub.github.io/index.xml type=application/rss+xml class="iconfont icon-rss" title=rss></a>
+</div>
+<div class=copyright>
+<span class=power-by>
+Powered by <a class=hexo-link href=https://gohugo.io>Hugo</a>
+</span>
 <span class=division>|</span>
-<span class=theme-info>Theme -
-<a class=theme-link href=https://github.com/olOwOlo/hugo-theme-even>Even</a></span><div class=busuanzi-footer><span id=busuanzi_container_site_pv>site pv: <span id=busuanzi_value_site_pv><img src=/img/spinner.svg alt=spinner.svg></span></span>
+<span class=theme-info>
+Theme -
+<a class=theme-link href=https://github.com/olOwOlo/hugo-theme-even>Even</a>
+</span>
+<div class=busuanzi-footer>
+<span id=busuanzi_container_site_pv> site pv: <span id=busuanzi_value_site_pv><img src=/img/spinner.svg alt=spinner.svg></span> </span>
 <span class=division>|</span>
-<span id=busuanzi_container_site_uv>site uv: <span id=busuanzi_value_site_uv><img src=/img/spinner.svg alt=spinner.svg></span></span></div><span class=copyright-year>&copy;
+<span id=busuanzi_container_site_uv> site uv: <span id=busuanzi_value_site_uv><img src=/img/spinner.svg alt=spinner.svg></span> </span>
+</div>
+<span class=copyright-year>
+&copy;
 2017 -
 2021
-<span class=heart><i class="iconfont icon-heart"></i></span><span class=author>friday</span></span></div></footer><div class=back-to-top id=back-to-top><i class="iconfont icon-up"></i></div></div><script src=https://cdn.jsdelivr.net/npm/jquery@3.2.1/dist/jquery.min.js integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin=anonymous></script><script src=https://cdn.jsdelivr.net/npm/slideout@1.0.1/dist/slideout.min.js integrity="sha256-t+zJ/g8/KXIJMjSVQdnibt4dlaDxc9zXr/9oNPeWqdg=" crossorigin=anonymous></script><script src=https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.js integrity="sha256-XVLffZaxoWfGUEbdzuLi7pwaUJv1cecsQJQqGLe7axY=" crossorigin=anonymous></script><script type=text/javascript src=/js/main.min.2517c0eb67172a0bae917de4af59b10ca2531411a009d4c0b82f5685259e5771.js></script></body></html>
+<span class=heart>
+<i class="iconfont icon-heart"></i>
+</span>
+<span class=author>friday</span>
+</span>
+</div>
+</footer>
+<div class=back-to-top id=back-to-top>
+<i class="iconfont icon-up"></i>
+</div>
+</div>
+<script src=https://cdn.jsdelivr.net/npm/jquery@3.2.1/dist/jquery.min.js integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin=anonymous></script>
+<script src=https://cdn.jsdelivr.net/npm/slideout@1.0.1/dist/slideout.min.js integrity="sha256-t+zJ/g8/KXIJMjSVQdnibt4dlaDxc9zXr/9oNPeWqdg=" crossorigin=anonymous></script>
+<script src=https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.js integrity="sha256-XVLffZaxoWfGUEbdzuLi7pwaUJv1cecsQJQqGLe7axY=" crossorigin=anonymous></script>
+<script type=text/javascript src=/js/main.min.2517c0eb67172a0bae917de4af59b10ca2531411a009d4c0b82f5685259e5771.js></script>
+</body>
+</html>
