@@ -1,0 +1,491 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta http-equiv=x-ua-compatible content="IE=edge,chrome=1"><title>Kubeedge Cloudcore - Friday - Here I record my experience</title><meta name=renderer content="webkit"><meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1"><meta http-equiv=cache-control content="no-transform"><meta http-equiv=cache-control content="no-siteapp"><meta name=theme-color content="#f8f5ec"><meta name=msapplication-navbutton-color content="#f8f5ec"><meta name=apple-mobile-web-app-capable content="yes"><meta name=apple-mobile-web-app-status-bar-style content="#f8f5ec"><meta name=author content="Friday"><meta name=description content><meta name=keywords content="kubeedge,k8s"><meta name=generator content="Hugo 0.94.2 with theme even"><link rel=canonical href=https://fridayhub.github.io/post/kubeedge-cloudcore/><link rel=apple-touch-icon sizes=180x180 href=/apple-touch-icon.png><link rel=icon type=image/png sizes=32x32 href=/favicon-32x32.png><link rel=icon type=image/png sizes=16x16 href=/favicon-16x16.png><link rel=manifest href=/manifest.json><link rel=mask-icon href=/safari-pinned-tab.svg color=#5bbad5><script async src=//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js></script><meta name=referrer content="no-referrer-when-downgrade"><link href=/sass/main.min.c2803d17ea439bb194b104ce262b40c9118b45b7b108e27dadf43e96dd6664a3.css rel=stylesheet><link rel=stylesheet href=https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.css integrity="sha256-7TyXnr2YU040zfSP+rEcz29ggW4j56/ujTPwjMzyqFY=" crossorigin=anonymous><meta property="og:title" content="Kubeedge Cloudcore"><meta property="og:description" content><meta property="og:type" content="article"><meta property="og:url" content="https://fridayhub.github.io/post/kubeedge-cloudcore/"><meta property="article:section" content="post"><meta property="article:published_time" content="2022-03-16T15:33:57+08:00"><meta property="article:modified_time" content="2022-03-16T15:33:57+08:00"><meta itemprop=name content="Kubeedge Cloudcore"><meta itemprop=description content><meta itemprop=datePublished content="2022-03-16T15:33:57+08:00"><meta itemprop=dateModified content="2022-03-16T15:33:57+08:00"><meta itemprop=wordCount content="2479"><meta itemprop=keywords content="kubeedge,k8s,"><meta name=twitter:card content="summary"><meta name=twitter:title content="Kubeedge Cloudcore"><meta name=twitter:description content><!--[if lte IE 9]><script src=https://cdnjs.cloudflare.com/ajax/libs/classlist/1.1.20170427/classList.min.js></script><![endif]--><!--[if lt IE 9]><script src=https://cdn.jsdelivr.net/npm/html5shiv@3.7.3/dist/html5shiv.min.js></script>
+<script src=https://cdn.jsdelivr.net/npm/respond.js@1.4.2/dest/respond.min.js></script><![endif]--></head><body><div id=mobile-navbar class=mobile-navbar><div class=mobile-header-logo><a href=/ class=logo>Friday</a></div><div class=mobile-navbar-icon><span></span>
+<span></span>
+<span></span></div></div><nav id=mobile-menu class="mobile-menu slideout-menu"><ul class=mobile-menu-list><a href=/><li class=mobile-menu-item>Home</li></a><a href=/post/><li class=mobile-menu-item>Archives</li></a><a href=/tags/><li class=mobile-menu-item>Tags</li></a><a href=/categories/><li class=mobile-menu-item>Categories</li></a><a href=/about/><li class=mobile-menu-item>About</li></a></ul></nav><div class=container id=mobile-panel><header id=header class=header><div class=logo-wrapper><a href=/ class=logo>Friday</a></div><nav class=site-navbar><ul id=menu class=menu><li class=menu-item><a class=menu-item-link href=/>Home</a></li><li class=menu-item><a class=menu-item-link href=/post/>Archives</a></li><li class=menu-item><a class=menu-item-link href=/tags/>Tags</a></li><li class=menu-item><a class=menu-item-link href=/categories/>Categories</a></li><li class=menu-item><a class=menu-item-link href=/about/>About</a></li></ul></nav></header><main id=main class=main><div class=content-wrapper><div id=content class=content><article class=post><header class=post-header><h1 class=post-title>Kubeedge Cloudcore</h1><div class=post-meta><span class=post-time>2022-03-16 15:33:57</span><div class=post-category><a href=/categories/kubeedge/>kubeedge</a>
+<a href=/categories/k8s/>k8s</a></div><span class=more-meta>2479 words</span>
+<span class=more-meta>5 mins read</span>
+<span id=busuanzi_container_page_pv class=more-meta><span id=busuanzi_value_page_pv><img src=/img/spinner.svg alt=spinner.svg></span> times read</span></div></header><div class=post-toc id=post-toc><h2 class=post-toc-title>Contents</h2><div class=post-toc-content><nav id=TableOfContents><ul><li><ul><li><a href=#1-下发逻辑>1. 下发逻辑</a></li><li><a href=#2-上报逻辑>2. 上报逻辑</a><ul><li><a href=#插播开始>插播开始</a><ul><li><a href=#muxentry的实现>mux.Entry的实现</a></li></ul></li><li><a href=#插播结束>插播结束</a></li></ul></li></ul></li></ul></nav></div></div><div class=post-content><p>cloud core 在整个kubeedge中扮演的角色：
+<img src=../../static/kubeedge-arch/arch.png alt=Kubeedge-log-arch></p><p>本次只分析两大主要流程：</p><ol><li>如何将kube-api中的数据同步到边缘节点</li><li>如何将边缘节点通过websocket、quic上报的状态数据同步到k8s</li></ol><p>cloudcore启动流程：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span><span class=lnt>22
+</span><span class=lnt>23
+</span><span class=lnt>24
+</span><span class=lnt>25
+</span><span class=lnt>26
+</span><span class=lnt>27
+</span><span class=lnt>28
+</span><span class=lnt>29
+</span><span class=lnt>30
+</span><span class=lnt>31
+</span><span class=lnt>32
+</span><span class=lnt>33
+</span><span class=lnt>34
+</span><span class=lnt>35
+</span><span class=lnt>36
+</span><span class=lnt>37
+</span><span class=lnt>38
+</span><span class=lnt>39
+</span><span class=lnt>40
+</span><span class=lnt>41
+</span><span class=lnt>42
+</span><span class=lnt>43
+</span><span class=lnt>44
+</span><span class=lnt>45
+</span><span class=lnt>46
+</span><span class=lnt>47
+</span><span class=lnt>48
+</span><span class=lnt>49
+</span><span class=lnt>50
+</span><span class=lnt>51
+</span><span class=lnt>52
+</span><span class=lnt>53
+</span><span class=lnt>54
+</span><span class=lnt>55
+</span><span class=lnt>56
+</span><span class=lnt>57
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=kd>func</span> <span class=nf>NewCloudCoreCommand</span><span class=p>()</span> <span class=o>*</span><span class=nx>cobra</span><span class=p>.</span><span class=nx>Command</span> 
+</span></span><span class=line><span class=cl>  <span class=p>=&gt;</span> <span class=nx>client</span><span class=p>.</span><span class=nf>InitKubeEdgeClient</span><span class=p>(</span><span class=nx>config</span><span class=p>.</span><span class=nx>KubeAPIConfig</span><span class=p>)</span> <span class=c1>// 初始化与k8s的连接 kubeClient、crdClient、dynamicClient
+</span></span></span><span class=line><span class=cl><span class=c1></span>  <span class=p>=&gt;</span> <span class=nf>registerModules</span><span class=p>(</span><span class=nx>config</span><span class=p>)</span> <span class=c1>// 注册所有需要启动的module
+</span></span></span><span class=line><span class=cl><span class=c1></span>    <span class=p>=&gt;</span> <span class=kd>func</span> <span class=nf>Register</span><span class=p>(</span><span class=nx>m</span> <span class=nx>Module</span><span class=p>)</span>  <span class=c1>//最终调用， 将module存到 modules的map中
+</span></span></span><span class=line><span class=cl><span class=c1></span>  <span class=p>=&gt;</span> <span class=nx>core</span><span class=p>.</span><span class=nf>Run</span><span class=p>()</span>  <span class=c1>// core.go
+</span></span></span><span class=line><span class=cl><span class=c1></span>  	<span class=p>=&gt;</span> <span class=nf>StartModules</span><span class=p>()</span>
+</span></span><span class=line><span class=cl>  		<span class=p>=&gt;</span> <span class=k>range</span> <span class=nx>modules</span> <span class=c1>// core.go
+</span></span></span><span class=line><span class=cl><span class=c1></span>  		<span class=p>=&gt;</span> <span class=nx>beehiveContext</span><span class=p>.</span><span class=nf>AddModule</span><span class=p>(</span><span class=nx>name</span><span class=p>)</span> <span class=c1>// 
+</span></span></span><span class=line><span class=cl><span class=c1></span>  			<span class=p>=&gt;</span> <span class=kd>func</span> <span class=nf>AddModule</span><span class=p>(</span><span class=nx>module</span> <span class=kt>string</span><span class=p>)</span> 
+</span></span><span class=line><span class=cl>  				<span class=p>=&gt;</span> <span class=kd>func</span> <span class=p>(</span><span class=nx>ctx</span> <span class=o>*</span><span class=nx>ChannelContext</span><span class=p>)</span> <span class=nf>AddModule</span><span class=p>(</span><span class=nx>module</span> <span class=kt>string</span><span class=p>)</span> <span class=c1>// staging/src/github.com/kubeedge/beehive/pkg/core/context/context_channel.go
+</span></span></span><span class=line><span class=cl><span class=c1></span>  					<span class=p>=&gt;</span> <span class=nx>channel</span> <span class=o>:=</span> <span class=nx>ctx</span><span class=p>.</span><span class=nf>newChannel</span><span class=p>()</span>
+</span></span><span class=line><span class=cl>  						<span class=p>=&gt;</span> <span class=nx>channel</span> <span class=o>:=</span> <span class=nb>make</span><span class=p>(</span><span class=kd>chan</span> <span class=nx>model</span><span class=p>.</span><span class=nx>Message</span><span class=p>,</span> <span class=nx>ChannelSizeDefault</span><span class=p>)</span> <span class=c1>// ChannelSizeDefault = 1024
+</span></span></span><span class=line><span class=cl><span class=c1></span>  					<span class=p>=&gt;</span> <span class=nx>ctx</span><span class=p>.</span><span class=nf>addChannel</span><span class=p>(</span><span class=nx>module</span><span class=p>,</span> <span class=nx>channel</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>  						<span class=p>=&gt;</span> <span class=nx>ctx</span><span class=p>.</span><span class=nx>channels</span><span class=p>[</span><span class=nx>module</span><span class=p>]</span> <span class=p>=</span> <span class=nx>moduleCh</span>  <span class=c1>// 为每个模块，初始化一个channel， 默认大小1024, 以edgecontroller为例， module=&#34;edgecontroller&#34;
+</span></span></span><span class=line><span class=cl><span class=c1></span>  		<span class=p>=&gt;</span> <span class=nx>beehiveContext</span><span class=p>.</span><span class=nf>AddModuleGroup</span><span class=p>(</span><span class=nx>name</span><span class=p>,</span> <span class=nx>module</span><span class=p>.</span><span class=nf>Group</span><span class=p>())</span>
+</span></span><span class=line><span class=cl>  			<span class=p>=&gt;</span> <span class=nx>context</span><span class=p>.</span><span class=nx>moduleContext</span><span class=p>.</span><span class=nf>AddModuleGroup</span><span class=p>(</span><span class=nx>module</span><span class=p>,</span> <span class=nx>group</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>  				<span class=p>=&gt;</span> <span class=kd>func</span> <span class=p>(</span><span class=nx>ctx</span> <span class=o>*</span><span class=nx>ChannelContext</span><span class=p>)</span> <span class=nf>AddModuleGroup</span><span class=p>(</span><span class=nx>module</span><span class=p>,</span> <span class=nx>group</span> <span class=kt>string</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>  					<span class=p>=&gt;</span> <span class=nx>channel</span> <span class=o>:=</span> <span class=nx>ctx</span><span class=p>.</span><span class=nf>getChannel</span><span class=p>(</span><span class=nx>module</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>  					<span class=p>=&gt;</span> <span class=nx>ctx</span><span class=p>.</span><span class=nf>addTypeChannel</span><span class=p>(</span><span class=nx>module</span><span class=p>,</span> <span class=nx>group</span><span class=p>,</span> <span class=nx>channel</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>  						<span class=p>=&gt;</span> <span class=nx>ctx</span><span class=p>.</span><span class=nx>typeChannels</span><span class=p>[</span><span class=nx>group</span><span class=p>]</span> <span class=p>=</span> <span class=nb>make</span><span class=p>(</span><span class=kd>map</span><span class=p>[</span><span class=kt>string</span><span class=p>]</span><span class=kd>chan</span> <span class=nx>model</span><span class=p>.</span><span class=nx>Message</span><span class=p>)</span> <span class=c1>// typeChannels map[string]map[string]chan model.Message
+</span></span></span><span class=line><span class=cl><span class=c1></span>  						<span class=p>=&gt;</span> <span class=nx>ctx</span><span class=p>.</span><span class=nx>typeChannels</span><span class=p>[</span><span class=nx>group</span><span class=p>][</span><span class=nx>module</span><span class=p>]</span> <span class=p>=</span> <span class=nx>moduleCh</span> <span class=c1>// 以edgecontroller为例, group=&#34;edgecontroller&#34; module=&#34;edgecontroller&#34;
+</span></span></span><span class=line><span class=cl><span class=c1></span>  		<span class=p>=&gt;</span> <span class=k>go</span> <span class=nx>module</span><span class=p>.</span><span class=nf>Start</span><span class=p>()</span> <span class=c1>// core.go
+</span></span></span><span class=line><span class=cl><span class=c1></span>  		<span class=p>=&gt;</span> <span class=kd>func</span> <span class=p>(</span><span class=nx>a</span> <span class=o>*</span><span class=nx>cloudHub</span><span class=p>)</span> <span class=nf>Start</span><span class=p>()</span>  <span class=c1>//cloudhub.go
+</span></span></span><span class=line><span class=cl><span class=c1></span>  			<span class=p>=&gt;</span> <span class=k>go</span> <span class=nx>messageq</span><span class=p>.</span><span class=nf>DispatchMessage</span><span class=p>()</span> <span class=c1>//从 cloudhub的channel中接受消息，下发到node中
+</span></span></span><span class=line><span class=cl><span class=c1></span>  				<span class=p>=&gt;</span> <span class=kd>func</span> <span class=p>(</span><span class=nx>q</span> <span class=o>*</span><span class=nx>ChannelMessageQueue</span><span class=p>)</span> <span class=nf>DispatchMessage</span><span class=p>()</span>
+</span></span><span class=line><span class=cl>  					<span class=p>=&gt;</span> <span class=nx>msg</span><span class=p>,</span> <span class=nx>err</span> <span class=o>:=</span> <span class=nx>beehiveContext</span><span class=p>.</span><span class=nf>Receive</span><span class=p>(</span><span class=nx>model</span><span class=p>.</span><span class=nx>SrcCloudHub</span><span class=p>)</span>  <span class=c1>// model间的通信，都是通过 beehiveContext.Receive 接受, model.SrcCloudHub=&#34;cloudhub&#34;
+</span></span></span><span class=line><span class=cl><span class=c1></span>  					<span class=p>=&gt;</span> <span class=nx>q</span><span class=p>.</span><span class=nf>addListMessageToQueue</span><span class=p>(</span><span class=nx>nodeID</span><span class=p>,</span> <span class=o>&amp;</span><span class=nx>msg</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>  						<span class=p>=&gt;</span> <span class=nx>nodeListStore</span><span class=p>.</span><span class=nf>Add</span><span class=p>(</span><span class=nx>msg</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>  						<span class=p>=&gt;</span> <span class=nx>nodeListQueue</span><span class=p>.</span><span class=nf>Add</span><span class=p>(</span><span class=nx>messageKey</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>  					<span class=p>=&gt;</span> <span class=nx>q</span><span class=p>.</span><span class=nf>addMessageToQueue</span><span class=p>(</span><span class=nx>nodeID</span><span class=p>,</span> <span class=o>&amp;</span><span class=nx>msg</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>  						<span class=p>=&gt;</span> <span class=nx>nodeQueue</span><span class=p>.</span><span class=nf>Add</span><span class=p>(</span><span class=nx>messageKey</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>  						<span class=p>=&gt;</span> <span class=nx>nodeStore</span><span class=p>.</span><span class=nf>Add</span><span class=p>(</span><span class=nx>msg</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>  						
+</span></span><span class=line><span class=cl>  			<span class=p>=&gt;</span> <span class=nx>servers</span><span class=p>.</span><span class=nf>StartCloudHub</span><span class=p>(</span><span class=nx>messageq</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>  				<span class=p>=&gt;</span> <span class=kd>var</span> <span class=nx>CloudhubHandler</span> <span class=o>*</span><span class=nx>MessageHandle</span> <span class=c1>//声明 单例CloudhubHandler
+</span></span></span><span class=line><span class=cl><span class=c1></span>  				<span class=p>=&gt;</span> <span class=nx>handler</span><span class=p>.</span><span class=nf>InitHandler</span><span class=p>(</span><span class=nx>messageq</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>  					<span class=p>=&gt;</span> <span class=nx>CloudhubHandler</span><span class=p>.</span><span class=nf>initServerEntries</span><span class=p>()</span>
+</span></span><span class=line><span class=cl>  						<span class=p>=&gt;</span> <span class=nx>mux</span><span class=p>.</span><span class=nf>Entry</span><span class=p>(</span><span class=nx>mux</span><span class=p>.</span><span class=nf>NewPattern</span><span class=p>(</span><span class=s>&#34;*&#34;</span><span class=p>).</span><span class=nf>Op</span><span class=p>(</span><span class=s>&#34;*&#34;</span><span class=p>),</span> <span class=nx>mh</span><span class=p>.</span><span class=nx>HandleServer</span><span class=p>)</span> <span class=c1>//所有http请求都走这个方法
+</span></span></span><span class=line><span class=cl><span class=c1></span>	  						<span class=p>=&gt;</span> <span class=kd>func</span> <span class=p>(</span><span class=nx>mh</span> <span class=o>*</span><span class=nx>MessageHandle</span><span class=p>)</span> <span class=nf>HandleServer</span><span class=p>(</span><span class=nx>container</span> <span class=o>*</span><span class=nx>mux</span><span class=p>.</span><span class=nx>MessageContainer</span><span class=p>,</span> <span class=nx>writer</span> <span class=nx>mux</span><span class=p>.</span><span class=nx>ResponseWriter</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>								<span class=p>=&gt;</span> <span class=k>if</span> <span class=nx>container</span><span class=p>.</span><span class=nx>Message</span><span class=p>.</span><span class=nf>GetOperation</span><span class=p>()</span> <span class=o>==</span> <span class=s>&#34;upload&#34;</span> <span class=o>&amp;&amp;</span> <span class=nx>container</span><span class=p>.</span><span class=nx>Message</span><span class=p>.</span><span class=nf>GetGroup</span><span class=p>()</span> <span class=o>==</span> <span class=nx>modules</span><span class=p>.</span><span class=nx>UserGroup</span>
+</span></span><span class=line><span class=cl>								<span class=p>=&gt;</span> <span class=nx>beehiveContext</span><span class=p>.</span><span class=nf>Send</span><span class=p>(</span><span class=nx>modules</span><span class=p>.</span><span class=nx>RouterModuleName</span><span class=p>,</span> <span class=o>*</span><span class=nx>container</span><span class=p>.</span><span class=nx>Message</span><span class=p>)</span>  <span class=c1>// 发送到 router module, 此模块默认不开启，需要在配置文件中显式声明开启
+</span></span></span><span class=line><span class=cl><span class=c1></span>  				<span class=p>=&gt;</span> <span class=k>go</span> <span class=nf>startWebsocketServer</span><span class=p>()</span> <span class=c1>// 启动 ws 服务, 10000端口
+</span></span></span><span class=line><span class=cl><span class=c1></span>  					<span class=p>=&gt;</span> <span class=nx>svc</span> <span class=o>:=</span> <span class=nx>server</span><span class=p>.</span><span class=nx>Server</span><span class=p>{</span><span class=nx>ConnNotify</span><span class=p>:</span> <span class=nx>handler</span><span class=p>.</span><span class=nx>CloudhubHandler</span><span class=p>.</span><span class=nx>OnRegister</span><span class=p>,}</span>
+</span></span><span class=line><span class=cl>  			<span class=p>=&gt;</span> <span class=k>go</span> <span class=nx>udsserver</span><span class=p>.</span><span class=nf>StartServer</span><span class=p>(</span><span class=nx>hubconfig</span><span class=p>.</span><span class=nx>Config</span><span class=p>.</span><span class=nx>UnixSocket</span><span class=p>.</span><span class=nx>Address</span><span class=p>)</span> <span class=c1>// The uds server is only used to communicate with csi driver from kubeedge on cloud
+</span></span></span><span class=line><span class=cl><span class=c1></span>  			<span class=p>=&gt;</span> <span class=kd>func</span> <span class=nf>StartServer</span><span class=p>(</span><span class=nx>address</span> <span class=kt>string</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>  				<span class=p>=&gt;</span> <span class=nx>uds</span><span class=p>.</span><span class=nx>SetContextHandler</span>
+</span></span><span class=line><span class=cl>  					<span class=p>=&gt;</span> <span class=nx>beehiveContext</span><span class=p>.</span><span class=nf>SendSync</span><span class=p>(</span><span class=nx>hubmodel</span><span class=p>.</span><span class=nx>SrcCloudHub</span><span class=p>,</span> <span class=o>*</span><span class=nx>msg</span><span class=p>,</span> <span class=nx>constants</span><span class=p>.</span><span class=nx>CSISyncMsgRespTimeout</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>  				<span class=p>=&gt;</span> <span class=nx>uds</span><span class=p>.</span><span class=nf>StartServer</span><span class=p>()</span>
+</span></span><span class=line><span class=cl>  					<span class=p>=&gt;</span> <span class=nx>listener</span><span class=p>,</span> <span class=nx>err</span> <span class=o>:=</span> <span class=nx>net</span><span class=p>.</span><span class=nf>Listen</span><span class=p>(</span><span class=nx>proto</span><span class=p>,</span> <span class=nx>addr</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>  					<span class=p>=&gt;</span> <span class=nx>c</span><span class=p>,</span> <span class=nx>err</span> <span class=o>:=</span> <span class=nx>listener</span><span class=p>.</span><span class=nf>Accept</span><span class=p>()</span>
+</span></span><span class=line><span class=cl>  					<span class=p>=&gt;</span> <span class=k>go</span> <span class=nx>us</span><span class=p>.</span><span class=nf>handleServerConn</span><span class=p>(</span><span class=nx>c</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>  						<span class=p>=&gt;</span> <span class=nx>us</span><span class=p>.</span><span class=nf>handleServerContext</span><span class=p>(</span><span class=nb>string</span><span class=p>(</span><span class=nx>buf</span><span class=p>[</span><span class=mi>0</span><span class=p>:</span><span class=nx>nr</span><span class=p>]))</span>
+</span></span><span class=line><span class=cl>  							<span class=p>=&gt;</span> <span class=k>return</span> <span class=nx>us</span><span class=p>.</span><span class=nf>handler</span><span class=p>(</span><span class=nx>context</span><span class=p>)</span>  <span class=c1>// uds.SetContextHandler
+</span></span></span><span class=line><span class=cl><span class=c1></span>  		<span class=p>=&gt;</span> <span class=kd>func</span> <span class=p>(</span><span class=nx>ec</span> <span class=o>*</span><span class=nx>EdgeController</span><span class=p>)</span> <span class=nf>Start</span><span class=p>()</span> <span class=c1>//edgecontroller.go
+</span></span></span><span class=line><span class=cl><span class=c1></span>  		<span class=p>=&gt;</span> <span class=kd>func</span> <span class=p>(</span><span class=nx>dc</span> <span class=o>*</span><span class=nx>DeviceController</span><span class=p>)</span> <span class=nf>Start</span><span class=p>()</span> <span class=c1>// devicecontroller.go
+</span></span></span><span class=line><span class=cl><span class=c1></span>  		<span class=p>=&gt;</span> <span class=kd>func</span> <span class=p>(</span><span class=nx>sctl</span> <span class=o>*</span><span class=nx>SyncController</span><span class=p>)</span> <span class=nf>Start</span><span class=p>()</span>  <span class=c1>// synccontroller.go
+</span></span></span><span class=line><span class=cl><span class=c1></span>  		<span class=p>=&gt;</span> <span class=kd>func</span> <span class=p>(</span><span class=nx>s</span> <span class=o>*</span><span class=nx>cloudStream</span><span class=p>)</span> <span class=nf>Start</span><span class=p>()</span> <span class=c1>// cloudstream.go
+</span></span></span></code></pre></td></tr></table></div></div><h3 id=1-下发逻辑>1. 下发逻辑</h3><p>CloudHub 是整个cloudcore的消息枢纽。
+负责将消息下发到edgecore，读取edgecore发送来的消息。</p><p>当我们通过kubectl执行一个deployment命令时，资源会经过kubeapi首先保存在etcd，cloudcore的SyncController模块在启动时，会定时List kubeapi的所有资源：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span><span class=lnt>5
+</span><span class=lnt>6
+</span><span class=lnt>7
+</span><span class=lnt>8
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=k>go</span> <span class=nx>wait</span><span class=p>.</span><span class=nf>Until</span><span class=p>(</span><span class=nx>sctl</span><span class=p>.</span><span class=nx>reconcile</span><span class=p>,</span> <span class=mi>5</span><span class=o>*</span><span class=nx>time</span><span class=p>.</span><span class=nx>Second</span><span class=p>,</span> <span class=nx>beehiveContext</span><span class=p>.</span><span class=nf>Done</span><span class=p>())</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=nx>allObjectSyncs</span><span class=p>,</span> <span class=nx>err</span> <span class=o>:=</span> <span class=nx>sctl</span><span class=p>.</span><span class=nx>objectSyncLister</span><span class=p>.</span><span class=nf>List</span><span class=p>(</span><span class=nx>labels</span><span class=p>.</span><span class=nf>Everything</span><span class=p>())</span>
+</span></span><span class=line><span class=cl><span class=k>if</span> <span class=nx>err</span> <span class=o>!=</span> <span class=kc>nil</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>	<span class=nx>klog</span><span class=p>.</span><span class=nf>Errorf</span><span class=p>(</span><span class=s>&#34;Failed to list all the ObjectSyncs: %v&#34;</span><span class=p>,</span> <span class=nx>err</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=nx>sctl</span><span class=p>.</span><span class=nf>manageObjectSync</span><span class=p>(</span><span class=nx>allObjectSyncs</span><span class=p>)</span>
+</span></span></code></pre></td></tr></table></div></div><p>消息会通过几层函数调用，最终到达：</p><p><code>sendEvents(err, nodeName, sync, sync.Spec.ObjectKind, object.GetResourceVersion(), object)</code></p><p>sendEvents 通过判断资源是否被删除，版本号是否是最新的，最终将消息发送到cloudhub模块。</p><p>cloudhub收到消息经过解析放到nodeQueue 类型为k8s的 RateLimitingInterface 限速队列。且每个node，有自己单独的限速队列：
+<code>nodeQueue := q.GetNodeQueue(nodeID)</code></p><p>cloudhub在初始化的时候会初始化connection handles:</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span><span class=lnt>5
+</span><span class=lnt>6
+</span><span class=lnt>7
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl>		<span class=nx>CloudhubHandler</span><span class=p>.</span><span class=nx>Handlers</span> <span class=p>=</span> <span class=p>[]</span><span class=nx>HandleFunc</span><span class=p>{</span>
+</span></span><span class=line><span class=cl>			<span class=nx>CloudhubHandler</span><span class=p>.</span><span class=nx>KeepaliveCheckLoop</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>			<span class=nx>CloudhubHandler</span><span class=p>.</span><span class=nx>MessageWriteLoop</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>			<span class=nx>CloudhubHandler</span><span class=p>.</span><span class=nx>ListMessageWriteLoop</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>		<span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>        <span class=nx>CloudhubHandler</span><span class=p>.</span><span class=nf>initServerEntries</span><span class=p>()</span> <span class=c1>// 初始化连接handler，node的连接进来，调用到这里初始化的handler。
+</span></span></span></code></pre></td></tr></table></div></div><p>当edgecore新连接到cloudhub，会为该连接启动所有的handles</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=c1>// ServeConn starts serving the incoming connection
+</span></span></span><span class=line><span class=cl><span class=c1></span><span class=kd>func</span> <span class=p>(</span><span class=nx>mh</span> <span class=o>*</span><span class=nx>MessageHandle</span><span class=p>)</span> <span class=nf>ServeConn</span><span class=p>(</span><span class=nx>info</span> <span class=o>*</span><span class=nx>model</span><span class=p>.</span><span class=nx>HubInfo</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>	<span class=nx>err</span> <span class=o>:=</span> <span class=nx>mh</span><span class=p>.</span><span class=nf>RegisterNode</span><span class=p>(</span><span class=nx>info</span><span class=p>)</span> <span class=c1>// 注册节点， 发送连接消息到cloudhub
+</span></span></span><span class=line><span class=cl><span class=c1></span>	<span class=k>if</span> <span class=nx>err</span> <span class=o>!=</span> <span class=kc>nil</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>		<span class=nx>klog</span><span class=p>.</span><span class=nf>Errorf</span><span class=p>(</span><span class=s>&#34;fail to register node %s, reason %s&#34;</span><span class=p>,</span> <span class=nx>info</span><span class=p>.</span><span class=nx>NodeID</span><span class=p>,</span> <span class=nx>err</span><span class=p>.</span><span class=nf>Error</span><span class=p>())</span>
+</span></span><span class=line><span class=cl>		<span class=k>return</span>
+</span></span><span class=line><span class=cl>	<span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>	<span class=nx>klog</span><span class=p>.</span><span class=nf>Infof</span><span class=p>(</span><span class=s>&#34;edge node %s for project %s connected&#34;</span><span class=p>,</span> <span class=nx>info</span><span class=p>.</span><span class=nx>NodeID</span><span class=p>,</span> <span class=nx>info</span><span class=p>.</span><span class=nx>ProjectID</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>	<span class=nx>exitServe</span> <span class=o>:=</span> <span class=nb>make</span><span class=p>(</span><span class=kd>chan</span> <span class=nx>ExitCode</span><span class=p>,</span> <span class=nb>len</span><span class=p>(</span><span class=nx>mh</span><span class=p>.</span><span class=nx>Handlers</span><span class=p>))</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>	<span class=k>for</span> <span class=nx>_</span><span class=p>,</span> <span class=nx>handle</span> <span class=o>:=</span> <span class=k>range</span> <span class=nx>mh</span><span class=p>.</span><span class=nx>Handlers</span> <span class=p>{</span> <span class=c1>// 启动所有的handler
+</span></span></span><span class=line><span class=cl><span class=c1></span>		<span class=k>go</span> <span class=nf>handle</span><span class=p>(</span><span class=nx>info</span><span class=p>,</span> <span class=nx>exitServe</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>	<span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>	<span class=nx>code</span> <span class=o>:=</span> <span class=o>&lt;-</span><span class=nx>exitServe</span>
+</span></span><span class=line><span class=cl>	<span class=nx>mh</span><span class=p>.</span><span class=nf>UnregisterNode</span><span class=p>(</span><span class=nx>info</span><span class=p>,</span> <span class=nx>code</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span></code></pre></td></tr></table></div></div><p>在启动的hadlers中，<code>func (mh *MessageHandle) MessageWriteLoop(info *model.HubInfo, stopServe chan ExitCode)</code> 负责遍历自己的nodeQueue和nodeStore，如果有消息，在<code>nodeConns sync.Map</code> nodeConns中拿到连接信息，发送数据到对应的连接中。</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl>            <span class=nx>conn</span><span class=p>,</span> <span class=nx>ok</span> <span class=o>:=</span> <span class=nx>mh</span><span class=p>.</span><span class=nx>nodeConns</span><span class=p>.</span><span class=nf>Load</span><span class=p>(</span><span class=nx>info</span><span class=p>.</span><span class=nx>NodeID</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>			<span class=k>if</span> <span class=p>!</span><span class=nx>ok</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>				<span class=k>if</span> <span class=nx>retry</span> <span class=o>==</span> <span class=mi>1</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>					<span class=k>break</span>
+</span></span><span class=line><span class=cl>				<span class=p>}</span>
+</span></span><span class=line><span class=cl>				<span class=nx>retry</span><span class=o>++</span>
+</span></span><span class=line><span class=cl>				<span class=nx>time</span><span class=p>.</span><span class=nf>Sleep</span><span class=p>(</span><span class=nx>time</span><span class=p>.</span><span class=nx>Second</span> <span class=o>*</span> <span class=nx>retryInterval</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>				<span class=k>continue</span>
+</span></span><span class=line><span class=cl>			<span class=p>}</span>
+</span></span><span class=line><span class=cl>			<span class=nx>err</span> <span class=o>:=</span> <span class=nx>mh</span><span class=p>.</span><span class=nf>sendMsg</span><span class=p>(</span><span class=nx>conn</span><span class=p>.(</span><span class=nx>hubio</span><span class=p>.</span><span class=nx>CloudHubIO</span><span class=p>),</span> <span class=nx>info</span><span class=p>,</span> <span class=nx>copyMsg</span><span class=p>,</span> <span class=nx>msg</span><span class=p>,</span> <span class=nx>nodeStore</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>			<span class=k>if</span> <span class=nx>err</span> <span class=o>!=</span> <span class=kc>nil</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>				<span class=nx>klog</span><span class=p>.</span><span class=nf>Errorf</span><span class=p>(</span><span class=s>&#34;Failed to send event to node: %s, affected event: %s, err: %s&#34;</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>					<span class=nx>info</span><span class=p>.</span><span class=nx>NodeID</span><span class=p>,</span> <span class=nf>dumpMessageMetadata</span><span class=p>(</span><span class=nx>copyMsg</span><span class=p>),</span> <span class=nx>err</span><span class=p>.</span><span class=nf>Error</span><span class=p>())</span>
+</span></span><span class=line><span class=cl>				<span class=nx>nodeQueue</span><span class=p>.</span><span class=nf>AddRateLimited</span><span class=p>(</span><span class=nx>key</span><span class=p>.(</span><span class=kt>string</span><span class=p>))</span>
+</span></span><span class=line><span class=cl>				<span class=nx>time</span><span class=p>.</span><span class=nf>Sleep</span><span class=p>(</span><span class=nx>time</span><span class=p>.</span><span class=nx>Second</span> <span class=o>*</span> <span class=mi>2</span><span class=p>)</span>  <span class=c1>// 如果发送失败，休眠两秒重试
+</span></span></span><span class=line><span class=cl><span class=c1></span>			<span class=p>}</span>
+</span></span><span class=line><span class=cl>            <span class=nx>nodeQueue</span><span class=p>.</span><span class=nf>Forget</span><span class=p>(</span><span class=nx>key</span><span class=p>.(</span><span class=kt>string</span><span class=p>))</span> <span class=c1>// 成功，从本地队列删除消息
+</span></span></span><span class=line><span class=cl><span class=c1></span>		    <span class=nx>nodeQueue</span><span class=p>.</span><span class=nf>Done</span><span class=p>(</span><span class=nx>key</span><span class=p>)</span>
+</span></span></code></pre></td></tr></table></div></div><h3 id=2-上报逻辑>2. 上报逻辑</h3><p>上文提到的initServerEntries初始化新连接的handler
+// initServerEntries register handler func
+func (mh <em>MessageHandle) initServerEntries() {
+mux.Entry(mux.NewPattern("</em>").Op("*"), mh.HandleServer)
+}</p><h4 id=插播开始>插播开始</h4><h5 id=muxentry的实现>mux.Entry的实现</h5><p>（跳过这个逻辑，不影响上报逻辑的流程梳理）
+定义一个全局的MessageMux：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=nx>MuxDefault</span> <span class=p>=</span> <span class=nf>NewMessageMux</span><span class=p>()</span>
+</span></span></code></pre></td></tr></table></div></div><p>为msg增加handler</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=kd>func</span> <span class=nf>Entry</span><span class=p>(</span><span class=nx>pattern</span> <span class=o>*</span><span class=nx>MessagePattern</span><span class=p>,</span> <span class=nx>handle</span> <span class=kd>func</span><span class=p>(</span><span class=o>*</span><span class=nx>MessageContainer</span><span class=p>,</span> <span class=nx>ResponseWriter</span><span class=p>))</span> <span class=o>*</span><span class=nx>MessageMux</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>	<span class=nx>MuxDefault</span><span class=p>.</span><span class=nf>Entry</span><span class=p>(</span><span class=nx>pattern</span><span class=p>,</span> <span class=nx>handle</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>	<span class=k>return</span> <span class=nx>MuxDefault</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span></code></pre></td></tr></table></div></div><p>实现handerl的方法：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=kd>type</span> <span class=nx>Handler</span> <span class=kd>interface</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>	<span class=nf>ServeConn</span><span class=p>(</span><span class=nx>req</span> <span class=o>*</span><span class=nx>MessageRequest</span><span class=p>,</span> <span class=nx>writer</span> <span class=nx>ResponseWriter</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=kd>func</span> <span class=p>(</span><span class=nx>mux</span> <span class=o>*</span><span class=nx>MessageMux</span><span class=p>)</span> <span class=nf>ServeConn</span><span class=p>(</span><span class=nx>req</span> <span class=o>*</span><span class=nx>MessageRequest</span><span class=p>,</span> <span class=nx>writer</span> <span class=nx>ResponseWriter</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>	<span class=nx>err</span> <span class=o>:=</span> <span class=nx>mux</span><span class=p>.</span><span class=nf>processFilter</span><span class=p>(</span><span class=nx>req</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>	<span class=k>if</span> <span class=nx>err</span> <span class=o>!=</span> <span class=kc>nil</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>		<span class=k>return</span>
+</span></span><span class=line><span class=cl>	<span class=p>}</span>
+</span></span><span class=line><span class=cl>	<span class=nx>mux</span><span class=p>.</span><span class=nf>dispatch</span><span class=p>(</span><span class=nx>req</span><span class=p>,</span> <span class=nx>writer</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span></code></pre></td></tr></table></div></div><p>之后 ws的handlerMesage会调用到次方法：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=kd>func</span> <span class=p>(</span><span class=nx>conn</span> <span class=o>*</span><span class=nx>WSConnection</span><span class=p>)</span> <span class=nf>handleMessage</span><span class=p>()</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl><span class=o>...</span>
+</span></span><span class=line><span class=cl>    	<span class=nx>conn</span><span class=p>.</span><span class=nx>handler</span><span class=p>.</span><span class=nf>ServeConn</span><span class=p>(</span><span class=o>&amp;</span><span class=nx>mux</span><span class=p>.</span><span class=nx>MessageRequest</span><span class=p>{</span>
+</span></span><span class=line><span class=cl>			<span class=nx>Header</span><span class=p>:</span>  <span class=nx>conn</span><span class=p>.</span><span class=nx>state</span><span class=p>.</span><span class=nx>Headers</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>			<span class=nx>Message</span><span class=p>:</span> <span class=nx>msg</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>		<span class=p>},</span> <span class=o>&amp;</span><span class=nx>responseWriter</span><span class=p>{</span>
+</span></span><span class=line><span class=cl>			<span class=nx>Type</span><span class=p>:</span> <span class=nx>api</span><span class=p>.</span><span class=nx>ProtocolTypeWS</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>			<span class=nx>Van</span><span class=p>:</span>  <span class=nx>conn</span><span class=p>.</span><span class=nx>wsConn</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>		<span class=p>})</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span></code></pre></td></tr></table></div></div><p>在dispatch中调用注册的handler：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=kd>func</span> <span class=p>(</span><span class=nx>mux</span> <span class=o>*</span><span class=nx>MessageMux</span><span class=p>)</span> <span class=nf>dispatch</span><span class=p>(</span><span class=nx>req</span> <span class=o>*</span><span class=nx>MessageRequest</span><span class=p>,</span> <span class=nx>writer</span> <span class=nx>ResponseWriter</span><span class=p>)</span> <span class=kt>error</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>	<span class=k>for</span> <span class=nx>_</span><span class=p>,</span> <span class=nx>entry</span> <span class=o>:=</span> <span class=k>range</span> <span class=nx>mux</span><span class=p>.</span><span class=nx>muxEntry</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>		<span class=c1>// select entry
+</span></span></span><span class=line><span class=cl><span class=c1></span>		<span class=nx>matched</span> <span class=o>:=</span> <span class=nx>entry</span><span class=p>.</span><span class=nx>pattern</span><span class=p>.</span><span class=nf>Match</span><span class=p>(</span><span class=nx>req</span><span class=p>.</span><span class=nx>Message</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>		<span class=k>if</span> <span class=p>!</span><span class=nx>matched</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>			<span class=k>continue</span>
+</span></span><span class=line><span class=cl>		<span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>		<span class=c1>// extract parameters
+</span></span></span><span class=line><span class=cl><span class=c1></span>		<span class=nx>parameters</span> <span class=o>:=</span> <span class=nx>mux</span><span class=p>.</span><span class=nf>extractParameters</span><span class=p>(</span><span class=nx>entry</span><span class=p>.</span><span class=nx>pattern</span><span class=p>.</span><span class=nx>resExpr</span><span class=p>,</span> <span class=nx>req</span><span class=p>.</span><span class=nx>Message</span><span class=p>.</span><span class=nf>GetResource</span><span class=p>())</span>
+</span></span><span class=line><span class=cl>		<span class=c1>// wrap message
+</span></span></span><span class=line><span class=cl><span class=c1></span>		<span class=nx>container</span> <span class=o>:=</span> <span class=nx>mux</span><span class=p>.</span><span class=nf>wrapMessage</span><span class=p>(</span><span class=nx>req</span><span class=p>.</span><span class=nx>Header</span><span class=p>,</span> <span class=nx>req</span><span class=p>.</span><span class=nx>Message</span><span class=p>,</span> <span class=nx>parameters</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>		<span class=c1>// call user handle of entry
+</span></span></span><span class=line><span class=cl><span class=c1></span>		<span class=nx>entry</span><span class=p>.</span><span class=nf>handleFunc</span><span class=p>(</span><span class=nx>container</span><span class=p>,</span> <span class=nx>writer</span><span class=p>)</span>  <span class=c1>// 调用注册的handler
+</span></span></span><span class=line><span class=cl><span class=c1></span>		<span class=k>return</span> <span class=kc>nil</span>
+</span></span><span class=line><span class=cl>	<span class=p>}</span>
+</span></span><span class=line><span class=cl>	<span class=k>return</span> <span class=nx>fmt</span><span class=p>.</span><span class=nf>Errorf</span><span class=p>(</span><span class=s>&#34;failed to found entry for message&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span></code></pre></td></tr></table></div></div><h4 id=插播结束>插播结束</h4><p>handerl的真正逻辑：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=c1>// HandleServer handle all the request from node
+</span></span></span><span class=line><span class=cl><span class=c1></span><span class=kd>func</span> <span class=p>(</span><span class=nx>mh</span> <span class=o>*</span><span class=nx>MessageHandle</span><span class=p>)</span> <span class=nf>HandleServer</span><span class=p>(</span><span class=nx>container</span> <span class=o>*</span><span class=nx>mux</span><span class=p>.</span><span class=nx>MessageContainer</span><span class=p>,</span> <span class=nx>writer</span> <span class=nx>mux</span><span class=p>.</span><span class=nx>ResponseWriter</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>	<span class=o>...</span> <span class=nx>省略非主干逻辑</span><span class=err>，</span><span class=nx>我们只关心消息最终去了哪里</span>
+</span></span><span class=line><span class=cl>		<span class=nx>err</span> <span class=o>:=</span> <span class=nx>mh</span><span class=p>.</span><span class=nf>PubToController</span><span class=p>(</span><span class=o>&amp;</span><span class=nx>model</span><span class=p>.</span><span class=nx>HubInfo</span><span class=p>{</span><span class=nx>ProjectID</span><span class=p>:</span> <span class=nx>projectID</span><span class=p>,</span> <span class=nx>NodeID</span><span class=p>:</span> <span class=nx>nodeID</span><span class=p>},</span> <span class=nx>container</span><span class=p>.</span><span class=nx>Message</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>		<span class=k>if</span> <span class=nx>err</span> <span class=o>!=</span> <span class=kc>nil</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>			<span class=c1>// if err, we should stop node, write data to edgehub, stop nodify
+</span></span></span><span class=line><span class=cl><span class=c1></span>			<span class=nx>klog</span><span class=p>.</span><span class=nf>Errorf</span><span class=p>(</span><span class=s>&#34;Failed to serve handle with error: %s&#34;</span><span class=p>,</span> <span class=nx>err</span><span class=p>.</span><span class=nf>Error</span><span class=p>())</span>
+</span></span><span class=line><span class=cl>		<span class=p>}</span>
+</span></span><span class=line><span class=cl>	<span class=p>}</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span></code></pre></td></tr></table></div></div><p>通过以上逻辑，将消息pub到controller:</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=kd>func</span> <span class=p>(</span><span class=nx>mh</span> <span class=o>*</span><span class=nx>MessageHandle</span><span class=p>)</span> <span class=nf>PubToController</span><span class=p>(</span><span class=nx>info</span> <span class=o>*</span><span class=nx>model</span><span class=p>.</span><span class=nx>HubInfo</span><span class=p>,</span> <span class=nx>msg</span> <span class=o>*</span><span class=nx>beehiveModel</span><span class=p>.</span><span class=nx>Message</span><span class=p>)</span> <span class=kt>error</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>	<span class=nx>msg</span><span class=p>.</span><span class=nf>SetResourceOperation</span><span class=p>(</span><span class=nx>fmt</span><span class=p>.</span><span class=nf>Sprintf</span><span class=p>(</span><span class=s>&#34;node/%s/%s&#34;</span><span class=p>,</span> <span class=nx>info</span><span class=p>.</span><span class=nx>NodeID</span><span class=p>,</span> <span class=nx>msg</span><span class=p>.</span><span class=nf>GetResource</span><span class=p>()),</span> <span class=nx>msg</span><span class=p>.</span><span class=nf>GetOperation</span><span class=p>())</span>
+</span></span><span class=line><span class=cl>	<span class=k>if</span> <span class=nx>model</span><span class=p>.</span><span class=nf>IsFromEdge</span><span class=p>(</span><span class=nx>msg</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>		<span class=nx>err</span> <span class=o>:=</span> <span class=nx>mh</span><span class=p>.</span><span class=nx>MessageQueue</span><span class=p>.</span><span class=nf>Publish</span><span class=p>(</span><span class=nx>msg</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>		<span class=k>if</span> <span class=nx>err</span> <span class=o>!=</span> <span class=kc>nil</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl><span class=o>...</span>
+</span></span><span class=line><span class=cl>		<span class=p>}</span>
+</span></span><span class=line><span class=cl>	<span class=p>}</span>
+</span></span><span class=line><span class=cl>	<span class=k>return</span> <span class=kc>nil</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span></code></pre></td></tr></table></div></div><p>通过beehive发送到edgecontroller 模块。</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span><span class=lnt>5
+</span><span class=lnt>6
+</span><span class=lnt>7
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=c1>// Publish sends message via the channel to Controllers
+</span></span></span><span class=line><span class=cl><span class=c1></span><span class=kd>func</span> <span class=p>(</span><span class=nx>q</span> <span class=o>*</span><span class=nx>ChannelMessageQueue</span><span class=p>)</span> <span class=nf>Publish</span><span class=p>(</span><span class=nx>msg</span> <span class=o>*</span><span class=nx>beehiveModel</span><span class=p>.</span><span class=nx>Message</span><span class=p>)</span> <span class=kt>error</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl><span class=o>...</span>
+</span></span><span class=line><span class=cl>		<span class=nx>beehiveContext</span><span class=p>.</span><span class=nf>SendToGroup</span><span class=p>(</span><span class=nx>model</span><span class=p>.</span><span class=nx>SrcEdgeController</span><span class=p>,</span> <span class=o>*</span><span class=nx>msg</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>	<span class=p>}</span>
+</span></span><span class=line><span class=cl>	<span class=k>return</span> <span class=kc>nil</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span></code></pre></td></tr></table></div></div><p>这部分主要由UpstreamController实现，beehive发送消息到edgecontroller，由<code>func (uc *UpstreamController) dispatchMessage() </code>负责处理。</p><p>dispatchMessage解析消息结果，根据资源类型，发送到不同channel中，每个channle对应一组资源处理的goroutine。</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=kd>func</span> <span class=p>(</span><span class=nx>uc</span> <span class=o>*</span><span class=nx>UpstreamController</span><span class=p>)</span> <span class=nf>dispatchMessage</span><span class=p>()</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>	<span class=k>for</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>		<span class=k>select</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>		<span class=k>case</span> <span class=o>&lt;-</span><span class=nx>beehiveContext</span><span class=p>.</span><span class=nf>Done</span><span class=p>():</span>
+</span></span><span class=line><span class=cl>			<span class=nx>klog</span><span class=p>.</span><span class=nf>Info</span><span class=p>(</span><span class=s>&#34;stop dispatchMessage&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>			<span class=k>return</span>
+</span></span><span class=line><span class=cl>		<span class=k>default</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>		<span class=p>}</span>
+</span></span><span class=line><span class=cl>		<span class=nx>msg</span><span class=p>,</span> <span class=nx>err</span> <span class=o>:=</span> <span class=nx>uc</span><span class=p>.</span><span class=nx>messageLayer</span><span class=p>.</span><span class=nf>Receive</span><span class=p>()</span>
+</span></span><span class=line><span class=cl>		<span class=o>...</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>		<span class=nx>resourceType</span><span class=p>,</span> <span class=nx>err</span> <span class=o>:=</span> <span class=nx>messagelayer</span><span class=p>.</span><span class=nf>GetResourceType</span><span class=p>(</span><span class=nx>msg</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>	    <span class=o>...</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>		<span class=k>switch</span> <span class=nx>resourceType</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>		<span class=k>case</span> <span class=nx>model</span><span class=p>.</span><span class=nx>ResourceTypeNodeStatus</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>			<span class=nx>uc</span><span class=p>.</span><span class=nx>nodeStatusChan</span> <span class=o>&lt;-</span> <span class=nx>msg</span>
+</span></span><span class=line><span class=cl>	<span class=o>...</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span></code></pre></td></tr></table></div></div><p>UpstreamController在启动时，为每个资源启动一组goroutine，比如node status：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=k>for</span> <span class=nx>i</span> <span class=o>:=</span> <span class=mi>0</span><span class=p>;</span> <span class=nx>i</span> <span class=p>&lt;</span> <span class=nb>int</span><span class=p>(</span><span class=nx>uc</span><span class=p>.</span><span class=nx>config</span><span class=p>.</span><span class=nx>Load</span><span class=p>.</span><span class=nx>UpdateNodeStatusWorkers</span><span class=p>);</span> <span class=nx>i</span><span class=o>++</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>		<span class=k>go</span> <span class=nx>uc</span><span class=p>.</span><span class=nf>updateNodeStatus</span><span class=p>()</span>
+</span></span><span class=line><span class=cl>	<span class=p>}</span>
+</span></span></code></pre></td></tr></table></div></div><p>UpdateNodeStatusWorkers 数量根据配置文件时可配置的。
+所有的配置项如下：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-yaml data-lang=yaml><span class=line><span class=cl><span class=w>      </span><span class=nt>deletePodWorkers</span><span class=p>:</span><span class=w> </span><span class=m>4</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span><span class=nt>queryConfigMapWorkers</span><span class=p>:</span><span class=w> </span><span class=m>4</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span><span class=nt>queryEndpointsWorkers</span><span class=p>:</span><span class=w> </span><span class=m>4</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span><span class=nt>queryNodeWorkers</span><span class=p>:</span><span class=w> </span><span class=m>4</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span><span class=nt>queryPersistentVolumeClaimWorkers</span><span class=p>:</span><span class=w> </span><span class=m>4</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span><span class=nt>queryPersistentVolumeWorkers</span><span class=p>:</span><span class=w> </span><span class=m>4</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span><span class=nt>querySecretWorkers</span><span class=p>:</span><span class=w> </span><span class=m>4</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span><span class=nt>queryServiceWorkers</span><span class=p>:</span><span class=w> </span><span class=m>4</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span><span class=nt>queryVolumeAttachmentWorkers</span><span class=p>:</span><span class=w> </span><span class=m>4</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span><span class=nt>updateNodeStatusWorkers</span><span class=p>:</span><span class=w> </span><span class=m>1</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span><span class=nt>updateNodeWorkers</span><span class=p>:</span><span class=w> </span><span class=m>4</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span><span class=nt>updatePodStatusWorkers</span><span class=p>:</span><span class=w> </span><span class=m>1</span><span class=w>
+</span></span></span></code></pre></td></tr></table></div></div><p>以updateNodeStatus为例，做个简单分析：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=kd>func</span> <span class=p>(</span><span class=nx>uc</span> <span class=o>*</span><span class=nx>UpstreamController</span><span class=p>)</span> <span class=nf>updateNodeStatus</span><span class=p>(){</span>
+</span></span><span class=line><span class=cl>    <span class=k>select</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>		<span class=k>case</span> <span class=o>&lt;-</span><span class=nx>beehiveContext</span><span class=p>.</span><span class=nf>Done</span><span class=p>():</span>
+</span></span><span class=line><span class=cl>			<span class=nx>klog</span><span class=p>.</span><span class=nf>Warning</span><span class=p>(</span><span class=s>&#34;stop updateNodeStatus&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>			<span class=k>return</span>
+</span></span><span class=line><span class=cl>		<span class=k>case</span> <span class=nx>msg</span> <span class=o>:=</span> <span class=o>&lt;-</span><span class=nx>uc</span><span class=p>.</span><span class=nx>nodeStatusChan</span><span class=p>:</span> <span class=c1>// 接收消息并处理
+</span></span></span><span class=line><span class=cl><span class=c1></span>            <span class=o>...</span>
+</span></span><span class=line><span class=cl>            <span class=k>switch</span> <span class=nx>msg</span><span class=p>.</span><span class=nf>GetOperation</span><span class=p>()</span> <span class=p>{</span> <span class=c1>// 解析消息的动作
+</span></span></span><span class=line><span class=cl><span class=c1></span>			<span class=k>case</span> <span class=nx>model</span><span class=p>.</span><span class=nx>InsertOperation</span><span class=p>:</span> 
+</span></span><span class=line><span class=cl>            <span class=o>...</span>
+</span></span><span class=line><span class=cl>            <span class=k>case</span> <span class=nx>model</span><span class=p>.</span><span class=nx>UpdateOperation</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>            <span class=nx>getNode</span><span class=p>,</span> <span class=nx>err</span> <span class=o>:=</span> <span class=nx>uc</span><span class=p>.</span><span class=nx>kubeClient</span><span class=p>.</span><span class=nf>CoreV1</span><span class=p>().</span><span class=nf>Nodes</span><span class=p>().</span><span class=nf>Get</span><span class=p>(</span><span class=nx>context</span><span class=p>.</span><span class=nf>Background</span><span class=p>(),</span> <span class=nx>name</span><span class=p>,</span> <span class=nx>metaV1</span><span class=p>.</span><span class=nx>GetOptions</span><span class=p>{})</span> <span class=c1>// 调用kubeClient将消息同步到k8s
+</span></span></span><span class=line><span class=cl><span class=c1></span>            <span class=o>...</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span></code></pre></td></tr></table></div></div><p>至此，消息的上下行逻辑，大概明了了。</p></div><footer class=post-footer><div class=post-tags><a href=/tags/kubeedge/>kubeedge</a>
+<a href=/tags/k8s/>k8s</a></div><nav class=post-nav><a class=next href=/post/kubeedge-k8s-pod-dns/><span class="next-text nav-default">Kubeedge K8s Pod Dns 创建流程和查询流程</span>
+<span class="next-text nav-mobile">Next</span>
+<i class="iconfont icon-right"></i></a></nav></footer></article></div><div id=vcomments></div><script src=//cdn1.lncld.net/static/js/3.0.4/av-min.js></script>
+<script src=//unpkg.com/valine/dist/Valine.min.js></script>
+<script type=text/javascript>new Valine({el:"#vcomments",appId:"fb6qCfVYGmIrC87K3STOS3V8-gzGzoHsz",appKey:"FilghKK7HHC4hMQHxhR90dDE",notify:!1,verify:!1,avatar:"mm",placeholder:"说点什么吧...",visitor:!1})</script></div></main><footer id=footer class=footer><div class=social-links><a href=mailto:hanglinux@163.com class="iconfont icon-email" title=email></a>
+<a href=https://github.com/fridayhub class="iconfont icon-github" title=github></a>
+<a href=https://fridayhub.github.io/index.xml type=application/rss+xml class="iconfont icon-rss" title=rss></a></div><div class=copyright><span class=power-by>Powered by <a class=hexo-link href=https://gohugo.io>Hugo</a></span>
+<span class=division>|</span>
+<span class=theme-info>Theme -
+<a class=theme-link href=https://github.com/olOwOlo/hugo-theme-even>Even</a></span><div class=busuanzi-footer><span id=busuanzi_container_site_pv>site pv: <span id=busuanzi_value_site_pv><img src=/img/spinner.svg alt=spinner.svg></span></span>
+<span class=division>|</span>
+<span id=busuanzi_container_site_uv>site uv: <span id=busuanzi_value_site_uv><img src=/img/spinner.svg alt=spinner.svg></span></span></div><span class=copyright-year>&copy;
+2017 -
+2022
+<span class=heart><i class="iconfont icon-heart"></i></span>
+<span class=author>friday</span></span></div></footer><div class=back-to-top id=back-to-top><i class="iconfont icon-up"></i></div></div><script src=https://cdn.jsdelivr.net/npm/jquery@3.2.1/dist/jquery.min.js integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin=anonymous></script>
+<script src=https://cdn.jsdelivr.net/npm/slideout@1.0.1/dist/slideout.min.js integrity="sha256-t+zJ/g8/KXIJMjSVQdnibt4dlaDxc9zXr/9oNPeWqdg=" crossorigin=anonymous></script>
+<script src=https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.js integrity="sha256-XVLffZaxoWfGUEbdzuLi7pwaUJv1cecsQJQqGLe7axY=" crossorigin=anonymous></script>
+<script type=text/javascript src=/js/main.min.30dad356188cdaba5047112eaa8bf5e85cb14ae7e803337403591fce94a531a0.js></script></body></html>

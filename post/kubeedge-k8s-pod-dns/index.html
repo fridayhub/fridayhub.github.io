@@ -1,141 +1,14 @@
-<!doctype html><html lang=en>
-<head>
-<meta charset=utf-8>
-<meta http-equiv=x-ua-compatible content="IE=edge,chrome=1">
-<title>Kubeedge K8s Pod Dns 创建流程和查询流程 - Friday - Here I record my experience</title>
-<meta name=renderer content="webkit">
-<meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1">
-<meta http-equiv=cache-control content="no-transform">
-<meta http-equiv=cache-control content="no-siteapp">
-<meta name=theme-color content="#f8f5ec">
-<meta name=msapplication-navbutton-color content="#f8f5ec">
-<meta name=apple-mobile-web-app-capable content="yes">
-<meta name=apple-mobile-web-app-status-bar-style content="#f8f5ec">
-<meta name=author content="Friday"><meta name=description content><meta name=keywords content="kubeedge,k8s">
-<meta name=generator content="Hugo 0.92.0 with theme even">
-<link rel=canonical href=https://fridayhub.github.io/post/kubeedge-k8s-pod-dns/>
-<link rel=apple-touch-icon sizes=180x180 href=/apple-touch-icon.png>
-<link rel=icon type=image/png sizes=32x32 href=/favicon-32x32.png>
-<link rel=icon type=image/png sizes=16x16 href=/favicon-16x16.png>
-<link rel=manifest href=/manifest.json>
-<link rel=mask-icon href=/safari-pinned-tab.svg color=#5bbad5>
-<script async src=//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js></script>
-<meta name=referrer content="no-referrer-when-downgrade">
-<link href=/sass/main.min.c2803d17ea439bb194b104ce262b40c9118b45b7b108e27dadf43e96dd6664a3.css rel=stylesheet>
-<link rel=stylesheet href=https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.css integrity="sha256-7TyXnr2YU040zfSP+rEcz29ggW4j56/ujTPwjMzyqFY=" crossorigin=anonymous>
-<meta property="og:title" content="Kubeedge K8s Pod Dns 创建流程和查询流程">
-<meta property="og:description" content>
-<meta property="og:type" content="article">
-<meta property="og:url" content="https://fridayhub.github.io/post/kubeedge-k8s-pod-dns/"><meta property="article:section" content="post">
-<meta property="article:published_time" content="2022-01-13T15:52:04+08:00">
-<meta property="article:modified_time" content="2022-01-13T15:52:04+08:00">
-<meta itemprop=name content="Kubeedge K8s Pod Dns 创建流程和查询流程">
-<meta itemprop=description content><meta itemprop=datePublished content="2022-01-13T15:52:04+08:00">
-<meta itemprop=dateModified content="2022-01-13T15:52:04+08:00">
-<meta itemprop=wordCount content="1151">
-<meta itemprop=keywords content="kubeedge,k8s,"><meta name=twitter:card content="summary">
-<meta name=twitter:title content="Kubeedge K8s Pod Dns 创建流程和查询流程">
-<meta name=twitter:description content><!--[if lte IE 9]><script src=https://cdnjs.cloudflare.com/ajax/libs/classlist/1.1.20170427/classList.min.js></script><![endif]--><!--[if lt IE 9]><script src=https://cdn.jsdelivr.net/npm/html5shiv@3.7.3/dist/html5shiv.min.js></script>
-<script src=https://cdn.jsdelivr.net/npm/respond.js@1.4.2/dest/respond.min.js></script><![endif]-->
-</head>
-<body>
-<div id=mobile-navbar class=mobile-navbar>
-<div class=mobile-header-logo>
-<a href=/ class=logo>Friday</a>
-</div>
-<div class=mobile-navbar-icon>
+<!doctype html><html lang=en><head><meta charset=utf-8><meta http-equiv=x-ua-compatible content="IE=edge,chrome=1"><title>Kubeedge K8s Pod Dns 创建流程和查询流程 - Friday - Here I record my experience</title><meta name=renderer content="webkit"><meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1"><meta http-equiv=cache-control content="no-transform"><meta http-equiv=cache-control content="no-siteapp"><meta name=theme-color content="#f8f5ec"><meta name=msapplication-navbutton-color content="#f8f5ec"><meta name=apple-mobile-web-app-capable content="yes"><meta name=apple-mobile-web-app-status-bar-style content="#f8f5ec"><meta name=author content="Friday"><meta name=description content><meta name=keywords content="kubeedge,k8s"><meta name=generator content="Hugo 0.94.2 with theme even"><link rel=canonical href=https://fridayhub.github.io/post/kubeedge-k8s-pod-dns/><link rel=apple-touch-icon sizes=180x180 href=/apple-touch-icon.png><link rel=icon type=image/png sizes=32x32 href=/favicon-32x32.png><link rel=icon type=image/png sizes=16x16 href=/favicon-16x16.png><link rel=manifest href=/manifest.json><link rel=mask-icon href=/safari-pinned-tab.svg color=#5bbad5><script async src=//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js></script><meta name=referrer content="no-referrer-when-downgrade"><link href=/sass/main.min.c2803d17ea439bb194b104ce262b40c9118b45b7b108e27dadf43e96dd6664a3.css rel=stylesheet><link rel=stylesheet href=https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.css integrity="sha256-7TyXnr2YU040zfSP+rEcz29ggW4j56/ujTPwjMzyqFY=" crossorigin=anonymous><meta property="og:title" content="Kubeedge K8s Pod Dns 创建流程和查询流程"><meta property="og:description" content><meta property="og:type" content="article"><meta property="og:url" content="https://fridayhub.github.io/post/kubeedge-k8s-pod-dns/"><meta property="article:section" content="post"><meta property="article:published_time" content="2022-01-13T15:52:04+08:00"><meta property="article:modified_time" content="2022-01-13T15:52:04+08:00"><meta itemprop=name content="Kubeedge K8s Pod Dns 创建流程和查询流程"><meta itemprop=description content><meta itemprop=datePublished content="2022-01-13T15:52:04+08:00"><meta itemprop=dateModified content="2022-01-13T15:52:04+08:00"><meta itemprop=wordCount content="1150"><meta itemprop=keywords content="kubeedge,k8s,"><meta name=twitter:card content="summary"><meta name=twitter:title content="Kubeedge K8s Pod Dns 创建流程和查询流程"><meta name=twitter:description content><!--[if lte IE 9]><script src=https://cdnjs.cloudflare.com/ajax/libs/classlist/1.1.20170427/classList.min.js></script><![endif]--><!--[if lt IE 9]><script src=https://cdn.jsdelivr.net/npm/html5shiv@3.7.3/dist/html5shiv.min.js></script>
+<script src=https://cdn.jsdelivr.net/npm/respond.js@1.4.2/dest/respond.min.js></script><![endif]--></head><body><div id=mobile-navbar class=mobile-navbar><div class=mobile-header-logo><a href=/ class=logo>Friday</a></div><div class=mobile-navbar-icon><span></span>
 <span></span>
-<span></span>
-<span></span>
-</div>
-</div>
-<nav id=mobile-menu class="mobile-menu slideout-menu">
-<ul class=mobile-menu-list>
-<a href=/>
-<li class=mobile-menu-item>Home</li>
-</a><a href=/post/>
-<li class=mobile-menu-item>Archives</li>
-</a><a href=/tags/>
-<li class=mobile-menu-item>Tags</li>
-</a><a href=/categories/>
-<li class=mobile-menu-item>Categories</li>
-</a><a href=/about/>
-<li class=mobile-menu-item>About</li>
-</a>
-</ul>
-</nav>
-<div class=container id=mobile-panel>
-<header id=header class=header>
-<div class=logo-wrapper>
-<a href=/ class=logo>Friday</a>
-</div>
-<nav class=site-navbar>
-<ul id=menu class=menu>
-<li class=menu-item>
-<a class=menu-item-link href=/>Home</a>
-</li><li class=menu-item>
-<a class=menu-item-link href=/post/>Archives</a>
-</li><li class=menu-item>
-<a class=menu-item-link href=/tags/>Tags</a>
-</li><li class=menu-item>
-<a class=menu-item-link href=/categories/>Categories</a>
-</li><li class=menu-item>
-<a class=menu-item-link href=/about/>About</a>
-</li>
-</ul>
-</nav>
-</header>
-<main id=main class=main>
-<div class=content-wrapper>
-<div id=content class=content>
-<article class=post>
-<header class=post-header>
-<h1 class=post-title>Kubeedge K8s Pod Dns 创建流程和查询流程</h1>
-<div class=post-meta>
-<span class=post-time> 2022-01-13 15:52:04 </span>
-<div class=post-category>
-<a href=/categories/kubeedge/> kubeedge </a>
-<a href=/categories/k8s/> k8s </a>
-</div>
-<span class=more-meta> 1151 words </span>
-<span class=more-meta> 3 mins read </span>
-<span id=busuanzi_container_page_pv class=more-meta> <span id=busuanzi_value_page_pv><img src=/img/spinner.svg alt=spinner.svg></span> times read </span>
-</div>
-</header>
-<div class=post-toc id=post-toc>
-<h2 class=post-toc-title>Contents</h2>
-<div class=post-toc-content>
-<nav id=TableOfContents></nav>
-</div>
-</div>
-<div class=post-content>
-<p>本文主要分析k8s/kubeedge在创建pod容器的时候，怎么指定dns的。</p>
-<p>如果想指定node创建容器的dns，一般在kublet/edgecore 的配置文件中指定dns信息：</p>
-<div class=highlight><div class=chroma>
-<table class=lntable><tr><td class=lntd>
-<pre tabindex=0 class=chroma><code><span class=lnt>1
+<span></span></div></div><nav id=mobile-menu class="mobile-menu slideout-menu"><ul class=mobile-menu-list><a href=/><li class=mobile-menu-item>Home</li></a><a href=/post/><li class=mobile-menu-item>Archives</li></a><a href=/tags/><li class=mobile-menu-item>Tags</li></a><a href=/categories/><li class=mobile-menu-item>Categories</li></a><a href=/about/><li class=mobile-menu-item>About</li></a></ul></nav><div class=container id=mobile-panel><header id=header class=header><div class=logo-wrapper><a href=/ class=logo>Friday</a></div><nav class=site-navbar><ul id=menu class=menu><li class=menu-item><a class=menu-item-link href=/>Home</a></li><li class=menu-item><a class=menu-item-link href=/post/>Archives</a></li><li class=menu-item><a class=menu-item-link href=/tags/>Tags</a></li><li class=menu-item><a class=menu-item-link href=/categories/>Categories</a></li><li class=menu-item><a class=menu-item-link href=/about/>About</a></li></ul></nav></header><main id=main class=main><div class=content-wrapper><div id=content class=content><article class=post><header class=post-header><h1 class=post-title>Kubeedge K8s Pod Dns 创建流程和查询流程</h1><div class=post-meta><span class=post-time>2022-01-13 15:52:04</span><div class=post-category><a href=/categories/kubeedge/>kubeedge</a>
+<a href=/categories/k8s/>k8s</a></div><span class=more-meta>1150 words</span>
+<span class=more-meta>3 mins read</span>
+<span id=busuanzi_container_page_pv class=more-meta><span id=busuanzi_value_page_pv><img src=/img/spinner.svg alt=spinner.svg></span> times read</span></div></header><div class=post-toc id=post-toc><h2 class=post-toc-title>Contents</h2><div class=post-toc-content><nav id=TableOfContents></nav></div></div><div class=post-content><p>本文主要分析k8s/kubeedge在创建pod容器的时候，怎么指定dns的。</p><p>如果想指定node创建容器的dns，一般在kublet/edgecore 的配置文件中指定dns信息：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
 </span><span class=lnt>2
-</span></code></pre></td>
-<td class=lntd>
-<pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>clusterDNS: 169.254.96.16
-clusterDomain: cluster.local
-</code></pre></td></tr></table>
-</div>
-</div><p>当node接收到创建pod的消息，执行如下流程：</p>
-<p>k8s.io/kubernetes/pkg/kubelet/kuberuntime/kuberuntime_manager.go</p>
-<ol>
-<li>Compute sandbox and container changes.</li>
-<li>Kill pod sandbox if necessary.</li>
-<li>Kill any containers that should not be running.</li>
-<li>Create sandbox if necessary.</li>
-<li>Create ephemeral containers.</li>
-<li>Create init containers.</li>
-<li>Create normal containers.</li>
-</ol>
-<p>配置dns将要启动的dns，发生在第四步。</p>
-<div class=highlight><div class=chroma>
-<table class=lntable><tr><td class=lntd>
-<pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>clusterDNS: 169.254.96.16
+</span></span><span class=line><span class=cl>clusterDomain: cluster.local
+</span></span></code></pre></td></tr></table></div></div><p>当node接收到创建pod的消息，执行如下流程：</p><p>k8s.io/kubernetes/pkg/kubelet/kuberuntime/kuberuntime_manager.go</p><ol><li>Compute sandbox and container changes.</li><li>Kill pod sandbox if necessary.</li><li>Kill any containers that should not be running.</li><li>Create sandbox if necessary.</li><li>Create ephemeral containers.</li><li>Create init containers.</li><li>Create normal containers.</li></ol><p>配置dns将要启动的dns，发生在第四步。</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
 </span><span class=lnt> 2
 </span><span class=lnt> 3
 </span><span class=lnt> 4
@@ -145,79 +18,48 @@ clusterDomain: cluster.local
 </span><span class=lnt> 8
 </span><span class=lnt> 9
 </span><span class=lnt>10
-</span></code></pre></td>
-<td class=lntd>
-<pre tabindex=0 class=chroma><code class=language-golang data-lang=golang>    <span class=c1>// Get podSandboxConfig for containers to start.
-</span><span class=c1></span>	<span class=nx>configPodSandboxResult</span> <span class=o>:=</span> <span class=nx>kubecontainer</span><span class=p>.</span><span class=nf>NewSyncResult</span><span class=p>(</span><span class=nx>kubecontainer</span><span class=p>.</span><span class=nx>ConfigPodSandbox</span><span class=p>,</span> <span class=nx>podSandboxID</span><span class=p>)</span>
-	<span class=nx>result</span><span class=p>.</span><span class=nf>AddSyncResult</span><span class=p>(</span><span class=nx>configPodSandboxResult</span><span class=p>)</span>
-	<span class=nx>podSandboxConfig</span><span class=p>,</span> <span class=nx>err</span> <span class=o>:=</span> <span class=nx>m</span><span class=p>.</span><span class=nf>generatePodSandboxConfig</span><span class=p>(</span><span class=nx>pod</span><span class=p>,</span> <span class=nx>podContainerChanges</span><span class=p>.</span><span class=nx>Attempt</span><span class=p>)</span>
-	<span class=k>if</span> <span class=nx>err</span> <span class=o>!=</span> <span class=kc>nil</span> <span class=p>{</span>
-		<span class=nx>message</span> <span class=o>:=</span> <span class=nx>fmt</span><span class=p>.</span><span class=nf>Sprintf</span><span class=p>(</span><span class=s>&#34;GeneratePodSandboxConfig for pod %q failed: %v&#34;</span><span class=p>,</span> <span class=nx>format</span><span class=p>.</span><span class=nf>Pod</span><span class=p>(</span><span class=nx>pod</span><span class=p>),</span> <span class=nx>err</span><span class=p>)</span>
-		<span class=nx>klog</span><span class=p>.</span><span class=nf>ErrorS</span><span class=p>(</span><span class=nx>err</span><span class=p>,</span> <span class=s>&#34;GeneratePodSandboxConfig for pod failed&#34;</span><span class=p>,</span> <span class=s>&#34;pod&#34;</span><span class=p>,</span> <span class=nx>klog</span><span class=p>.</span><span class=nf>KObj</span><span class=p>(</span><span class=nx>pod</span><span class=p>))</span>
-		<span class=nx>configPodSandboxResult</span><span class=p>.</span><span class=nf>Fail</span><span class=p>(</span><span class=nx>kubecontainer</span><span class=p>.</span><span class=nx>ErrConfigPodSandbox</span><span class=p>,</span> <span class=nx>message</span><span class=p>)</span>
-		<span class=k>return</span>
-	<span class=p>}</span>
-</code></pre></td></tr></table>
-</div>
-</div><p>跟踪<code>m.generatePodSandboxConfig(pod, podContainerChanges.Attempt)</code>:</p>
-<p>k8s.io/kubernetes/pkg/kubelet/kuberuntime/kuberuntime_sandbox.go</p>
-<div class=highlight><div class=chroma>
-<table class=lntable><tr><td class=lntd>
-<pre tabindex=0 class=chroma><code><span class=lnt>1
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-golang data-lang=golang><span class=line><span class=cl>    <span class=c1>// Get podSandboxConfig for containers to start.
+</span></span></span><span class=line><span class=cl><span class=c1></span>	<span class=nx>configPodSandboxResult</span> <span class=o>:=</span> <span class=nx>kubecontainer</span><span class=p>.</span><span class=nf>NewSyncResult</span><span class=p>(</span><span class=nx>kubecontainer</span><span class=p>.</span><span class=nx>ConfigPodSandbox</span><span class=p>,</span> <span class=nx>podSandboxID</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>	<span class=nx>result</span><span class=p>.</span><span class=nf>AddSyncResult</span><span class=p>(</span><span class=nx>configPodSandboxResult</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>	<span class=nx>podSandboxConfig</span><span class=p>,</span> <span class=nx>err</span> <span class=o>:=</span> <span class=nx>m</span><span class=p>.</span><span class=nf>generatePodSandboxConfig</span><span class=p>(</span><span class=nx>pod</span><span class=p>,</span> <span class=nx>podContainerChanges</span><span class=p>.</span><span class=nx>Attempt</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>	<span class=k>if</span> <span class=nx>err</span> <span class=o>!=</span> <span class=kc>nil</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>		<span class=nx>message</span> <span class=o>:=</span> <span class=nx>fmt</span><span class=p>.</span><span class=nf>Sprintf</span><span class=p>(</span><span class=s>&#34;GeneratePodSandboxConfig for pod %q failed: %v&#34;</span><span class=p>,</span> <span class=nx>format</span><span class=p>.</span><span class=nf>Pod</span><span class=p>(</span><span class=nx>pod</span><span class=p>),</span> <span class=nx>err</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>		<span class=nx>klog</span><span class=p>.</span><span class=nf>ErrorS</span><span class=p>(</span><span class=nx>err</span><span class=p>,</span> <span class=s>&#34;GeneratePodSandboxConfig for pod failed&#34;</span><span class=p>,</span> <span class=s>&#34;pod&#34;</span><span class=p>,</span> <span class=nx>klog</span><span class=p>.</span><span class=nf>KObj</span><span class=p>(</span><span class=nx>pod</span><span class=p>))</span>
+</span></span><span class=line><span class=cl>		<span class=nx>configPodSandboxResult</span><span class=p>.</span><span class=nf>Fail</span><span class=p>(</span><span class=nx>kubecontainer</span><span class=p>.</span><span class=nx>ErrConfigPodSandbox</span><span class=p>,</span> <span class=nx>message</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>		<span class=k>return</span>
+</span></span><span class=line><span class=cl>	<span class=p>}</span>
+</span></span></code></pre></td></tr></table></div></div><p>跟踪<code>m.generatePodSandboxConfig(pod, podContainerChanges.Attempt)</code>:</p><p>k8s.io/kubernetes/pkg/kubelet/kuberuntime/kuberuntime_sandbox.go</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
 </span><span class=lnt>2
 </span><span class=lnt>3
 </span><span class=lnt>4
-</span></code></pre></td>
-<td class=lntd>
-<pre tabindex=0 class=chroma><code class=language-golang data-lang=golang><span class=nx>dnsConfig</span><span class=p>,</span> <span class=nx>err</span> <span class=o>:=</span> <span class=nx>m</span><span class=p>.</span><span class=nx>runtimeHelper</span><span class=p>.</span><span class=nf>GetPodDNS</span><span class=p>(</span><span class=nx>pod</span><span class=p>)</span>
-	<span class=k>if</span> <span class=nx>err</span> <span class=o>!=</span> <span class=kc>nil</span> <span class=p>{</span>
-		<span class=k>return</span> <span class=kc>nil</span><span class=p>,</span> <span class=nx>err</span>
-	<span class=p>}</span>
-</code></pre></td></tr></table>
-</div>
-</div><p>调用到kubelet代码中：</p>
-<p>k8s.io/kubernetes/pkg/kubelet/network/dns/dns.go</p>
-<div class=highlight><div class=chroma>
-<table class=lntable><tr><td class=lntd>
-<pre tabindex=0 class=chroma><code><span class=lnt>1
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-golang data-lang=golang><span class=line><span class=cl><span class=nx>dnsConfig</span><span class=p>,</span> <span class=nx>err</span> <span class=o>:=</span> <span class=nx>m</span><span class=p>.</span><span class=nx>runtimeHelper</span><span class=p>.</span><span class=nf>GetPodDNS</span><span class=p>(</span><span class=nx>pod</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>	<span class=k>if</span> <span class=nx>err</span> <span class=o>!=</span> <span class=kc>nil</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>		<span class=k>return</span> <span class=kc>nil</span><span class=p>,</span> <span class=nx>err</span>
+</span></span><span class=line><span class=cl>	<span class=p>}</span>
+</span></span></code></pre></td></tr></table></div></div><p>调用到kubelet代码中：</p><p>k8s.io/kubernetes/pkg/kubelet/network/dns/dns.go</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
 </span><span class=lnt>2
 </span><span class=lnt>3
 </span><span class=lnt>4
 </span><span class=lnt>5
 </span><span class=lnt>6
 </span><span class=lnt>7
-</span></code></pre></td>
-<td class=lntd>
-<pre tabindex=0 class=chroma><code class=language-golang data-lang=golang><span class=nx>dnsConfig</span><span class=p>,</span> <span class=nx>err</span> <span class=o>:=</span> <span class=nx>c</span><span class=p>.</span><span class=nf>getHostDNSConfig</span><span class=p>()</span>  <span class=c1>// 首先读取本地dns配置文件 一般为 /etc/resolv.conf
-</span><span class=c1></span><span class=o>...</span>
-<span class=nx>dnsType</span><span class=p>,</span> <span class=nx>err</span> <span class=o>:=</span> <span class=nf>getPodDNSType</span><span class=p>(</span><span class=nx>pod</span><span class=p>)</span> <span class=c1>// 判断pod的dns type, 如果出错，默认为：podDNSCluster
-</span><span class=c1></span><span class=o>...</span> 
-<span class=nx>dnsConfig</span><span class=p>.</span><span class=nx>Searches</span> <span class=p>=</span> <span class=nx>c</span><span class=p>.</span><span class=nf>generateSearchesForDNSClusterFirst</span><span class=p>(</span><span class=nx>dnsConfig</span><span class=p>.</span><span class=nx>Searches</span><span class=p>,</span> <span class=nx>pod</span><span class=p>)</span> <span class=c1>// 更新dns search信息
-</span><span class=c1></span><span class=o>...</span>
-<span class=nx>c</span><span class=p>.</span><span class=nf>formDNSConfigFitsLimits</span><span class=p>(</span><span class=nx>dnsConfig</span><span class=p>,</span> <span class=nx>pod</span><span class=p>)</span> <span class=c1>// 如果dns服务器信息大于三项，取前三项，如果server信息大于六项，取前六项，防止将来创建的容器中 /etc/resolv.conf 过大，影响查询效率
-</span></code></pre></td></tr></table>
-</div>
-</div><p>/etc/resolv.conf文件中的search项作用</p>
-<div class=highlight><div class=chroma>
-<table class=lntable><tr><td class=lntd>
-<pre tabindex=0 class=chroma><code><span class=lnt>1
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-golang data-lang=golang><span class=line><span class=cl><span class=nx>dnsConfig</span><span class=p>,</span> <span class=nx>err</span> <span class=o>:=</span> <span class=nx>c</span><span class=p>.</span><span class=nf>getHostDNSConfig</span><span class=p>()</span>  <span class=c1>// 首先读取本地dns配置文件 一般为 /etc/resolv.conf
+</span></span></span><span class=line><span class=cl><span class=c1></span><span class=o>...</span>
+</span></span><span class=line><span class=cl><span class=nx>dnsType</span><span class=p>,</span> <span class=nx>err</span> <span class=o>:=</span> <span class=nf>getPodDNSType</span><span class=p>(</span><span class=nx>pod</span><span class=p>)</span> <span class=c1>// 判断pod的dns type, 如果出错，默认为：podDNSCluster
+</span></span></span><span class=line><span class=cl><span class=c1></span><span class=o>...</span> 
+</span></span><span class=line><span class=cl><span class=nx>dnsConfig</span><span class=p>.</span><span class=nx>Searches</span> <span class=p>=</span> <span class=nx>c</span><span class=p>.</span><span class=nf>generateSearchesForDNSClusterFirst</span><span class=p>(</span><span class=nx>dnsConfig</span><span class=p>.</span><span class=nx>Searches</span><span class=p>,</span> <span class=nx>pod</span><span class=p>)</span> <span class=c1>// 更新dns search信息
+</span></span></span><span class=line><span class=cl><span class=c1></span><span class=o>...</span>
+</span></span><span class=line><span class=cl><span class=nx>c</span><span class=p>.</span><span class=nf>formDNSConfigFitsLimits</span><span class=p>(</span><span class=nx>dnsConfig</span><span class=p>,</span> <span class=nx>pod</span><span class=p>)</span> <span class=c1>// 如果dns服务器信息大于三项，取前三项，如果server信息大于六项，取前六项，防止将来创建的容器中 /etc/resolv.conf 过大，影响查询效率
+</span></span></span></code></pre></td></tr></table></div></div><p>/etc/resolv.conf文件中的search项作用</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
 </span><span class=lnt>2
 </span><span class=lnt>3
 </span><span class=lnt>4
-</span></code></pre></td>
-<td class=lntd>
-<pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>cat /etc/resolv.conf 
-nameserver 169.254.96.16
-search edgezone.svc.cluster.local svc.cluster.local cluster.local
-options ndots:5
-</code></pre></td></tr></table>
-</div>
-</div><p>如上dns配置文件，当我们执行：
-<code>telnet tcp-echo-cloud-svc 2701</code></p>
-<p>dns查询流程：</p>
-<div class=highlight><div class=chroma>
-<table class=lntable><tr><td class=lntd>
-<pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>cat /etc/resolv.conf 
+</span></span><span class=line><span class=cl>nameserver 169.254.96.16
+</span></span><span class=line><span class=cl>search edgezone.svc.cluster.local svc.cluster.local cluster.local
+</span></span><span class=line><span class=cl>options ndots:5
+</span></span></code></pre></td></tr></table></div></div><p>如上dns配置文件，当我们执行：
+<code>telnet tcp-echo-cloud-svc 2701</code></p><p>dns查询流程：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
 </span><span class=lnt> 2
 </span><span class=lnt> 3
 </span><span class=lnt> 4
@@ -241,99 +83,52 @@ options ndots:5
 </span><span class=lnt>22
 </span><span class=lnt>23
 </span><span class=lnt>24
-</span><span class=lnt>25
-</span></code></pre></td>
-<td class=lntd>
-<pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=o>[</span>INFO<span class=o>]</span> 172.17.0.3:44574 - <span class=m>2</span> <span class=s2>&#34;AAAA IN tcp-echo-cloud-svc.edgezone.svc.cluster.local. udp 63 false 512&#34;</span> NXDOMAIN qr,aa,rd <span class=m>156</span> 0.000615248s
-<span class=o>[</span>INFO<span class=o>]</span> 172.17.0.3:45200 - <span class=m>3</span> <span class=s2>&#34;AAAA IN tcp-echo-cloud-svc.svc.cluster.local. udp 54 false 512&#34;</span> NXDOMAIN qr,aa,rd <span class=m>147</span> 0.000424578s
-<span class=o>[</span>INFO<span class=o>]</span> 172.17.0.3:59917 - <span class=m>4</span> <span class=s2>&#34;AAAA IN tcp-echo-cloud-svc.cluster.local. udp 50 false 512&#34;</span> NXDOMAIN qr,aa,rd <span class=m>143</span> 0.000261174s
-<span class=o>[</span>INFO<span class=o>]</span> 172.17.0.3:57148 - <span class=m>5</span> <span class=s2>&#34;AAAA IN tcp-echo-cloud-svc. udp 36 false 512&#34;</span> SERVFAIL qr,rd,ra <span class=m>36</span> 0.004129322s
-<span class=o>[</span>INFO<span class=o>]</span> 172.17.0.3:44422 - <span class=m>6</span> <span class=s2>&#34;AAAA IN tcp-echo-cloud-svc.edgezone.svc.cluster.local. udp 63 false 512&#34;</span> NXDOMAIN qr,aa,rd <span class=m>156</span> 0.000156824s
-<span class=o>[</span>INFO<span class=o>]</span> 172.17.0.3:35644 - <span class=m>7</span> <span class=s2>&#34;AAAA IN tcp-echo-cloud-svc.svc.cluster.local. udp 54 false 512&#34;</span> NXDOMAIN qr,aa,rd <span class=m>147</span> 0.000154486s
-<span class=o>[</span>INFO<span class=o>]</span> 172.17.0.3:51536 - <span class=m>8</span> <span class=s2>&#34;AAAA IN tcp-echo-cloud-svc.cluster.local. udp 50 false 512&#34;</span> NXDOMAIN qr,aa,rd <span class=m>143</span> 0.000138751s
-<span class=o>[</span>INFO<span class=o>]</span> 172.17.0.3:49727 - <span class=m>9</span> <span class=s2>&#34;AAAA IN tcp-echo-cloud-svc. udp 36 false 512&#34;</span> SERVFAIL qr,aa,rd,ra <span class=m>36</span> 0.000209603s
-<span class=o>[</span>INFO<span class=o>]</span> 172.17.0.3:54476 - <span class=m>10</span> <span class=s2>&#34;AAAA IN tcp-echo-cloud-svc.edgezone.svc.cluster.local. udp 63 false 512&#34;</span> NXDOMAIN qr,aa,rd <span class=m>156</span> 0.000125377s
-<span class=o>[</span>INFO<span class=o>]</span> 172.17.0.3:55879 - <span class=m>11</span> <span class=s2>&#34;AAAA IN tcp-echo-cloud-svc.svc.cluster.local. udp 54 false 512&#34;</span> NXDOMAIN qr,aa,rd <span class=m>147</span> 0.000141351s
-<span class=o>[</span>INFO<span class=o>]</span> 172.17.0.3:55681 - <span class=m>12</span> <span class=s2>&#34;AAAA IN tcp-echo-cloud-svc.cluster.local. udp 50 false 512&#34;</span> NXDOMAIN qr,aa,rd <span class=m>143</span> 0.000124606s
-<span class=o>[</span>INFO<span class=o>]</span> 172.17.0.3:48394 - <span class=m>13</span> <span class=s2>&#34;AAAA IN tcp-echo-cloud-svc. udp 36 false 512&#34;</span> SERVFAIL qr,aa,rd,ra <span class=m>36</span> 0.000126711s
-<span class=o>[</span>INFO<span class=o>]</span> 172.17.0.3:42212 - <span class=m>14</span> <span class=s2>&#34;A IN tcp-echo-cloud-svc.edgezone.svc.cluster.local. udp 63 false 512&#34;</span> NXDOMAIN qr,aa,rd <span class=m>156</span> 0.000261496s
-<span class=o>[</span>INFO<span class=o>]</span> 172.17.0.3:45326 - <span class=m>15</span> <span class=s2>&#34;A IN tcp-echo-cloud-svc.svc.cluster.local. udp 54 false 512&#34;</span> NXDOMAIN qr,aa,rd <span class=m>147</span> 0.000243659s
-<span class=o>[</span>INFO<span class=o>]</span> 172.17.0.3:57336 - <span class=m>16</span> <span class=s2>&#34;A IN tcp-echo-cloud-svc.cluster.local. udp 50 false 512&#34;</span> NXDOMAIN qr,aa,rd <span class=m>143</span> 0.000234824s
-<span class=o>[</span>INFO<span class=o>]</span> 172.17.0.3:58830 - <span class=m>17</span> <span class=s2>&#34;A IN tcp-echo-cloud-svc. udp 36 false 512&#34;</span> SERVFAIL qr,rd,ra <span class=m>36</span> 0.003850904s
-<span class=o>[</span>INFO<span class=o>]</span> 172.17.0.3:33492 - <span class=m>18</span> <span class=s2>&#34;A IN tcp-echo-cloud-svc.edgezone.svc.cluster.local. udp 63 false 512&#34;</span> NXDOMAIN qr,aa,rd <span class=m>156</span> 0.000159994s
-<span class=o>[</span>INFO<span class=o>]</span> 172.17.0.3:47536 - <span class=m>19</span> <span class=s2>&#34;A IN tcp-echo-cloud-svc.svc.cluster.local. udp 54 false 512&#34;</span> NXDOMAIN qr,aa,rd <span class=m>147</span> 0.000200511s
-<span class=o>[</span>INFO<span class=o>]</span> 172.17.0.3:47825 - <span class=m>20</span> <span class=s2>&#34;A IN tcp-echo-cloud-svc.cluster.local. udp 50 false 512&#34;</span> NXDOMAIN qr,aa,rd <span class=m>143</span> 0.000130152s
-<span class=o>[</span>INFO<span class=o>]</span> 172.17.0.3:37545 - <span class=m>21</span> <span class=s2>&#34;A IN tcp-echo-cloud-svc. udp 36 false 512&#34;</span> SERVFAIL qr,aa,rd,ra <span class=m>36</span> 0.000148824s
-<span class=o>[</span>INFO<span class=o>]</span> 172.17.0.3:60738 - <span class=m>22</span> <span class=s2>&#34;A IN tcp-echo-cloud-svc.edgezone.svc.cluster.local. udp 63 false 512&#34;</span> NXDOMAIN qr,aa,rd <span class=m>156</span> 0.000106792s
-<span class=o>[</span>INFO<span class=o>]</span> 172.17.0.3:39783 - <span class=m>23</span> <span class=s2>&#34;A IN tcp-echo-cloud-svc.svc.cluster.local. udp 54 false 512&#34;</span> NXDOMAIN qr,aa,rd <span class=m>147</span> 0.000189994s
-<span class=o>[</span>INFO<span class=o>]</span> 172.17.0.3:47708 - <span class=m>24</span> <span class=s2>&#34;A IN tcp-echo-cloud-svc.cluster.local. udp 50 false 512&#34;</span> NXDOMAIN qr,aa,rd <span class=m>143</span> 0.000134209s
-<span class=o>[</span>INFO<span class=o>]</span> 172.17.0.3:43808 - <span class=m>25</span> <span class=s2>&#34;A IN tcp-echo-cloud-svc. udp 36 false 512&#34;</span> SERVFAIL qr,aa,rd,ra <span class=m>36</span> 0.000161034s
-
-</code></pre></td></tr></table>
-</div>
-</div><p>查询主机名，因为主机名后面没有点，就认为是主机名，所以先添加search里的每一项依次组成FQDN（完全合格域名）来查询，完全合格域名查询未找到，就再认为主机名是完全合格域名来查询。
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl><span class=o>[</span>INFO<span class=o>]</span> 172.17.0.3:44574 - <span class=m>2</span> <span class=s2>&#34;AAAA IN tcp-echo-cloud-svc.edgezone.svc.cluster.local. udp 63 false 512&#34;</span> NXDOMAIN qr,aa,rd <span class=m>156</span> 0.000615248s
+</span></span><span class=line><span class=cl><span class=o>[</span>INFO<span class=o>]</span> 172.17.0.3:45200 - <span class=m>3</span> <span class=s2>&#34;AAAA IN tcp-echo-cloud-svc.svc.cluster.local. udp 54 false 512&#34;</span> NXDOMAIN qr,aa,rd <span class=m>147</span> 0.000424578s
+</span></span><span class=line><span class=cl><span class=o>[</span>INFO<span class=o>]</span> 172.17.0.3:59917 - <span class=m>4</span> <span class=s2>&#34;AAAA IN tcp-echo-cloud-svc.cluster.local. udp 50 false 512&#34;</span> NXDOMAIN qr,aa,rd <span class=m>143</span> 0.000261174s
+</span></span><span class=line><span class=cl><span class=o>[</span>INFO<span class=o>]</span> 172.17.0.3:57148 - <span class=m>5</span> <span class=s2>&#34;AAAA IN tcp-echo-cloud-svc. udp 36 false 512&#34;</span> SERVFAIL qr,rd,ra <span class=m>36</span> 0.004129322s
+</span></span><span class=line><span class=cl><span class=o>[</span>INFO<span class=o>]</span> 172.17.0.3:44422 - <span class=m>6</span> <span class=s2>&#34;AAAA IN tcp-echo-cloud-svc.edgezone.svc.cluster.local. udp 63 false 512&#34;</span> NXDOMAIN qr,aa,rd <span class=m>156</span> 0.000156824s
+</span></span><span class=line><span class=cl><span class=o>[</span>INFO<span class=o>]</span> 172.17.0.3:35644 - <span class=m>7</span> <span class=s2>&#34;AAAA IN tcp-echo-cloud-svc.svc.cluster.local. udp 54 false 512&#34;</span> NXDOMAIN qr,aa,rd <span class=m>147</span> 0.000154486s
+</span></span><span class=line><span class=cl><span class=o>[</span>INFO<span class=o>]</span> 172.17.0.3:51536 - <span class=m>8</span> <span class=s2>&#34;AAAA IN tcp-echo-cloud-svc.cluster.local. udp 50 false 512&#34;</span> NXDOMAIN qr,aa,rd <span class=m>143</span> 0.000138751s
+</span></span><span class=line><span class=cl><span class=o>[</span>INFO<span class=o>]</span> 172.17.0.3:49727 - <span class=m>9</span> <span class=s2>&#34;AAAA IN tcp-echo-cloud-svc. udp 36 false 512&#34;</span> SERVFAIL qr,aa,rd,ra <span class=m>36</span> 0.000209603s
+</span></span><span class=line><span class=cl><span class=o>[</span>INFO<span class=o>]</span> 172.17.0.3:54476 - <span class=m>10</span> <span class=s2>&#34;AAAA IN tcp-echo-cloud-svc.edgezone.svc.cluster.local. udp 63 false 512&#34;</span> NXDOMAIN qr,aa,rd <span class=m>156</span> 0.000125377s
+</span></span><span class=line><span class=cl><span class=o>[</span>INFO<span class=o>]</span> 172.17.0.3:55879 - <span class=m>11</span> <span class=s2>&#34;AAAA IN tcp-echo-cloud-svc.svc.cluster.local. udp 54 false 512&#34;</span> NXDOMAIN qr,aa,rd <span class=m>147</span> 0.000141351s
+</span></span><span class=line><span class=cl><span class=o>[</span>INFO<span class=o>]</span> 172.17.0.3:55681 - <span class=m>12</span> <span class=s2>&#34;AAAA IN tcp-echo-cloud-svc.cluster.local. udp 50 false 512&#34;</span> NXDOMAIN qr,aa,rd <span class=m>143</span> 0.000124606s
+</span></span><span class=line><span class=cl><span class=o>[</span>INFO<span class=o>]</span> 172.17.0.3:48394 - <span class=m>13</span> <span class=s2>&#34;AAAA IN tcp-echo-cloud-svc. udp 36 false 512&#34;</span> SERVFAIL qr,aa,rd,ra <span class=m>36</span> 0.000126711s
+</span></span><span class=line><span class=cl><span class=o>[</span>INFO<span class=o>]</span> 172.17.0.3:42212 - <span class=m>14</span> <span class=s2>&#34;A IN tcp-echo-cloud-svc.edgezone.svc.cluster.local. udp 63 false 512&#34;</span> NXDOMAIN qr,aa,rd <span class=m>156</span> 0.000261496s
+</span></span><span class=line><span class=cl><span class=o>[</span>INFO<span class=o>]</span> 172.17.0.3:45326 - <span class=m>15</span> <span class=s2>&#34;A IN tcp-echo-cloud-svc.svc.cluster.local. udp 54 false 512&#34;</span> NXDOMAIN qr,aa,rd <span class=m>147</span> 0.000243659s
+</span></span><span class=line><span class=cl><span class=o>[</span>INFO<span class=o>]</span> 172.17.0.3:57336 - <span class=m>16</span> <span class=s2>&#34;A IN tcp-echo-cloud-svc.cluster.local. udp 50 false 512&#34;</span> NXDOMAIN qr,aa,rd <span class=m>143</span> 0.000234824s
+</span></span><span class=line><span class=cl><span class=o>[</span>INFO<span class=o>]</span> 172.17.0.3:58830 - <span class=m>17</span> <span class=s2>&#34;A IN tcp-echo-cloud-svc. udp 36 false 512&#34;</span> SERVFAIL qr,rd,ra <span class=m>36</span> 0.003850904s
+</span></span><span class=line><span class=cl><span class=o>[</span>INFO<span class=o>]</span> 172.17.0.3:33492 - <span class=m>18</span> <span class=s2>&#34;A IN tcp-echo-cloud-svc.edgezone.svc.cluster.local. udp 63 false 512&#34;</span> NXDOMAIN qr,aa,rd <span class=m>156</span> 0.000159994s
+</span></span><span class=line><span class=cl><span class=o>[</span>INFO<span class=o>]</span> 172.17.0.3:47536 - <span class=m>19</span> <span class=s2>&#34;A IN tcp-echo-cloud-svc.svc.cluster.local. udp 54 false 512&#34;</span> NXDOMAIN qr,aa,rd <span class=m>147</span> 0.000200511s
+</span></span><span class=line><span class=cl><span class=o>[</span>INFO<span class=o>]</span> 172.17.0.3:47825 - <span class=m>20</span> <span class=s2>&#34;A IN tcp-echo-cloud-svc.cluster.local. udp 50 false 512&#34;</span> NXDOMAIN qr,aa,rd <span class=m>143</span> 0.000130152s
+</span></span><span class=line><span class=cl><span class=o>[</span>INFO<span class=o>]</span> 172.17.0.3:37545 - <span class=m>21</span> <span class=s2>&#34;A IN tcp-echo-cloud-svc. udp 36 false 512&#34;</span> SERVFAIL qr,aa,rd,ra <span class=m>36</span> 0.000148824s
+</span></span><span class=line><span class=cl><span class=o>[</span>INFO<span class=o>]</span> 172.17.0.3:60738 - <span class=m>22</span> <span class=s2>&#34;A IN tcp-echo-cloud-svc.edgezone.svc.cluster.local. udp 63 false 512&#34;</span> NXDOMAIN qr,aa,rd <span class=m>156</span> 0.000106792s
+</span></span><span class=line><span class=cl><span class=o>[</span>INFO<span class=o>]</span> 172.17.0.3:39783 - <span class=m>23</span> <span class=s2>&#34;A IN tcp-echo-cloud-svc.svc.cluster.local. udp 54 false 512&#34;</span> NXDOMAIN qr,aa,rd <span class=m>147</span> 0.000189994s
+</span></span><span class=line><span class=cl><span class=o>[</span>INFO<span class=o>]</span> 172.17.0.3:47708 - <span class=m>24</span> <span class=s2>&#34;A IN tcp-echo-cloud-svc.cluster.local. udp 50 false 512&#34;</span> NXDOMAIN qr,aa,rd <span class=m>143</span> 0.000134209s
+</span></span><span class=line><span class=cl><span class=o>[</span>INFO<span class=o>]</span> 172.17.0.3:43808 - <span class=m>25</span> <span class=s2>&#34;A IN tcp-echo-cloud-svc. udp 36 false 512&#34;</span> SERVFAIL qr,aa,rd,ra <span class=m>36</span> 0.000161034s
+</span></span></code></pre></td></tr></table></div></div><p>查询主机名，因为主机名后面没有点，就认为是主机名，所以先添加search里的每一项依次组成FQDN（完全合格域名）来查询，完全合格域名查询未找到，就再认为主机名是完全合格域名来查询。
 查询主机名，因为主机名中有点（不是末尾有点），就认为是完全合格域名，先用它来查询，查询失败就把它当成是主机名来进行，添加search里的每一项组成FQDN（完全合格域名）来查询。
-查询主机名，因为主机名中末尾有点，则认为是完全合格域名，只用它来查询（不会再添加search里的每一项）。查询次数会与search里项域名个数有关。</p>
-</div>
-<footer class=post-footer>
-<div class=post-tags>
-<a href=/tags/kubeedge/>kubeedge</a>
-<a href=/tags/k8s/>k8s</a>
-</div>
-<nav class=post-nav>
-<a class=next href=/post/kubeedge-container-log-1/>
-<span class="next-text nav-default">Kubeedge Container Log 1</span>
+查询主机名，因为主机名中末尾有点，则认为是完全合格域名，只用它来查询（不会再添加search里的每一项）。查询次数会与search里项域名个数有关。</p></div><footer class=post-footer><div class=post-tags><a href=/tags/kubeedge/>kubeedge</a>
+<a href=/tags/k8s/>k8s</a></div><nav class=post-nav><a class=prev href=/post/kubeedge-cloudcore/><i class="iconfont icon-left"></i>
+<span class="prev-text nav-default">Kubeedge Cloudcore</span>
+<span class="prev-text nav-mobile">Prev</span></a>
+<a class=next href=/post/kubeedge-container-log-1/><span class="next-text nav-default">Kubeedge Container Log 1</span>
 <span class="next-text nav-mobile">Next</span>
-<i class="iconfont icon-right"></i>
-</a>
-</nav>
-</footer>
-</article>
-</div>
-<div id=vcomments></div>
-<script src=//cdn1.lncld.net/static/js/3.0.4/av-min.js></script>
+<i class="iconfont icon-right"></i></a></nav></footer></article></div><div id=vcomments></div><script src=//cdn1.lncld.net/static/js/3.0.4/av-min.js></script>
 <script src=//unpkg.com/valine/dist/Valine.min.js></script>
-<script type=text/javascript>new Valine({el:'#vcomments',appId:'fb6qCfVYGmIrC87K3STOS3V8-gzGzoHsz',appKey:'FilghKK7HHC4hMQHxhR90dDE',notify:!1,verify:!1,avatar:'mm',placeholder:'说点什么吧...',visitor:!1})</script>
-</div>
-</main>
-<footer id=footer class=footer>
-<div class=social-links>
-<a href=mailto:hanglinux@163.com class="iconfont icon-email" title=email></a>
+<script type=text/javascript>new Valine({el:"#vcomments",appId:"fb6qCfVYGmIrC87K3STOS3V8-gzGzoHsz",appKey:"FilghKK7HHC4hMQHxhR90dDE",notify:!1,verify:!1,avatar:"mm",placeholder:"说点什么吧...",visitor:!1})</script></div></main><footer id=footer class=footer><div class=social-links><a href=mailto:hanglinux@163.com class="iconfont icon-email" title=email></a>
 <a href=https://github.com/fridayhub class="iconfont icon-github" title=github></a>
-<a href=https://fridayhub.github.io/index.xml type=application/rss+xml class="iconfont icon-rss" title=rss></a>
-</div>
-<div class=copyright>
-<span class=power-by>
-Powered by <a class=hexo-link href=https://gohugo.io>Hugo</a>
-</span>
+<a href=https://fridayhub.github.io/index.xml type=application/rss+xml class="iconfont icon-rss" title=rss></a></div><div class=copyright><span class=power-by>Powered by <a class=hexo-link href=https://gohugo.io>Hugo</a></span>
 <span class=division>|</span>
-<span class=theme-info>
-Theme -
-<a class=theme-link href=https://github.com/olOwOlo/hugo-theme-even>Even</a>
-</span>
-<div class=busuanzi-footer>
-<span id=busuanzi_container_site_pv> site pv: <span id=busuanzi_value_site_pv><img src=/img/spinner.svg alt=spinner.svg></span> </span>
+<span class=theme-info>Theme -
+<a class=theme-link href=https://github.com/olOwOlo/hugo-theme-even>Even</a></span><div class=busuanzi-footer><span id=busuanzi_container_site_pv>site pv: <span id=busuanzi_value_site_pv><img src=/img/spinner.svg alt=spinner.svg></span></span>
 <span class=division>|</span>
-<span id=busuanzi_container_site_uv> site uv: <span id=busuanzi_value_site_uv><img src=/img/spinner.svg alt=spinner.svg></span> </span>
-</div>
-<span class=copyright-year>
-&copy;
+<span id=busuanzi_container_site_uv>site uv: <span id=busuanzi_value_site_uv><img src=/img/spinner.svg alt=spinner.svg></span></span></div><span class=copyright-year>&copy;
 2017 -
 2022
-<span class=heart>
-<i class="iconfont icon-heart"></i>
-</span>
-<span class=author>friday</span>
-</span>
-</div>
-</footer>
-<div class=back-to-top id=back-to-top>
-<i class="iconfont icon-up"></i>
-</div>
-</div>
-<script src=https://cdn.jsdelivr.net/npm/jquery@3.2.1/dist/jquery.min.js integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin=anonymous></script>
+<span class=heart><i class="iconfont icon-heart"></i></span>
+<span class=author>friday</span></span></div></footer><div class=back-to-top id=back-to-top><i class="iconfont icon-up"></i></div></div><script src=https://cdn.jsdelivr.net/npm/jquery@3.2.1/dist/jquery.min.js integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin=anonymous></script>
 <script src=https://cdn.jsdelivr.net/npm/slideout@1.0.1/dist/slideout.min.js integrity="sha256-t+zJ/g8/KXIJMjSVQdnibt4dlaDxc9zXr/9oNPeWqdg=" crossorigin=anonymous></script>
 <script src=https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.js integrity="sha256-XVLffZaxoWfGUEbdzuLi7pwaUJv1cecsQJQqGLe7axY=" crossorigin=anonymous></script>
-<script type=text/javascript src=/js/main.min.2517c0eb67172a0bae917de4af59b10ca2531411a009d4c0b82f5685259e5771.js></script>
-</body>
-</html>
+<script type=text/javascript src=/js/main.min.30dad356188cdaba5047112eaa8bf5e85cb14ae7e803337403591fce94a531a0.js></script></body></html>

@@ -1,318 +1,58 @@
-<!doctype html><html lang=en>
-<head>
-<meta charset=utf-8>
-<meta http-equiv=x-ua-compatible content="IE=edge,chrome=1">
-<title>Linux Zfs - Friday - Here I record my experience</title>
-<meta name=renderer content="webkit">
-<meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1">
-<meta http-equiv=cache-control content="no-transform">
-<meta http-equiv=cache-control content="no-siteapp">
-<meta name=theme-color content="#f8f5ec">
-<meta name=msapplication-navbutton-color content="#f8f5ec">
-<meta name=apple-mobile-web-app-capable content="yes">
-<meta name=apple-mobile-web-app-status-bar-style content="#f8f5ec">
-<meta name=author content="friday"><meta name=description content><meta name=keywords content="zfs">
-<meta name=generator content="Hugo 0.92.0 with theme even">
-<link rel=canonical href=https://fridayhub.github.io/post/linux-zfs/>
-<link rel=apple-touch-icon sizes=180x180 href=/apple-touch-icon.png>
-<link rel=icon type=image/png sizes=32x32 href=/favicon-32x32.png>
-<link rel=icon type=image/png sizes=16x16 href=/favicon-16x16.png>
-<link rel=manifest href=/manifest.json>
-<link rel=mask-icon href=/safari-pinned-tab.svg color=#5bbad5>
-<script async src=//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js></script>
-<meta name=referrer content="no-referrer-when-downgrade">
-<link href=/sass/main.min.c2803d17ea439bb194b104ce262b40c9118b45b7b108e27dadf43e96dd6664a3.css rel=stylesheet>
-<link rel=stylesheet href=https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.css integrity="sha256-7TyXnr2YU040zfSP+rEcz29ggW4j56/ujTPwjMzyqFY=" crossorigin=anonymous>
-<meta property="og:title" content="Linux Zfs">
-<meta property="og:description" content>
-<meta property="og:type" content="article">
-<meta property="og:url" content="https://fridayhub.github.io/post/linux-zfs/"><meta property="article:section" content="post">
-<meta property="article:published_time" content="2021-01-13T10:44:48+08:00">
-<meta property="article:modified_time" content="2021-01-13T10:44:48+08:00">
-<meta itemprop=name content="Linux Zfs">
-<meta itemprop=description content><meta itemprop=datePublished content="2021-01-13T10:44:48+08:00">
-<meta itemprop=dateModified content="2021-01-13T10:44:48+08:00">
-<meta itemprop=wordCount content="942">
-<meta itemprop=keywords content="zfs,"><meta name=twitter:card content="summary">
-<meta name=twitter:title content="Linux Zfs">
-<meta name=twitter:description content><!--[if lte IE 9]><script src=https://cdnjs.cloudflare.com/ajax/libs/classlist/1.1.20170427/classList.min.js></script><![endif]--><!--[if lt IE 9]><script src=https://cdn.jsdelivr.net/npm/html5shiv@3.7.3/dist/html5shiv.min.js></script>
-<script src=https://cdn.jsdelivr.net/npm/respond.js@1.4.2/dest/respond.min.js></script><![endif]-->
-</head>
-<body>
-<div id=mobile-navbar class=mobile-navbar>
-<div class=mobile-header-logo>
-<a href=/ class=logo>Friday</a>
-</div>
-<div class=mobile-navbar-icon>
+<!doctype html><html lang=en><head><meta charset=utf-8><meta http-equiv=x-ua-compatible content="IE=edge,chrome=1"><title>Linux Zfs - Friday - Here I record my experience</title><meta name=renderer content="webkit"><meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1"><meta http-equiv=cache-control content="no-transform"><meta http-equiv=cache-control content="no-siteapp"><meta name=theme-color content="#f8f5ec"><meta name=msapplication-navbutton-color content="#f8f5ec"><meta name=apple-mobile-web-app-capable content="yes"><meta name=apple-mobile-web-app-status-bar-style content="#f8f5ec"><meta name=author content="friday"><meta name=description content><meta name=keywords content="zfs"><meta name=generator content="Hugo 0.94.2 with theme even"><link rel=canonical href=https://fridayhub.github.io/post/linux-zfs/><link rel=apple-touch-icon sizes=180x180 href=/apple-touch-icon.png><link rel=icon type=image/png sizes=32x32 href=/favicon-32x32.png><link rel=icon type=image/png sizes=16x16 href=/favicon-16x16.png><link rel=manifest href=/manifest.json><link rel=mask-icon href=/safari-pinned-tab.svg color=#5bbad5><script async src=//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js></script><meta name=referrer content="no-referrer-when-downgrade"><link href=/sass/main.min.c2803d17ea439bb194b104ce262b40c9118b45b7b108e27dadf43e96dd6664a3.css rel=stylesheet><link rel=stylesheet href=https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.css integrity="sha256-7TyXnr2YU040zfSP+rEcz29ggW4j56/ujTPwjMzyqFY=" crossorigin=anonymous><meta property="og:title" content="Linux Zfs"><meta property="og:description" content><meta property="og:type" content="article"><meta property="og:url" content="https://fridayhub.github.io/post/linux-zfs/"><meta property="article:section" content="post"><meta property="article:published_time" content="2021-01-13T10:44:48+08:00"><meta property="article:modified_time" content="2021-01-13T10:44:48+08:00"><meta itemprop=name content="Linux Zfs"><meta itemprop=description content><meta itemprop=datePublished content="2021-01-13T10:44:48+08:00"><meta itemprop=dateModified content="2021-01-13T10:44:48+08:00"><meta itemprop=wordCount content="942"><meta itemprop=keywords content="zfs,"><meta name=twitter:card content="summary"><meta name=twitter:title content="Linux Zfs"><meta name=twitter:description content><!--[if lte IE 9]><script src=https://cdnjs.cloudflare.com/ajax/libs/classlist/1.1.20170427/classList.min.js></script><![endif]--><!--[if lt IE 9]><script src=https://cdn.jsdelivr.net/npm/html5shiv@3.7.3/dist/html5shiv.min.js></script>
+<script src=https://cdn.jsdelivr.net/npm/respond.js@1.4.2/dest/respond.min.js></script><![endif]--></head><body><div id=mobile-navbar class=mobile-navbar><div class=mobile-header-logo><a href=/ class=logo>Friday</a></div><div class=mobile-navbar-icon><span></span>
 <span></span>
-<span></span>
-<span></span>
-</div>
-</div>
-<nav id=mobile-menu class="mobile-menu slideout-menu">
-<ul class=mobile-menu-list>
-<a href=/>
-<li class=mobile-menu-item>Home</li>
-</a><a href=/post/>
-<li class=mobile-menu-item>Archives</li>
-</a><a href=/tags/>
-<li class=mobile-menu-item>Tags</li>
-</a><a href=/categories/>
-<li class=mobile-menu-item>Categories</li>
-</a><a href=/about/>
-<li class=mobile-menu-item>About</li>
-</a>
-</ul>
-</nav>
-<div class=container id=mobile-panel>
-<header id=header class=header>
-<div class=logo-wrapper>
-<a href=/ class=logo>Friday</a>
-</div>
-<nav class=site-navbar>
-<ul id=menu class=menu>
-<li class=menu-item>
-<a class=menu-item-link href=/>Home</a>
-</li><li class=menu-item>
-<a class=menu-item-link href=/post/>Archives</a>
-</li><li class=menu-item>
-<a class=menu-item-link href=/tags/>Tags</a>
-</li><li class=menu-item>
-<a class=menu-item-link href=/categories/>Categories</a>
-</li><li class=menu-item>
-<a class=menu-item-link href=/about/>About</a>
-</li>
-</ul>
-</nav>
-</header>
-<main id=main class=main>
-<div class=content-wrapper>
-<div id=content class=content>
-<article class=post>
-<header class=post-header>
-<h1 class=post-title>Linux Zfs</h1>
-<div class=post-meta>
-<span class=post-time> 2021-01-13 10:44:48 </span>
-<span class=more-meta> 942 words </span>
-<span class=more-meta> 2 mins read </span>
-<span id=busuanzi_container_page_pv class=more-meta> <span id=busuanzi_value_page_pv><img src=/img/spinner.svg alt=spinner.svg></span> times read </span>
-</div>
-</header>
-<div class=post-toc id=post-toc>
-<h2 class=post-toc-title>Contents</h2>
-<div class="post-toc-content always-active">
-<nav id=TableOfContents>
-<ul>
-<li>
-<ul>
-<li><a href=#1linux安装zfs>1、linux安装zfs</a></li>
-<li><a href=#2创建zfs-storage-pool>2、创建zfs storage pool</a></li>
-<li><a href=#3encryption-on-zfs>3、Encryption on ZFS</a></li>
-</ul>
-</li>
-</ul>
-</nav>
-</div>
-</div>
-<div class=post-content>
-<h3 id=1linux安装zfs>1、linux安装zfs</h3>
-<div class=highlight><div class=chroma>
-<table class=lntable><tr><td class=lntd>
-<pre tabindex=0 class=chroma><code><span class=lnt>1
+<span></span></div></div><nav id=mobile-menu class="mobile-menu slideout-menu"><ul class=mobile-menu-list><a href=/><li class=mobile-menu-item>Home</li></a><a href=/post/><li class=mobile-menu-item>Archives</li></a><a href=/tags/><li class=mobile-menu-item>Tags</li></a><a href=/categories/><li class=mobile-menu-item>Categories</li></a><a href=/about/><li class=mobile-menu-item>About</li></a></ul></nav><div class=container id=mobile-panel><header id=header class=header><div class=logo-wrapper><a href=/ class=logo>Friday</a></div><nav class=site-navbar><ul id=menu class=menu><li class=menu-item><a class=menu-item-link href=/>Home</a></li><li class=menu-item><a class=menu-item-link href=/post/>Archives</a></li><li class=menu-item><a class=menu-item-link href=/tags/>Tags</a></li><li class=menu-item><a class=menu-item-link href=/categories/>Categories</a></li><li class=menu-item><a class=menu-item-link href=/about/>About</a></li></ul></nav></header><main id=main class=main><div class=content-wrapper><div id=content class=content><article class=post><header class=post-header><h1 class=post-title>Linux Zfs</h1><div class=post-meta><span class=post-time>2021-01-13 10:44:48</span>
+<span class=more-meta>942 words</span>
+<span class=more-meta>2 mins read</span>
+<span id=busuanzi_container_page_pv class=more-meta><span id=busuanzi_value_page_pv><img src=/img/spinner.svg alt=spinner.svg></span> times read</span></div></header><div class=post-toc id=post-toc><h2 class=post-toc-title>Contents</h2><div class="post-toc-content always-active"><nav id=TableOfContents><ul><li><ul><li><a href=#1linux安装zfs>1、linux安装zfs</a></li><li><a href=#2创建zfs-storage-pool>2、创建zfs storage pool</a></li><li><a href=#3encryption-on-zfs>3、Encryption on ZFS</a></li></ul></li></ul></nav></div></div><div class=post-content><h3 id=1linux安装zfs>1、linux安装zfs</h3><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
 </span><span class=lnt>2
 </span><span class=lnt>3
-</span></code></pre></td>
-<td class=lntd>
-<pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>$ sudo apt update
-$ sudo apt install zfsutils-linux
-$ zfs --version
-</code></pre></td></tr></table>
-</div>
-</div><p>We have a few hard drives in our test system that we plan to use with ZFS. We&rsquo;ll show you various things you can do with them in this section.</p>
-<p>When you plug new hard disks into your system, ZFS addresses them by their device name - normally something along the lines of /dev/sda or similar. You can use the fdisk command to see what hard drives you have available.</p>
-<div class=highlight><div class=chroma>
-<table class=lntable><tr><td class=lntd>
-<pre tabindex=0 class=chroma><code><span class=lnt>1
-</span></code></pre></td>
-<td class=lntd>
-<pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>$ sudo fdisk -l
-</code></pre></td></tr></table>
-</div>
-</div><h3 id=2创建zfs-storage-pool>2、创建zfs storage pool</h3>
-<p>ZFS works by &ldquo;pooling&rdquo; disks together. These pools (commonly called &ldquo;zpools&rdquo;) can be configured for various RAID levels.</p>
-<p>The first zpool we&rsquo;ll look at is a RAID 0. This works by striping your data across multiple disks. When a file is read from or written to the storage pool, all the disks will work together to present a portion of the data. This offers you a speed boost for your read and write speeds, but it doesn&rsquo;t do anything for redundancy. As a matter of fact, any disk failure in the pool will result in a complete loss of data.</p>
-<div class=highlight><div class=chroma>
-<table class=lntable><tr><td class=lntd>
-<pre tabindex=0 class=chroma><code><span class=lnt>1
-</span></code></pre></td>
-<td class=lntd>
-<pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>$ sudo zpool create mypool /dev/sdb /dev/sdc
-</code></pre></td></tr></table>
-</div>
-</div><p>This command has created a ZFS storage pool named &ldquo;mypool&rdquo; with two hard drives, /dev/sdb and /dev/sdc. You can see details about your storage pools any time by running this command:</p>
-<div class=highlight><div class=chroma>
-<table class=lntable><tr><td class=lntd>
-<pre tabindex=0 class=chroma><code><span class=lnt>1
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>$ sudo apt update
+</span></span><span class=line><span class=cl>$ sudo apt install zfsutils-linux
+</span></span><span class=line><span class=cl>$ zfs --version
+</span></span></code></pre></td></tr></table></div></div><p>We have a few hard drives in our test system that we plan to use with ZFS. We&rsquo;ll show you various things you can do with them in this section.</p><p>When you plug new hard disks into your system, ZFS addresses them by their device name - normally something along the lines of /dev/sda or similar. You can use the fdisk command to see what hard drives you have available.</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>$ sudo fdisk -l
+</span></span></code></pre></td></tr></table></div></div><h3 id=2创建zfs-storage-pool>2、创建zfs storage pool</h3><p>ZFS works by &ldquo;pooling&rdquo; disks together. These pools (commonly called &ldquo;zpools&rdquo;) can be configured for various RAID levels.</p><p>The first zpool we&rsquo;ll look at is a RAID 0. This works by striping your data across multiple disks. When a file is read from or written to the storage pool, all the disks will work together to present a portion of the data. This offers you a speed boost for your read and write speeds, but it doesn&rsquo;t do anything for redundancy. As a matter of fact, any disk failure in the pool will result in a complete loss of data.</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>$ sudo zpool create mypool /dev/sdb /dev/sdc
+</span></span></code></pre></td></tr></table></div></div><p>This command has created a ZFS storage pool named &ldquo;mypool&rdquo; with two hard drives, /dev/sdb and /dev/sdc. You can see details about your storage pools any time by running this command:</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
 </span><span class=lnt>2
 </span><span class=lnt>3
-</span></code></pre></td>
-<td class=lntd>
-<pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>$ zpool status
-<span class=c1>#And you can see a more concise report of your ZFS storage pools by executing:</span>
-$ zpool list
-</code></pre></td></tr></table>
-</div>
-</div><p>Your newly created pool will be mounted automatically for you, and you can begin to use it right away. A nice feature of ZFS is that you don&rsquo;t need to go through a lengthy partitioning (when using whole disks) or formatting process. The storage is just accessible right away.</p>
-<div class=highlight><div class=chroma>
-<table class=lntable><tr><td class=lntd>
-<pre tabindex=0 class=chroma><code><span class=lnt>1
-</span></code></pre></td>
-<td class=lntd>
-<pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>$ df -hT <span class=p>|</span> grep zfs
-</code></pre></td></tr></table>
-</div>
-</div><p>If you want to add another hard disk to the pool, take a look at this command where we add hard disk /dev/sdd to our previously created mypool storage pool:</p>
-<div class=highlight><div class=chroma>
-<table class=lntable><tr><td class=lntd>
-<pre tabindex=0 class=chroma><code><span class=lnt>1
-</span></code></pre></td>
-<td class=lntd>
-<pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>$ sudo zpool add mypool /dev/sdd
-</code></pre></td></tr></table>
-</div>
-</div><p>You can see that the drive has been added to the zpool with the <code>zpool status</code> command.</p>
-<p>We can destroy our zpool at any time with the following command:</p>
-<div class=highlight><div class=chroma>
-<table class=lntable><tr><td class=lntd>
-<pre tabindex=0 class=chroma><code><span class=lnt>1
-</span></code></pre></td>
-<td class=lntd>
-<pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>$ sudo zpool destroy mypool 
-</code></pre></td></tr></table>
-</div>
-</div><p>In the case of RAID 0 zpools, you can&rsquo;t remove any disk from the pool without destroying the pool entirely and losing all data. ZFS has many different options, some of which allow for the removal or failure of disks while still maintaining the integrity of the pool.</p>
-<p>Other types of ZFS storage pools are created in the same manner as we&rsquo;ve shown you above, but you need to supply an extra argument in the <code>zpool</code> command when creating the pool. Let&rsquo;s look at some examples.</p>
-<p>A mirrored storage pool is ZFS' equivalent to RAID 1. This gives you redundancy because all your data is mirrored from one hard disk to one or more others. To make a mirrored storage pool, use the following command syntax:</p>
-<div class=highlight><div class=chroma>
-<table class=lntable><tr><td class=lntd>
-<pre tabindex=0 class=chroma><code><span class=lnt>1
-</span></code></pre></td>
-<td class=lntd>
-<pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>$ sudo zpool create mypool mirror /dev/sdb /dev/sdc
-</code></pre></td></tr></table>
-</div>
-</div><p>Of course, more disks can be added to the pool to create additional redundancy.</p>
-<p>Now, let&rsquo;s take a look at RAID-Z pools. RAID-Z is very similar to RAID 5, but improves upon it with better speed and avoiding some of the common errors associated with RAID 5.</p>
-<p>RAID-Z will give you speed plus redundancy by using block level striping and distributed parity. There are three types of RAID-Z available, depending on how much parity you want.</p>
-<ul>
-<li>raidz1 (or just raidz) - single parity 单个奇偶校验位，至少需要三个磁盘 类似 <code>RAID-5</code></li>
-<li>raidz2 - double parity 两个奇偶校验，至少需要四个磁盘 类似 <code>RAID-6</code></li>
-<li>raidz3 - triple parity 三重奇偶校验，至少需要五个磁盘</li>
-</ul>
-<p>Here&rsquo;s how you can create a RAID-Z pool. Use raidz2 or raidz3 in place of of raidz in this command if you want more parity (keep in mind you&rsquo;ll also need additional disks in that case):</p>
-<div class=highlight><div class=chroma>
-<table class=lntable><tr><td class=lntd>
-<pre tabindex=0 class=chroma><code><span class=lnt>1
-</span></code></pre></td>
-<td class=lntd>
-<pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>$ sudo zpool create mypool raidz /dev/sdb /dev/sdc /dev/sdd
-</code></pre></td></tr></table>
-</div>
-</div><h3 id=3encryption-on-zfs>3、Encryption on ZFS</h3>
-<p>After creating your ZFS storage pool, you can configure encryption on it with the following commands. For this example, we are still using our three disk RAID-Z pool named mypool.</p>
-<div class=highlight><div class=chroma>
-<table class=lntable><tr><td class=lntd>
-<pre tabindex=0 class=chroma><code><span class=lnt>1
-</span></code></pre></td>
-<td class=lntd>
-<pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>$ sudo zfs create -o <span class=nv>encryption</span><span class=o>=</span>on -o <span class=nv>keylocation</span><span class=o>=</span>prompt -o <span class=nv>keyformat</span><span class=o>=</span>passphrase mypool/encrypted
-</code></pre></td></tr></table>
-</div>
-</div><p>You&rsquo;ll be asked to enter a passphrase twice for the encryption.</p>
-<p>A new directory is created under /mypool/encrypted, and anything in that directory is encrypted. Whenever you reboot, you&rsquo;ll need to manually mount the encrypted dataset. Be sure to use the -l flag when mounting encrypted datasets. You&rsquo;ll be prompted to enter the passphrase you chose earlier.</p>
-<div class=highlight><div class=chroma>
-<table class=lntable><tr><td class=lntd>
-<pre tabindex=0 class=chroma><code><span class=lnt>1
-</span></code></pre></td>
-<td class=lntd>
-<pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>$ sudo zfs mount -l mypool/encrypted
-</code></pre></td></tr></table>
-</div>
-</div><p>ZFS is a file system focused on high availability and data integrity. It&rsquo;s perfect for storage/NAS servers and any environment where read and write speeds are crucial along with hard drive redundancy.</p>
-<p>ref：</p>
-<ol>
-<li><a href=https://linuxconfig.org/configuring-zfs-on-ubuntu-20-04>https://linuxconfig.org/configuring-zfs-on-ubuntu-20-04</a></li>
-<li><a href=https://www.latentexistence.me.uk/zfs-and-ubuntu-home-server-howto/>https://www.latentexistence.me.uk/zfs-and-ubuntu-home-server-howto/</a></li>
-<li><a href=http://www.ha97.com/4963.html>http://www.ha97.com/4963.html</a> (hdparm 常用方式)</li>
-<li><a href=http://blog.gqylpy.com/gqy/16786/>http://blog.gqylpy.com/gqy/16786/</a> (linux下Nas使硬盘自动进入休眠省电状态)</li>
-<li><a href=https://zhuanlan.zhihu.com/p/89575699>https://zhuanlan.zhihu.com/p/89575699</a> (Linux系统家庭服务器下机械硬盘优化方法)</li>
-<li><a href=https://github.com/bcwu/ZFS_on_Linux_LUKS_startup_automount>https://github.com/bcwu/ZFS_on_Linux_LUKS_startup_automount</a></li>
-<li><a href=https://wiki.archlinux.org/index.php/Hdparm>https://wiki.archlinux.org/index.php/Hdparm</a></li>
-</ol>
-</div>
-<footer class=post-footer>
-<div class=post-tags>
-<a href=/tags/zfs/>zfs</a>
-</div>
-<nav class=post-nav>
-<a class=prev href=/post/zfs-raidz-luks-encrypt/>
-<i class="iconfont icon-left"></i>
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>$ zpool status
+</span></span><span class=line><span class=cl><span class=c1>#And you can see a more concise report of your ZFS storage pools by executing:</span>
+</span></span><span class=line><span class=cl>$ zpool list
+</span></span></code></pre></td></tr></table></div></div><p>Your newly created pool will be mounted automatically for you, and you can begin to use it right away. A nice feature of ZFS is that you don&rsquo;t need to go through a lengthy partitioning (when using whole disks) or formatting process. The storage is just accessible right away.</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>$ df -hT <span class=p>|</span> grep zfs
+</span></span></code></pre></td></tr></table></div></div><p>If you want to add another hard disk to the pool, take a look at this command where we add hard disk /dev/sdd to our previously created mypool storage pool:</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>$ sudo zpool add mypool /dev/sdd
+</span></span></code></pre></td></tr></table></div></div><p>You can see that the drive has been added to the zpool with the <code>zpool status</code> command.</p><p>We can destroy our zpool at any time with the following command:</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>$ sudo zpool destroy mypool 
+</span></span></code></pre></td></tr></table></div></div><p>In the case of RAID 0 zpools, you can&rsquo;t remove any disk from the pool without destroying the pool entirely and losing all data. ZFS has many different options, some of which allow for the removal or failure of disks while still maintaining the integrity of the pool.</p><p>Other types of ZFS storage pools are created in the same manner as we&rsquo;ve shown you above, but you need to supply an extra argument in the <code>zpool</code> command when creating the pool. Let&rsquo;s look at some examples.</p><p>A mirrored storage pool is ZFS&rsquo; equivalent to RAID 1. This gives you redundancy because all your data is mirrored from one hard disk to one or more others. To make a mirrored storage pool, use the following command syntax:</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>$ sudo zpool create mypool mirror /dev/sdb /dev/sdc
+</span></span></code></pre></td></tr></table></div></div><p>Of course, more disks can be added to the pool to create additional redundancy.</p><p>Now, let&rsquo;s take a look at RAID-Z pools. RAID-Z is very similar to RAID 5, but improves upon it with better speed and avoiding some of the common errors associated with RAID 5.</p><p>RAID-Z will give you speed plus redundancy by using block level striping and distributed parity. There are three types of RAID-Z available, depending on how much parity you want.</p><ul><li>raidz1 (or just raidz) - single parity 单个奇偶校验位，至少需要三个磁盘 类似 <code>RAID-5</code></li><li>raidz2 - double parity 两个奇偶校验，至少需要四个磁盘 类似 <code>RAID-6</code></li><li>raidz3 - triple parity 三重奇偶校验，至少需要五个磁盘</li></ul><p>Here&rsquo;s how you can create a RAID-Z pool. Use raidz2 or raidz3 in place of of raidz in this command if you want more parity (keep in mind you&rsquo;ll also need additional disks in that case):</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>$ sudo zpool create mypool raidz /dev/sdb /dev/sdc /dev/sdd
+</span></span></code></pre></td></tr></table></div></div><h3 id=3encryption-on-zfs>3、Encryption on ZFS</h3><p>After creating your ZFS storage pool, you can configure encryption on it with the following commands. For this example, we are still using our three disk RAID-Z pool named mypool.</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>$ sudo zfs create -o <span class=nv>encryption</span><span class=o>=</span>on -o <span class=nv>keylocation</span><span class=o>=</span>prompt -o <span class=nv>keyformat</span><span class=o>=</span>passphrase mypool/encrypted
+</span></span></code></pre></td></tr></table></div></div><p>You&rsquo;ll be asked to enter a passphrase twice for the encryption.</p><p>A new directory is created under /mypool/encrypted, and anything in that directory is encrypted. Whenever you reboot, you&rsquo;ll need to manually mount the encrypted dataset. Be sure to use the -l flag when mounting encrypted datasets. You&rsquo;ll be prompted to enter the passphrase you chose earlier.</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>$ sudo zfs mount -l mypool/encrypted
+</span></span></code></pre></td></tr></table></div></div><p>ZFS is a file system focused on high availability and data integrity. It&rsquo;s perfect for storage/NAS servers and any environment where read and write speeds are crucial along with hard drive redundancy.</p><p>ref：</p><ol><li><a href=https://linuxconfig.org/configuring-zfs-on-ubuntu-20-04>https://linuxconfig.org/configuring-zfs-on-ubuntu-20-04</a></li><li><a href=https://www.latentexistence.me.uk/zfs-and-ubuntu-home-server-howto/>https://www.latentexistence.me.uk/zfs-and-ubuntu-home-server-howto/</a></li><li><a href=http://www.ha97.com/4963.html>http://www.ha97.com/4963.html</a> (hdparm 常用方式)</li><li><a href=http://blog.gqylpy.com/gqy/16786/>http://blog.gqylpy.com/gqy/16786/</a> (linux下Nas使硬盘自动进入休眠省电状态)</li><li><a href=https://zhuanlan.zhihu.com/p/89575699>https://zhuanlan.zhihu.com/p/89575699</a> (Linux系统家庭服务器下机械硬盘优化方法)</li><li><a href=https://github.com/bcwu/ZFS_on_Linux_LUKS_startup_automount>https://github.com/bcwu/ZFS_on_Linux_LUKS_startup_automount</a></li><li><a href=https://wiki.archlinux.org/index.php/Hdparm>https://wiki.archlinux.org/index.php/Hdparm</a></li></ol></div><footer class=post-footer><div class=post-tags><a href=/tags/zfs/>zfs</a></div><nav class=post-nav><a class=prev href=/post/zfs-raidz-luks-encrypt/><i class="iconfont icon-left"></i>
 <span class="prev-text nav-default">Zfs Raidz Luks Encrypt</span>
-<span class="prev-text nav-mobile">Prev</span>
-</a>
-<a class=next href=/post/kvm%E8%BF%81%E7%A7%BB%E5%B9%B6%E5%90%AF%E5%8A%A8%E5%9B%BE%E5%BD%A2%E7%95%8C%E9%9D%A2vnc-or-spice/>
-<span class="next-text nav-default">Kvm迁移并设置图形界面访问spice/vnc</span>
+<span class="prev-text nav-mobile">Prev</span></a>
+<a class=next href=/post/kvm%E8%BF%81%E7%A7%BB%E5%B9%B6%E5%90%AF%E5%8A%A8%E5%9B%BE%E5%BD%A2%E7%95%8C%E9%9D%A2vnc-or-spice/><span class="next-text nav-default">Kvm迁移并设置图形界面访问spice/vnc</span>
 <span class="next-text nav-mobile">Next</span>
-<i class="iconfont icon-right"></i>
-</a>
-</nav>
-</footer>
-</article>
-</div>
-<div id=vcomments></div>
-<script src=//cdn1.lncld.net/static/js/3.0.4/av-min.js></script>
+<i class="iconfont icon-right"></i></a></nav></footer></article></div><div id=vcomments></div><script src=//cdn1.lncld.net/static/js/3.0.4/av-min.js></script>
 <script src=//unpkg.com/valine/dist/Valine.min.js></script>
-<script type=text/javascript>new Valine({el:'#vcomments',appId:'fb6qCfVYGmIrC87K3STOS3V8-gzGzoHsz',appKey:'FilghKK7HHC4hMQHxhR90dDE',notify:!1,verify:!1,avatar:'mm',placeholder:'说点什么吧...',visitor:!1})</script>
-</div>
-</main>
-<footer id=footer class=footer>
-<div class=social-links>
-<a href=mailto:hanglinux@163.com class="iconfont icon-email" title=email></a>
+<script type=text/javascript>new Valine({el:"#vcomments",appId:"fb6qCfVYGmIrC87K3STOS3V8-gzGzoHsz",appKey:"FilghKK7HHC4hMQHxhR90dDE",notify:!1,verify:!1,avatar:"mm",placeholder:"说点什么吧...",visitor:!1})</script></div></main><footer id=footer class=footer><div class=social-links><a href=mailto:hanglinux@163.com class="iconfont icon-email" title=email></a>
 <a href=https://github.com/fridayhub class="iconfont icon-github" title=github></a>
-<a href=https://fridayhub.github.io/index.xml type=application/rss+xml class="iconfont icon-rss" title=rss></a>
-</div>
-<div class=copyright>
-<span class=power-by>
-Powered by <a class=hexo-link href=https://gohugo.io>Hugo</a>
-</span>
+<a href=https://fridayhub.github.io/index.xml type=application/rss+xml class="iconfont icon-rss" title=rss></a></div><div class=copyright><span class=power-by>Powered by <a class=hexo-link href=https://gohugo.io>Hugo</a></span>
 <span class=division>|</span>
-<span class=theme-info>
-Theme -
-<a class=theme-link href=https://github.com/olOwOlo/hugo-theme-even>Even</a>
-</span>
-<div class=busuanzi-footer>
-<span id=busuanzi_container_site_pv> site pv: <span id=busuanzi_value_site_pv><img src=/img/spinner.svg alt=spinner.svg></span> </span>
+<span class=theme-info>Theme -
+<a class=theme-link href=https://github.com/olOwOlo/hugo-theme-even>Even</a></span><div class=busuanzi-footer><span id=busuanzi_container_site_pv>site pv: <span id=busuanzi_value_site_pv><img src=/img/spinner.svg alt=spinner.svg></span></span>
 <span class=division>|</span>
-<span id=busuanzi_container_site_uv> site uv: <span id=busuanzi_value_site_uv><img src=/img/spinner.svg alt=spinner.svg></span> </span>
-</div>
-<span class=copyright-year>
-&copy;
+<span id=busuanzi_container_site_uv>site uv: <span id=busuanzi_value_site_uv><img src=/img/spinner.svg alt=spinner.svg></span></span></div><span class=copyright-year>&copy;
 2017 -
 2022
-<span class=heart>
-<i class="iconfont icon-heart"></i>
-</span>
-<span class=author>friday</span>
-</span>
-</div>
-</footer>
-<div class=back-to-top id=back-to-top>
-<i class="iconfont icon-up"></i>
-</div>
-</div>
-<script src=https://cdn.jsdelivr.net/npm/jquery@3.2.1/dist/jquery.min.js integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin=anonymous></script>
+<span class=heart><i class="iconfont icon-heart"></i></span>
+<span class=author>friday</span></span></div></footer><div class=back-to-top id=back-to-top><i class="iconfont icon-up"></i></div></div><script src=https://cdn.jsdelivr.net/npm/jquery@3.2.1/dist/jquery.min.js integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin=anonymous></script>
 <script src=https://cdn.jsdelivr.net/npm/slideout@1.0.1/dist/slideout.min.js integrity="sha256-t+zJ/g8/KXIJMjSVQdnibt4dlaDxc9zXr/9oNPeWqdg=" crossorigin=anonymous></script>
 <script src=https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.js integrity="sha256-XVLffZaxoWfGUEbdzuLi7pwaUJv1cecsQJQqGLe7axY=" crossorigin=anonymous></script>
-<script type=text/javascript src=/js/main.min.2517c0eb67172a0bae917de4af59b10ca2531411a009d4c0b82f5685259e5771.js></script>
-</body>
-</html>
+<script type=text/javascript src=/js/main.min.30dad356188cdaba5047112eaa8bf5e85cb14ae7e803337403591fce94a531a0.js></script></body></html>
