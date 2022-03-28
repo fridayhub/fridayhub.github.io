@@ -1,0 +1,567 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta http-equiv=x-ua-compatible content="IE=edge,chrome=1"><title>Grpc 连接建立过程、断线重连、服务发现的配合 - Friday - Here I record my experience</title><meta name=renderer content="webkit"><meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1"><meta http-equiv=cache-control content="no-transform"><meta http-equiv=cache-control content="no-siteapp"><meta name=theme-color content="#f8f5ec"><meta name=msapplication-navbutton-color content="#f8f5ec"><meta name=apple-mobile-web-app-capable content="yes"><meta name=apple-mobile-web-app-status-bar-style content="#f8f5ec"><meta name=author content="Friday"><meta name=description content="grpc 连接过程分析"><meta name=keywords content="grpc"><meta name=generator content="Hugo 0.96.0 with theme even"><link rel=canonical href=https://fridayhub.github.io/post/grpc-conn/><link rel=apple-touch-icon sizes=180x180 href=/apple-touch-icon.png><link rel=icon type=image/png sizes=32x32 href=/favicon-32x32.png><link rel=icon type=image/png sizes=16x16 href=/favicon-16x16.png><link rel=manifest href=/manifest.json><link rel=mask-icon href=/safari-pinned-tab.svg color=#5bbad5><script async src=//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js></script><meta name=referrer content="no-referrer-when-downgrade"><link href=/sass/main.min.c2803d17ea439bb194b104ce262b40c9118b45b7b108e27dadf43e96dd6664a3.css rel=stylesheet><link rel=stylesheet href=https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.css integrity="sha256-7TyXnr2YU040zfSP+rEcz29ggW4j56/ujTPwjMzyqFY=" crossorigin=anonymous><meta property="og:title" content="Grpc 连接建立过程、断线重连、服务发现的配合"><meta property="og:description" content="grpc 连接过程分析"><meta property="og:type" content="article"><meta property="og:url" content="https://fridayhub.github.io/post/grpc-conn/"><meta property="article:section" content="post"><meta property="article:published_time" content="2022-03-25T10:06:01+08:00"><meta property="article:modified_time" content="2022-03-25T10:06:01+08:00"><meta itemprop=name content="Grpc 连接建立过程、断线重连、服务发现的配合"><meta itemprop=description content="grpc 连接过程分析"><meta itemprop=datePublished content="2022-03-25T10:06:01+08:00"><meta itemprop=dateModified content="2022-03-25T10:06:01+08:00"><meta itemprop=wordCount content="2439"><meta itemprop=keywords content="grpc,"><meta name=twitter:card content="summary"><meta name=twitter:title content="Grpc 连接建立过程、断线重连、服务发现的配合"><meta name=twitter:description content="grpc 连接过程分析"><!--[if lte IE 9]><script src=https://cdnjs.cloudflare.com/ajax/libs/classlist/1.1.20170427/classList.min.js></script><![endif]--><!--[if lt IE 9]><script src=https://cdn.jsdelivr.net/npm/html5shiv@3.7.3/dist/html5shiv.min.js></script>
+<script src=https://cdn.jsdelivr.net/npm/respond.js@1.4.2/dest/respond.min.js></script><![endif]--></head><body><div id=mobile-navbar class=mobile-navbar><div class=mobile-header-logo><a href=/ class=logo>Friday</a></div><div class=mobile-navbar-icon><span></span>
+<span></span>
+<span></span></div></div><nav id=mobile-menu class="mobile-menu slideout-menu"><ul class=mobile-menu-list><a href=/><li class=mobile-menu-item>Home</li></a><a href=/post/><li class=mobile-menu-item>Archives</li></a><a href=/tags/><li class=mobile-menu-item>Tags</li></a><a href=/categories/><li class=mobile-menu-item>Categories</li></a><a href=/about/><li class=mobile-menu-item>About</li></a></ul></nav><div class=container id=mobile-panel><header id=header class=header><div class=logo-wrapper><a href=/ class=logo>Friday</a></div><nav class=site-navbar><ul id=menu class=menu><li class=menu-item><a class=menu-item-link href=/>Home</a></li><li class=menu-item><a class=menu-item-link href=/post/>Archives</a></li><li class=menu-item><a class=menu-item-link href=/tags/>Tags</a></li><li class=menu-item><a class=menu-item-link href=/categories/>Categories</a></li><li class=menu-item><a class=menu-item-link href=/about/>About</a></li></ul></nav></header><main id=main class=main><div class=content-wrapper><div id=content class=content><article class=post><header class=post-header><h1 class=post-title>Grpc 连接建立过程、断线重连、服务发现的配合</h1><div class=post-meta><span class=post-time>2022-03-25 10:06:01</span><div class=post-category><a href=/categories/grpc/>grpc</a></div><span class=more-meta>2439 words</span>
+<span class=more-meta>5 mins read</span>
+<span id=busuanzi_container_page_pv class=more-meta><span id=busuanzi_value_page_pv><img src=/img/spinner.svg alt=spinner.svg></span> times read</span></div></header><div class=post-toc id=post-toc><h2 class=post-toc-title>Contents</h2><div class=post-toc-content><nav id=TableOfContents></nav></div></div><div class=post-content><p>grpc连接维护五个状态：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=kd>const</span> <span class=p>(</span>
+</span></span><span class=line><span class=cl>	<span class=c1>// Idle indicates the ClientConn is idle.
+</span></span></span><span class=line><span class=cl><span class=c1></span>	<span class=nx>Idle</span> <span class=nx>State</span> <span class=p>=</span> <span class=kc>iota</span>
+</span></span><span class=line><span class=cl>	<span class=c1>// Connecting indicates the ClientConn is connecting.
+</span></span></span><span class=line><span class=cl><span class=c1></span>	<span class=nx>Connecting</span>
+</span></span><span class=line><span class=cl>	<span class=c1>// Ready indicates the ClientConn is ready for work.
+</span></span></span><span class=line><span class=cl><span class=c1></span>	<span class=nx>Ready</span>
+</span></span><span class=line><span class=cl>	<span class=c1>// TransientFailure indicates the ClientConn has seen a failure but expects to recover.
+</span></span></span><span class=line><span class=cl><span class=c1></span>	<span class=nx>TransientFailure</span>
+</span></span><span class=line><span class=cl>	<span class=c1>// Shutdown indicates the ClientConn has started shutting down.
+</span></span></span><span class=line><span class=cl><span class=c1></span>	<span class=nx>Shutdown</span>
+</span></span><span class=line><span class=cl><span class=p>)</span>
+</span></span></code></pre></td></tr></table></div></div><p>这五个状态贯穿整个连接的生命周期</p><p>经过一系列的准备：服务发现、负载均衡等策略，最终要和服务端建立真正的连接。</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span><span class=lnt>22
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=c1>// google.golang.org/grpc@v1.41.0/clientconn.go
+</span></span></span><span class=line><span class=cl><span class=c1>// connect starts creating a transport.
+</span></span></span><span class=line><span class=cl><span class=c1>// It does nothing if the ac is not IDLE.
+</span></span></span><span class=line><span class=cl><span class=c1>// TODO(bar) Move this to the addrConn section.
+</span></span></span><span class=line><span class=cl><span class=c1></span><span class=kd>func</span> <span class=p>(</span><span class=nx>ac</span> <span class=o>*</span><span class=nx>addrConn</span><span class=p>)</span> <span class=nf>connect</span><span class=p>()</span> <span class=kt>error</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>	<span class=nx>ac</span><span class=p>.</span><span class=nx>mu</span><span class=p>.</span><span class=nf>Lock</span><span class=p>()</span>
+</span></span><span class=line><span class=cl>	<span class=k>if</span> <span class=nx>ac</span><span class=p>.</span><span class=nx>state</span> <span class=o>==</span> <span class=nx>connectivity</span><span class=p>.</span><span class=nx>Shutdown</span> <span class=p>{</span> <span class=c1>// 如果调用了close方法，conn的状态为 Shutdown，此时不需要建立连接了，直接退出
+</span></span></span><span class=line><span class=cl><span class=c1></span>		<span class=nx>ac</span><span class=p>.</span><span class=nx>mu</span><span class=p>.</span><span class=nf>Unlock</span><span class=p>()</span>
+</span></span><span class=line><span class=cl>		<span class=k>return</span> <span class=nx>errConnClosing</span>
+</span></span><span class=line><span class=cl>	<span class=p>}</span>
+</span></span><span class=line><span class=cl>	<span class=k>if</span> <span class=nx>ac</span><span class=p>.</span><span class=nx>state</span> <span class=o>!=</span> <span class=nx>connectivity</span><span class=p>.</span><span class=nx>Idle</span> <span class=p>{</span> <span class=c1>// new出来的conn默认都是Idle状态， 参考下文的 newAddrConn方法
+</span></span></span><span class=line><span class=cl><span class=c1></span>		<span class=nx>ac</span><span class=p>.</span><span class=nx>mu</span><span class=p>.</span><span class=nf>Unlock</span><span class=p>()</span>
+</span></span><span class=line><span class=cl>		<span class=k>return</span> <span class=kc>nil</span>
+</span></span><span class=line><span class=cl>	<span class=p>}</span>
+</span></span><span class=line><span class=cl>	<span class=c1>// Update connectivity state within the lock to prevent subsequent or
+</span></span></span><span class=line><span class=cl><span class=c1></span>	<span class=c1>// concurrent calls from resetting the transport more than once.
+</span></span></span><span class=line><span class=cl><span class=c1></span>	<span class=nx>ac</span><span class=p>.</span><span class=nf>updateConnectivityState</span><span class=p>(</span><span class=nx>connectivity</span><span class=p>.</span><span class=nx>Connecting</span><span class=p>,</span> <span class=kc>nil</span><span class=p>)</span> <span class=c1>// 更新状态为正在连接
+</span></span></span><span class=line><span class=cl><span class=c1></span>	<span class=nx>ac</span><span class=p>.</span><span class=nx>mu</span><span class=p>.</span><span class=nf>Unlock</span><span class=p>()</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>	<span class=nx>ac</span><span class=p>.</span><span class=nf>resetTransport</span><span class=p>()</span>
+</span></span><span class=line><span class=cl>	<span class=k>return</span> <span class=kc>nil</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span></code></pre></td></tr></table></div></div><p>newAddrConn方法：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=c1>// google.golang.org/grpc@v1.41.0/clientconn.go
+</span></span></span><span class=line><span class=cl><span class=c1></span><span class=kd>func</span> <span class=p>(</span><span class=nx>cc</span> <span class=o>*</span><span class=nx>ClientConn</span><span class=p>)</span> <span class=nf>newAddrConn</span><span class=p>(</span><span class=nx>addrs</span> <span class=p>[]</span><span class=nx>resolver</span><span class=p>.</span><span class=nx>Address</span><span class=p>,</span> <span class=nx>opts</span> <span class=nx>balancer</span><span class=p>.</span><span class=nx>NewSubConnOptions</span><span class=p>)</span> <span class=p>(</span><span class=o>*</span><span class=nx>addrConn</span><span class=p>,</span> <span class=kt>error</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>	<span class=nx>ac</span> <span class=o>:=</span> <span class=o>&amp;</span><span class=nx>addrConn</span><span class=p>{</span>
+</span></span><span class=line><span class=cl>		<span class=nx>state</span><span class=p>:</span>        <span class=nx>connectivity</span><span class=p>.</span><span class=nx>Idle</span><span class=p>,</span> <span class=c1>// 默认状态
+</span></span></span><span class=line><span class=cl><span class=c1></span>		<span class=nx>cc</span><span class=p>:</span>           <span class=nx>cc</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>		<span class=nx>addrs</span><span class=p>:</span>        <span class=nx>addrs</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>		<span class=nx>scopts</span><span class=p>:</span>       <span class=nx>opts</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>		<span class=nx>dopts</span><span class=p>:</span>        <span class=nx>cc</span><span class=p>.</span><span class=nx>dopts</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>		<span class=nx>czData</span><span class=p>:</span>       <span class=nb>new</span><span class=p>(</span><span class=nx>channelzData</span><span class=p>),</span>
+</span></span><span class=line><span class=cl>		<span class=nx>resetBackoff</span><span class=p>:</span> <span class=nb>make</span><span class=p>(</span><span class=kd>chan</span> <span class=kd>struct</span><span class=p>{}),</span>
+</span></span><span class=line><span class=cl>	<span class=p>}</span>
+</span></span><span class=line><span class=cl><span class=o>...</span>
+</span></span><span class=line><span class=cl>	<span class=k>return</span> <span class=nx>ac</span><span class=p>,</span> <span class=kc>nil</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span></code></pre></td></tr></table></div></div><p>之后的主要逻辑通过<code>func (ac *addrConn) resetTransport()</code>调到<code>tryAllAddrs</code>, tryAllAddrs遍历左右的addr，发起连接（<code>ac.createTransport(addr, copts, connectDeadline)</code>）。</p><p>在createTransport中transport.NewClientTransport 一路向下调用http2的new client方法：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span><span class=lnt>22
+</span><span class=lnt>23
+</span><span class=lnt>24
+</span><span class=lnt>25
+</span><span class=lnt>26
+</span><span class=lnt>27
+</span><span class=lnt>28
+</span><span class=lnt>29
+</span><span class=lnt>30
+</span><span class=lnt>31
+</span><span class=lnt>32
+</span><span class=lnt>33
+</span><span class=lnt>34
+</span><span class=lnt>35
+</span><span class=lnt>36
+</span><span class=lnt>37
+</span><span class=lnt>38
+</span><span class=lnt>39
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=c1>// google.golang.org/grpc@v1.41.0/internal/transport/http2_client.go
+</span></span></span><span class=line><span class=cl><span class=c1></span><span class=kd>func</span> <span class=nf>newHTTP2Client</span><span class=p>(</span><span class=nx>connectCtx</span><span class=p>,</span> <span class=nx>ctx</span> <span class=nx>context</span><span class=p>.</span><span class=nx>Context</span><span class=p>,</span> <span class=nx>addr</span> <span class=nx>resolver</span><span class=p>.</span><span class=nx>Address</span><span class=p>,</span> <span class=nx>opts</span> <span class=nx>ConnectOptions</span><span class=p>,</span> <span class=nx>onPrefaceReceipt</span> <span class=kd>func</span><span class=p>(),</span> <span class=nx>onGoAway</span> <span class=kd>func</span><span class=p>(</span><span class=nx>GoAwayReason</span><span class=p>),</span> <span class=nx>onClose</span> <span class=kd>func</span><span class=p>())</span> <span class=p>(</span><span class=nx>_</span> <span class=o>*</span><span class=nx>http2Client</span><span class=p>,</span> <span class=nx>err</span> <span class=kt>error</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl><span class=o>...</span>
+</span></span><span class=line><span class=cl>    <span class=nx>conn</span><span class=p>,</span> <span class=nx>err</span> <span class=o>:=</span> <span class=nf>dial</span><span class=p>(</span><span class=nx>connectCtx</span><span class=p>,</span> <span class=nx>opts</span><span class=p>.</span><span class=nx>Dialer</span><span class=p>,</span> <span class=nx>addr</span><span class=p>,</span> <span class=nx>opts</span><span class=p>.</span><span class=nx>UseProxy</span><span class=p>,</span> <span class=nx>opts</span><span class=p>.</span><span class=nx>UserAgent</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=o>...</span> 
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>	<span class=k>if</span> <span class=nx>kp</span><span class=p>.</span><span class=nx>Time</span> <span class=o>==</span> <span class=mi>0</span> <span class=p>{</span> <span class=c1>//确保设置keepalive
+</span></span></span><span class=line><span class=cl><span class=c1></span>		<span class=nx>kp</span><span class=p>.</span><span class=nx>Time</span> <span class=p>=</span> <span class=nx>defaultClientKeepaliveTime</span>
+</span></span><span class=line><span class=cl>	<span class=p>}</span>
+</span></span><span class=line><span class=cl>	<span class=k>if</span> <span class=nx>kp</span><span class=p>.</span><span class=nx>Timeout</span> <span class=o>==</span> <span class=mi>0</span> <span class=p>{</span> <span class=c1>//确保设置timeout
+</span></span></span><span class=line><span class=cl><span class=c1></span>		<span class=nx>kp</span><span class=p>.</span><span class=nx>Timeout</span> <span class=p>=</span> <span class=nx>defaultClientKeepaliveTimeout</span>
+</span></span><span class=line><span class=cl>	<span class=p>}</span>
+</span></span><span class=line><span class=cl><span class=o>...</span>
+</span></span><span class=line><span class=cl>    <span class=nx>writeBufSize</span> <span class=o>:=</span> <span class=nx>opts</span><span class=p>.</span><span class=nx>WriteBufferSize</span>  <span class=c1>//设置write buf 
+</span></span></span><span class=line><span class=cl><span class=c1></span>	<span class=nx>readBufSize</span> <span class=o>:=</span> <span class=nx>opts</span><span class=p>.</span><span class=nx>ReadBufferSize</span>    <span class=c1>//设置read buf
+</span></span></span><span class=line><span class=cl><span class=c1></span>
+</span></span><span class=line><span class=cl>    <span class=c1>// 初始化一个http2Client结构体
+</span></span></span><span class=line><span class=cl><span class=c1></span>    	<span class=nx>t</span> <span class=o>:=</span> <span class=o>&amp;</span><span class=nx>http2Client</span><span class=p>{</span>
+</span></span><span class=line><span class=cl>		<span class=nx>ctx</span><span class=p>:</span>                   <span class=nx>ctx</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>		<span class=nx>ctxDone</span><span class=p>:</span>               <span class=nx>ctx</span><span class=p>.</span><span class=nf>Done</span><span class=p>(),</span> <span class=c1>// Cache Done chan.
+</span></span></span><span class=line><span class=cl><span class=c1></span>		<span class=nx>cancel</span><span class=p>:</span>                <span class=nx>cancel</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>		<span class=nx>userAgent</span><span class=p>:</span>             <span class=nx>opts</span><span class=p>.</span><span class=nx>UserAgent</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>		<span class=nx>conn</span><span class=p>:</span>                  <span class=nx>conn</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>		<span class=nx>remoteAddr</span><span class=p>:</span>            <span class=nx>conn</span><span class=p>.</span><span class=nf>RemoteAddr</span><span class=p>(),</span>
+</span></span><span class=line><span class=cl>		<span class=nx>localAddr</span><span class=p>:</span>             <span class=nx>conn</span><span class=p>.</span><span class=nf>LocalAddr</span><span class=p>(),</span>
+</span></span><span class=line><span class=cl>		<span class=nx>authInfo</span><span class=p>:</span>              <span class=nx>authInfo</span><span class=p>,</span>
+</span></span><span class=line><span class=cl><span class=o>...</span>
+</span></span><span class=line><span class=cl>	<span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>    <span class=c1>// 开启 keepalive
+</span></span></span><span class=line><span class=cl><span class=c1></span>    <span class=k>go</span> <span class=nx>t</span><span class=p>.</span><span class=nf>keepalive</span><span class=p>()</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>    <span class=c1>// Start the reader goroutine for incoming message. Each transport has
+</span></span></span><span class=line><span class=cl><span class=c1></span>	<span class=c1>// a dedicated goroutine which reads HTTP2 frame from network. Then it
+</span></span></span><span class=line><span class=cl><span class=c1></span>	<span class=c1>// dispatches the frame to the corresponding stream entity.
+</span></span></span><span class=line><span class=cl><span class=c1></span>    <span class=k>go</span> <span class=nx>t</span><span class=p>.</span><span class=nf>reader</span><span class=p>()</span> <span class=c1>// 上面的注释写的很好了
+</span></span></span><span class=line><span class=cl><span class=c1></span>
+</span></span><span class=line><span class=cl>    <span class=c1>// Send connection preface to server.
+</span></span></span><span class=line><span class=cl><span class=c1></span>	<span class=nx>n</span><span class=p>,</span> <span class=nx>err</span> <span class=o>:=</span> <span class=nx>t</span><span class=p>.</span><span class=nx>conn</span><span class=p>.</span><span class=nf>Write</span><span class=p>(</span><span class=nx>clientPreface</span><span class=p>)</span> <span class=c1>//发送一个消息头
+</span></span></span></code></pre></td></tr></table></div></div><p>在<code>createTransport</code>中会用select case等待连接返回，如果连接成功，调用<code>startHealthCheck</code>,保存新连接，开启健康检查</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span><span class=lnt>22
+</span><span class=lnt>23
+</span><span class=lnt>24
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=c1>// google.golang.org/grpc@v1.41.0/clientconn.go
+</span></span></span><span class=line><span class=cl><span class=c1></span><span class=kd>func</span> <span class=p>(</span><span class=nx>ac</span> <span class=o>*</span><span class=nx>addrConn</span><span class=p>)</span> <span class=nf>startHealthCheck</span><span class=p>(</span><span class=nx>ctx</span> <span class=nx>context</span><span class=p>.</span><span class=nx>Context</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>	<span class=kd>var</span> <span class=nx>healthcheckManagingState</span> <span class=kt>bool</span>
+</span></span><span class=line><span class=cl>	<span class=k>defer</span> <span class=kd>func</span><span class=p>()</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>		<span class=k>if</span> <span class=p>!</span><span class=nx>healthcheckManagingState</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>			<span class=nx>ac</span><span class=p>.</span><span class=nf>updateConnectivityState</span><span class=p>(</span><span class=nx>connectivity</span><span class=p>.</span><span class=nx>Ready</span><span class=p>,</span> <span class=kc>nil</span><span class=p>)</span> <span class=c1>// 更新状态为Ready
+</span></span></span><span class=line><span class=cl><span class=c1></span>		<span class=p>}</span>
+</span></span><span class=line><span class=cl>	<span class=p>}()</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=o>...</span>
+</span></span><span class=line><span class=cl>    <span class=nx>ac</span><span class=p>.</span><span class=nx>curAddr</span> <span class=p>=</span> <span class=nx>addr</span> <span class=c1>// 将当前连接用的地址保存为当前地址，下次连接，接着用
+</span></span></span><span class=line><span class=cl><span class=c1></span>    <span class=nx>ac</span><span class=p>.</span><span class=nx>transport</span> <span class=p>=</span> <span class=nx>newTr</span> <span class=c1>// 将连接信息保存到transport
+</span></span></span><span class=line><span class=cl><span class=c1></span>	<span class=c1>// Start the health checking stream.
+</span></span></span><span class=line><span class=cl><span class=c1></span>	<span class=k>go</span> <span class=kd>func</span><span class=p>()</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>		<span class=nx>err</span> <span class=o>:=</span> <span class=nx>ac</span><span class=p>.</span><span class=nx>cc</span><span class=p>.</span><span class=nx>dopts</span><span class=p>.</span><span class=nf>healthCheckFunc</span><span class=p>(</span><span class=nx>ctx</span><span class=p>,</span> <span class=nx>newStream</span><span class=p>,</span> <span class=nx>setConnectivityState</span><span class=p>,</span> <span class=nx>healthCheckConfig</span><span class=p>.</span><span class=nx>ServiceName</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>		<span class=k>if</span> <span class=nx>err</span> <span class=o>!=</span> <span class=kc>nil</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>			<span class=k>if</span> <span class=nx>status</span><span class=p>.</span><span class=nf>Code</span><span class=p>(</span><span class=nx>err</span><span class=p>)</span> <span class=o>==</span> <span class=nx>codes</span><span class=p>.</span><span class=nx>Unimplemented</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>				<span class=nx>channelz</span><span class=p>.</span><span class=nf>Error</span><span class=p>(</span><span class=nx>logger</span><span class=p>,</span> <span class=nx>ac</span><span class=p>.</span><span class=nx>channelzID</span><span class=p>,</span> <span class=s>&#34;Subchannel health check is unimplemented at server side, thus health check is disabled&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>			<span class=p>}</span> <span class=k>else</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>				<span class=nx>channelz</span><span class=p>.</span><span class=nf>Errorf</span><span class=p>(</span><span class=nx>logger</span><span class=p>,</span> <span class=nx>ac</span><span class=p>.</span><span class=nx>channelzID</span><span class=p>,</span> <span class=s>&#34;HealthCheckFunc exits with unexpected error %v&#34;</span><span class=p>,</span> <span class=nx>err</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>			<span class=p>}</span>
+</span></span><span class=line><span class=cl>		<span class=p>}</span>
+</span></span><span class=line><span class=cl>	<span class=p>}()</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span></code></pre></td></tr></table></div></div><p>如果用户没有指定healthCheckFunc，则使用grpc默认提供的</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span><span class=lnt>22
+</span><span class=lnt>23
+</span><span class=lnt>24
+</span><span class=lnt>25
+</span><span class=lnt>26
+</span><span class=lnt>27
+</span><span class=lnt>28
+</span><span class=lnt>29
+</span><span class=lnt>30
+</span><span class=lnt>31
+</span><span class=lnt>32
+</span><span class=lnt>33
+</span><span class=lnt>34
+</span><span class=lnt>35
+</span><span class=lnt>36
+</span><span class=lnt>37
+</span><span class=lnt>38
+</span><span class=lnt>39
+</span><span class=lnt>40
+</span><span class=lnt>41
+</span><span class=lnt>42
+</span><span class=lnt>43
+</span><span class=lnt>44
+</span><span class=lnt>45
+</span><span class=lnt>46
+</span><span class=lnt>47
+</span><span class=lnt>48
+</span><span class=lnt>49
+</span><span class=lnt>50
+</span><span class=lnt>51
+</span><span class=lnt>52
+</span><span class=lnt>53
+</span><span class=lnt>54
+</span><span class=lnt>55
+</span><span class=lnt>56
+</span><span class=lnt>57
+</span><span class=lnt>58
+</span><span class=lnt>59
+</span><span class=lnt>60
+</span><span class=lnt>61
+</span><span class=lnt>62
+</span><span class=lnt>63
+</span><span class=lnt>64
+</span><span class=lnt>65
+</span><span class=lnt>66
+</span><span class=lnt>67
+</span><span class=lnt>68
+</span><span class=lnt>69
+</span><span class=lnt>70
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=c1>// google.golang.org/grpc@v1.41.0/health/client.go
+</span></span></span><span class=line><span class=cl><span class=c1></span><span class=kd>func</span> <span class=nf>init</span><span class=p>()</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>	<span class=nx>internal</span><span class=p>.</span><span class=nx>HealthCheckFunc</span> <span class=p>=</span> <span class=nx>clientHealthCheck</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1>// This function implements the protocol defined at:
+</span></span></span><span class=line><span class=cl><span class=c1>// https://github.com/grpc/grpc/blob/master/doc/health-checking.md
+</span></span></span><span class=line><span class=cl><span class=c1></span><span class=kd>func</span> <span class=nf>clientHealthCheck</span><span class=p>(</span><span class=nx>ctx</span> <span class=nx>context</span><span class=p>.</span><span class=nx>Context</span><span class=p>,</span> <span class=nx>newStream</span> <span class=kd>func</span><span class=p>(</span><span class=kt>string</span><span class=p>)</span> <span class=p>(</span><span class=kd>interface</span><span class=p>{},</span> <span class=kt>error</span><span class=p>),</span> <span class=nx>setConnectivityState</span> <span class=kd>func</span><span class=p>(</span><span class=nx>connectivity</span><span class=p>.</span><span class=nx>State</span><span class=p>,</span> <span class=kt>error</span><span class=p>),</span> <span class=nx>service</span> <span class=kt>string</span><span class=p>)</span> <span class=kt>error</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>	<span class=nx>tryCnt</span> <span class=o>:=</span> <span class=mi>0</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=nx>retryConnection</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>	<span class=k>for</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>		<span class=c1>// Backs off if the connection has failed in some way without receiving a message in the previous retry.
+</span></span></span><span class=line><span class=cl><span class=c1></span>		<span class=k>if</span> <span class=nx>tryCnt</span> <span class=p>&gt;</span> <span class=mi>0</span> <span class=o>&amp;&amp;</span> <span class=p>!</span><span class=nf>backoffFunc</span><span class=p>(</span><span class=nx>ctx</span><span class=p>,</span> <span class=nx>tryCnt</span><span class=o>-</span><span class=mi>1</span><span class=p>)</span> <span class=p>{</span> <span class=c1>// 退避重连算法，保证不要重连过快
+</span></span></span><span class=line><span class=cl><span class=c1></span>			<span class=k>return</span> <span class=kc>nil</span>
+</span></span><span class=line><span class=cl>		<span class=p>}</span>
+</span></span><span class=line><span class=cl>		<span class=nx>tryCnt</span><span class=o>++</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>		<span class=k>if</span> <span class=nx>ctx</span><span class=p>.</span><span class=nf>Err</span><span class=p>()</span> <span class=o>!=</span> <span class=kc>nil</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>			<span class=k>return</span> <span class=kc>nil</span>
+</span></span><span class=line><span class=cl>		<span class=p>}</span>
+</span></span><span class=line><span class=cl>		<span class=nf>setConnectivityState</span><span class=p>(</span><span class=nx>connectivity</span><span class=p>.</span><span class=nx>Connecting</span><span class=p>,</span> <span class=kc>nil</span><span class=p>)</span> <span class=c1>// 更新状态为Connecting 开始连接
+</span></span></span><span class=line><span class=cl><span class=c1></span>
+</span></span><span class=line><span class=cl>        <span class=c1>// newStream 函数在google.golang.org/grpc@v1.41.0/stream.go 
+</span></span></span><span class=line><span class=cl><span class=c1></span>        <span class=c1>//func newNonRetryClientStream(ctx context.Context, desc *StreamDesc, method string, t transport.ClientTransport, ac *addrConn, opts ...CallOption) (_ ClientStream, err error)
+</span></span></span><span class=line><span class=cl><span class=c1></span>		<span class=nx>rawS</span><span class=p>,</span> <span class=nx>err</span> <span class=o>:=</span> <span class=nf>newStream</span><span class=p>(</span><span class=nx>healthCheckMethod</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>		<span class=k>if</span> <span class=nx>err</span> <span class=o>!=</span> <span class=kc>nil</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>			<span class=k>continue</span> <span class=nx>retryConnection</span>
+</span></span><span class=line><span class=cl>		<span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>		<span class=nx>s</span><span class=p>,</span> <span class=nx>ok</span> <span class=o>:=</span> <span class=nx>rawS</span><span class=p>.(</span><span class=nx>grpc</span><span class=p>.</span><span class=nx>ClientStream</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>		<span class=c1>// Ideally, this should never happen. But if it happens, the server is marked as healthy for LBing purposes.
+</span></span></span><span class=line><span class=cl><span class=c1></span>		<span class=k>if</span> <span class=p>!</span><span class=nx>ok</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>			<span class=nf>setConnectivityState</span><span class=p>(</span><span class=nx>connectivity</span><span class=p>.</span><span class=nx>Ready</span><span class=p>,</span> <span class=kc>nil</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>			<span class=k>return</span> <span class=nx>fmt</span><span class=p>.</span><span class=nf>Errorf</span><span class=p>(</span><span class=s>&#34;newStream returned %v (type %T); want grpc.ClientStream&#34;</span><span class=p>,</span> <span class=nx>rawS</span><span class=p>,</span> <span class=nx>rawS</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>		<span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>        <span class=c1>// 发送健康检查
+</span></span></span><span class=line><span class=cl><span class=c1></span>		<span class=k>if</span> <span class=nx>err</span> <span class=p>=</span> <span class=nx>s</span><span class=p>.</span><span class=nf>SendMsg</span><span class=p>(</span><span class=o>&amp;</span><span class=nx>healthpb</span><span class=p>.</span><span class=nx>HealthCheckRequest</span><span class=p>{</span><span class=nx>Service</span><span class=p>:</span> <span class=nx>service</span><span class=p>});</span> <span class=nx>err</span> <span class=o>!=</span> <span class=kc>nil</span> <span class=o>&amp;&amp;</span> <span class=nx>err</span> <span class=o>!=</span> <span class=nx>io</span><span class=p>.</span><span class=nx>EOF</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>			<span class=c1>// Stream should have been closed, so we can safely continue to create a new stream.
+</span></span></span><span class=line><span class=cl><span class=c1></span>			<span class=k>continue</span> <span class=nx>retryConnection</span>
+</span></span><span class=line><span class=cl>		<span class=p>}</span>
+</span></span><span class=line><span class=cl>		<span class=nx>s</span><span class=p>.</span><span class=nf>CloseSend</span><span class=p>()</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>		<span class=nx>resp</span> <span class=o>:=</span> <span class=nb>new</span><span class=p>(</span><span class=nx>healthpb</span><span class=p>.</span><span class=nx>HealthCheckResponse</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>		<span class=k>for</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>			<span class=nx>err</span> <span class=p>=</span> <span class=nx>s</span><span class=p>.</span><span class=nf>RecvMsg</span><span class=p>(</span><span class=nx>resp</span><span class=p>)</span> <span class=c1>// 等待接收消息
+</span></span></span><span class=line><span class=cl><span class=c1></span>
+</span></span><span class=line><span class=cl>			<span class=c1>// Reports healthy for the LBing purposes if health check is not implemented in the server.
+</span></span></span><span class=line><span class=cl><span class=c1></span>			<span class=k>if</span> <span class=nx>status</span><span class=p>.</span><span class=nf>Code</span><span class=p>(</span><span class=nx>err</span><span class=p>)</span> <span class=o>==</span> <span class=nx>codes</span><span class=p>.</span><span class=nx>Unimplemented</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>				<span class=nf>setConnectivityState</span><span class=p>(</span><span class=nx>connectivity</span><span class=p>.</span><span class=nx>Ready</span><span class=p>,</span> <span class=kc>nil</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>				<span class=k>return</span> <span class=nx>err</span>
+</span></span><span class=line><span class=cl>			<span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>			<span class=c1>// Reports unhealthy if server&#39;s Watch method gives an error other than UNIMPLEMENTED.
+</span></span></span><span class=line><span class=cl><span class=c1></span>			<span class=k>if</span> <span class=nx>err</span> <span class=o>!=</span> <span class=kc>nil</span> <span class=p>{</span> <span class=c1>// 报错，开始重新检查
+</span></span></span><span class=line><span class=cl><span class=c1></span>				<span class=nf>setConnectivityState</span><span class=p>(</span><span class=nx>connectivity</span><span class=p>.</span><span class=nx>TransientFailure</span><span class=p>,</span> <span class=nx>fmt</span><span class=p>.</span><span class=nf>Errorf</span><span class=p>(</span><span class=s>&#34;connection active but received health check RPC error: %v&#34;</span><span class=p>,</span> <span class=nx>err</span><span class=p>))</span>
+</span></span><span class=line><span class=cl>				<span class=k>continue</span> <span class=nx>retryConnection</span>
+</span></span><span class=line><span class=cl>			<span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>			<span class=c1>// As a message has been received, removes the need for backoff for the next retry by resetting the try count.
+</span></span></span><span class=line><span class=cl><span class=c1></span>			<span class=nx>tryCnt</span> <span class=p>=</span> <span class=mi>0</span> <span class=c1>// 成功，重置以下tryCnt，影响检查检查时间间隔
+</span></span></span><span class=line><span class=cl><span class=c1></span>			<span class=k>if</span> <span class=nx>resp</span><span class=p>.</span><span class=nx>Status</span> <span class=o>==</span> <span class=nx>healthpb</span><span class=p>.</span><span class=nx>HealthCheckResponse_SERVING</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>				<span class=nf>setConnectivityState</span><span class=p>(</span><span class=nx>connectivity</span><span class=p>.</span><span class=nx>Ready</span><span class=p>,</span> <span class=kc>nil</span><span class=p>)</span> <span class=c1>// 更新状态为ready
+</span></span></span><span class=line><span class=cl><span class=c1></span>			<span class=p>}</span> <span class=k>else</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>				<span class=nf>setConnectivityState</span><span class=p>(</span><span class=nx>connectivity</span><span class=p>.</span><span class=nx>TransientFailure</span><span class=p>,</span> <span class=nx>fmt</span><span class=p>.</span><span class=nf>Errorf</span><span class=p>(</span><span class=s>&#34;connection active but health check failed. status=%s&#34;</span><span class=p>,</span> <span class=nx>resp</span><span class=p>.</span><span class=nx>Status</span><span class=p>))</span>
+</span></span><span class=line><span class=cl>			<span class=p>}</span>
+</span></span><span class=line><span class=cl>		<span class=p>}</span>
+</span></span><span class=line><span class=cl>	<span class=p>}</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span></code></pre></td></tr></table></div></div><p>借助etcd list-watch实现断线重连
+grpc 提供一个builder interface，用来监控服务地址的变化，当有服务退出，或者新增，通过etcd的watch机制更新服务信息，实现重连。</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=c1>// Builder creates a resolver that will be used to watch name resolution updates.
+</span></span></span><span class=line><span class=cl><span class=c1></span><span class=kd>type</span> <span class=nx>Builder</span> <span class=kd>interface</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>	<span class=c1>// Build creates a new resolver for the given target.
+</span></span></span><span class=line><span class=cl><span class=c1></span>	<span class=c1>//
+</span></span></span><span class=line><span class=cl><span class=c1></span>	<span class=c1>// gRPC dial calls Build synchronously, and fails if the returned error is
+</span></span></span><span class=line><span class=cl><span class=c1></span>	<span class=c1>// not nil.
+</span></span></span><span class=line><span class=cl><span class=c1></span>	<span class=nf>Build</span><span class=p>(</span><span class=nx>target</span> <span class=nx>Target</span><span class=p>,</span> <span class=nx>cc</span> <span class=nx>ClientConn</span><span class=p>,</span> <span class=nx>opts</span> <span class=nx>BuildOptions</span><span class=p>)</span> <span class=p>(</span><span class=nx>Resolver</span><span class=p>,</span> <span class=kt>error</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>	<span class=c1>// Scheme returns the scheme supported by this resolver.
+</span></span></span><span class=line><span class=cl><span class=c1></span>	<span class=c1>// Scheme is defined at https://github.com/grpc/grpc/blob/master/doc/naming.md.
+</span></span></span><span class=line><span class=cl><span class=c1></span>	<span class=nf>Scheme</span><span class=p>()</span> <span class=kt>string</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span></code></pre></td></tr></table></div></div><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span><span class=lnt>22
+</span><span class=lnt>23
+</span><span class=lnt>24
+</span><span class=lnt>25
+</span><span class=lnt>26
+</span><span class=lnt>27
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=kd>func</span> <span class=p>(</span><span class=nx>b</span> <span class=o>*</span><span class=nx>discovBuilder</span><span class=p>)</span> <span class=nf>Build</span><span class=p>(</span><span class=nx>target</span> <span class=nx>resolver</span><span class=p>.</span><span class=nx>Target</span><span class=p>,</span> <span class=nx>cc</span> <span class=nx>resolver</span><span class=p>.</span><span class=nx>ClientConn</span><span class=p>,</span> <span class=nx>_</span> <span class=nx>resolver</span><span class=p>.</span><span class=nx>BuildOptions</span><span class=p>)</span> <span class=p>(</span>
+</span></span><span class=line><span class=cl>	<span class=nx>resolver</span><span class=p>.</span><span class=nx>Resolver</span><span class=p>,</span> <span class=kt>error</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>	<span class=nx>hosts</span> <span class=o>:=</span> <span class=nx>strings</span><span class=p>.</span><span class=nf>FieldsFunc</span><span class=p>(</span><span class=nx>target</span><span class=p>.</span><span class=nx>Authority</span><span class=p>,</span> <span class=kd>func</span><span class=p>(</span><span class=nx>r</span> <span class=kt>rune</span><span class=p>)</span> <span class=kt>bool</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>		<span class=k>return</span> <span class=nx>r</span> <span class=o>==</span> <span class=nx>EndpointSepChar</span>
+</span></span><span class=line><span class=cl>	<span class=p>})</span>
+</span></span><span class=line><span class=cl>	<span class=nx>sub</span><span class=p>,</span> <span class=nx>err</span> <span class=o>:=</span> <span class=nx>discov</span><span class=p>.</span><span class=nf>NewSubscriber</span><span class=p>(</span><span class=nx>hosts</span><span class=p>,</span> <span class=nx>target</span><span class=p>.</span><span class=nx>Endpoint</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>	<span class=k>if</span> <span class=nx>err</span> <span class=o>!=</span> <span class=kc>nil</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>		<span class=k>return</span> <span class=kc>nil</span><span class=p>,</span> <span class=nx>err</span>
+</span></span><span class=line><span class=cl>	<span class=p>}</span>
+</span></span><span class=line><span class=cl>	<span class=nx>update</span> <span class=o>:=</span> <span class=kd>func</span><span class=p>()</span> <span class=p>{</span> <span class=c1>// 监听key-value变更时watch调用的函数
+</span></span></span><span class=line><span class=cl><span class=c1></span>		<span class=kd>var</span> <span class=nx>addrs</span> <span class=p>[]</span><span class=nx>resolver</span><span class=p>.</span><span class=nx>Address</span>
+</span></span><span class=line><span class=cl>		<span class=k>for</span> <span class=nx>_</span><span class=p>,</span> <span class=nx>val</span> <span class=o>:=</span> <span class=k>range</span> <span class=nf>subset</span><span class=p>(</span><span class=nx>sub</span><span class=p>.</span><span class=nf>Values</span><span class=p>(),</span> <span class=nx>subsetSize</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>			<span class=nx>addrs</span> <span class=p>=</span> <span class=nb>append</span><span class=p>(</span><span class=nx>addrs</span><span class=p>,</span> <span class=nx>resolver</span><span class=p>.</span><span class=nx>Address</span><span class=p>{</span> <span class=c1>// 更新监听server的地址信息
+</span></span></span><span class=line><span class=cl><span class=c1></span>				<span class=nx>Addr</span><span class=p>:</span> <span class=nx>val</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>			<span class=p>})</span>
+</span></span><span class=line><span class=cl>		<span class=p>}</span>
+</span></span><span class=line><span class=cl>		<span class=k>if</span> <span class=nx>err</span> <span class=o>:=</span> <span class=nx>cc</span><span class=p>.</span><span class=nf>UpdateState</span><span class=p>(</span><span class=nx>resolver</span><span class=p>.</span><span class=nx>State</span><span class=p>{</span>
+</span></span><span class=line><span class=cl>			<span class=nx>Addresses</span><span class=p>:</span> <span class=nx>addrs</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>		<span class=p>});</span> <span class=nx>err</span> <span class=o>!=</span> <span class=kc>nil</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>			<span class=nx>log</span><span class=p>.</span><span class=nf>Error</span><span class=p>(</span><span class=nx>err</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>		<span class=p>}</span>
+</span></span><span class=line><span class=cl>	<span class=p>}</span>
+</span></span><span class=line><span class=cl>	<span class=nx>sub</span><span class=p>.</span><span class=nf>AddListener</span><span class=p>(</span><span class=nx>update</span><span class=p>)</span> <span class=c1>// 注册update 函数
+</span></span></span><span class=line><span class=cl><span class=c1></span>	<span class=nf>update</span><span class=p>()</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>	<span class=k>return</span> <span class=o>&amp;</span><span class=nx>nopResolver</span><span class=p>{</span><span class=nx>cc</span><span class=p>:</span> <span class=nx>cc</span><span class=p>},</span> <span class=kc>nil</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span></code></pre></td></tr></table></div></div><p>注册就是将函数append到listeners slice中，当变动时遍历所有的listener。</p><p>watch实现，在上面的NewSubscriber中，会起一个goroutine调用monitor，monitor负责启动watch</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=kd>func</span> <span class=p>(</span><span class=nx>c</span> <span class=o>*</span><span class=nx>cluster</span><span class=p>)</span> <span class=nf>monitor</span><span class=p>(</span><span class=nx>key</span> <span class=kt>string</span><span class=p>,</span> <span class=nx>l</span> <span class=nx>UpdateListener</span><span class=p>)</span> <span class=kt>error</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>	<span class=nx>c</span><span class=p>.</span><span class=nx>lock</span><span class=p>.</span><span class=nf>Lock</span><span class=p>()</span>
+</span></span><span class=line><span class=cl>	<span class=nx>c</span><span class=p>.</span><span class=nx>listeners</span><span class=p>[</span><span class=nx>key</span><span class=p>]</span> <span class=p>=</span> <span class=nb>append</span><span class=p>(</span><span class=nx>c</span><span class=p>.</span><span class=nx>listeners</span><span class=p>[</span><span class=nx>key</span><span class=p>],</span> <span class=nx>l</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>	<span class=nx>c</span><span class=p>.</span><span class=nx>lock</span><span class=p>.</span><span class=nf>Unlock</span><span class=p>()</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>	<span class=nx>cli</span><span class=p>,</span> <span class=nx>err</span> <span class=o>:=</span> <span class=nx>c</span><span class=p>.</span><span class=nf>getClient</span><span class=p>()</span>
+</span></span><span class=line><span class=cl>	<span class=k>if</span> <span class=nx>err</span> <span class=o>!=</span> <span class=kc>nil</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>		<span class=k>return</span> <span class=nx>err</span>
+</span></span><span class=line><span class=cl>	<span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>	<span class=nx>c</span><span class=p>.</span><span class=nf>load</span><span class=p>(</span><span class=nx>cli</span><span class=p>,</span> <span class=nx>key</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>	<span class=nx>c</span><span class=p>.</span><span class=nx>watchGroup</span><span class=p>.</span><span class=nf>Add</span><span class=p>(</span><span class=mi>1</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>	<span class=k>go</span> <span class=kd>func</span><span class=p>()</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>		<span class=k>defer</span> <span class=nx>c</span><span class=p>.</span><span class=nx>watchGroup</span><span class=p>.</span><span class=nf>Done</span><span class=p>()</span>
+</span></span><span class=line><span class=cl>		<span class=nx>c</span><span class=p>.</span><span class=nf>watch</span><span class=p>(</span><span class=nx>cli</span><span class=p>,</span> <span class=nx>key</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>	<span class=p>}()</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>	<span class=k>return</span> <span class=kc>nil</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span></code></pre></td></tr></table></div></div><p>monitor中的watch最终调用到此处的watchStream，watchStream启动一个etcd的watch，当有事件，调用handleWatchEvents回调上面注册的函数。</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span><span class=lnt>22
+</span><span class=lnt>23
+</span><span class=lnt>24
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=kd>func</span> <span class=p>(</span><span class=nx>c</span> <span class=o>*</span><span class=nx>cluster</span><span class=p>)</span> <span class=nf>watchStream</span><span class=p>(</span><span class=nx>cli</span> <span class=nx>EtcdClient</span><span class=p>,</span> <span class=nx>key</span> <span class=kt>string</span><span class=p>)</span> <span class=kt>bool</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>	<span class=nx>rch</span> <span class=o>:=</span> <span class=nx>cli</span><span class=p>.</span><span class=nf>Watch</span><span class=p>(</span><span class=nx>clientv3</span><span class=p>.</span><span class=nf>WithRequireLeader</span><span class=p>(</span><span class=nx>c</span><span class=p>.</span><span class=nf>context</span><span class=p>(</span><span class=nx>cli</span><span class=p>)),</span> <span class=nf>makeKeyPrefix</span><span class=p>(</span><span class=nx>key</span><span class=p>),</span> <span class=nx>clientv3</span><span class=p>.</span><span class=nf>WithPrefix</span><span class=p>())</span>
+</span></span><span class=line><span class=cl>	<span class=k>for</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>		<span class=k>select</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>		<span class=k>case</span> <span class=nx>wresp</span><span class=p>,</span> <span class=nx>ok</span> <span class=o>:=</span> <span class=o>&lt;-</span><span class=nx>rch</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>			<span class=k>if</span> <span class=p>!</span><span class=nx>ok</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>				<span class=nx>log</span><span class=p>.</span><span class=nf>Error</span><span class=p>(</span><span class=s>&#34;etcd monitor chan has been closed&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>				<span class=k>return</span> <span class=kc>false</span>
+</span></span><span class=line><span class=cl>			<span class=p>}</span>
+</span></span><span class=line><span class=cl>			<span class=k>if</span> <span class=nx>wresp</span><span class=p>.</span><span class=nx>Canceled</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>				<span class=nx>log</span><span class=p>.</span><span class=nf>Errorf</span><span class=p>(</span><span class=s>&#34;etcd monitor chan has been canceled, error: %v&#34;</span><span class=p>,</span> <span class=nx>wresp</span><span class=p>.</span><span class=nf>Err</span><span class=p>())</span>
+</span></span><span class=line><span class=cl>				<span class=k>return</span> <span class=kc>false</span>
+</span></span><span class=line><span class=cl>			<span class=p>}</span>
+</span></span><span class=line><span class=cl>			<span class=k>if</span> <span class=nx>wresp</span><span class=p>.</span><span class=nf>Err</span><span class=p>()</span> <span class=o>!=</span> <span class=kc>nil</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>				<span class=nx>log</span><span class=p>.</span><span class=nf>Error</span><span class=p>(</span><span class=nx>fmt</span><span class=p>.</span><span class=nf>Sprintf</span><span class=p>(</span><span class=s>&#34;etcd monitor chan error: %v&#34;</span><span class=p>,</span> <span class=nx>wresp</span><span class=p>.</span><span class=nf>Err</span><span class=p>()))</span>
+</span></span><span class=line><span class=cl>				<span class=k>return</span> <span class=kc>false</span>
+</span></span><span class=line><span class=cl>			<span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>			<span class=nx>c</span><span class=p>.</span><span class=nf>handleWatchEvents</span><span class=p>(</span><span class=nx>key</span><span class=p>,</span> <span class=nx>wresp</span><span class=p>.</span><span class=nx>Events</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>		<span class=k>case</span> <span class=o>&lt;-</span><span class=nx>c</span><span class=p>.</span><span class=nx>done</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>			<span class=k>return</span> <span class=kc>true</span>
+</span></span><span class=line><span class=cl>		<span class=p>}</span>
+</span></span><span class=line><span class=cl>	<span class=p>}</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span></code></pre></td></tr></table></div></div><p>当grpc的cc.UpdateState被调用时，通过调用关系：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span><span class=lnt>5
+</span><span class=lnt>6
+</span><span class=lnt>7
+</span><span class=lnt>8
+</span><span class=lnt>9
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=c1>// google.golang.org/grpc@v1.43.0/resolver_conn_wrapper.go
+</span></span></span><span class=line><span class=cl><span class=c1></span><span class=kd>func</span> <span class=p>(</span><span class=nx>ccr</span> <span class=o>*</span><span class=nx>ccResolverWrapper</span><span class=p>)</span> <span class=nf>UpdateState</span><span class=p>(</span><span class=nx>s</span> <span class=nx>resolver</span><span class=p>.</span><span class=nx>State</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>		<span class=c1>// google.golang.org/grpc@v1.43.0/clientconn.go
+</span></span></span><span class=line><span class=cl><span class=c1></span>	<span class=p>=&gt;</span> <span class=kd>func</span> <span class=p>(</span><span class=nx>cc</span> <span class=o>*</span><span class=nx>ClientConn</span><span class=p>)</span> <span class=nf>updateResolverState</span><span class=p>(</span><span class=nx>s</span> <span class=nx>resolver</span><span class=p>.</span><span class=nx>State</span><span class=p>,</span> <span class=nx>err</span> <span class=kt>error</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>		<span class=p>=&gt;</span> <span class=kd>func</span> <span class=p>(</span><span class=nx>b</span> <span class=o>*</span><span class=nx>baseBalancer</span><span class=p>)</span> <span class=nf>UpdateClientConnState</span><span class=p>(</span><span class=nx>s</span> <span class=nx>balancer</span><span class=p>.</span><span class=nx>ClientConnState</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>			<span class=p>=&gt;</span> <span class=nx>b</span><span class=p>.</span><span class=nx>cc</span><span class=p>.</span><span class=nf>NewSubConn</span><span class=p>([]</span><span class=nx>resolver</span><span class=p>.</span><span class=nx>Address</span><span class=p>{</span><span class=nx>a</span><span class=p>},</span> <span class=nx>balancer</span><span class=p>.</span><span class=nx>NewSubConnOptions</span><span class=p>{</span><span class=nx>HealthCheckEnabled</span><span class=p>:</span> <span class=nx>b</span><span class=p>.</span><span class=nx>config</span><span class=p>.</span><span class=nx>HealthCheck</span><span class=p>})</span>
+</span></span><span class=line><span class=cl>				<span class=p>=&gt;</span> <span class=nx>ccb</span><span class=p>.</span><span class=nx>cc</span><span class=p>.</span><span class=nf>newAddrConn</span><span class=p>(</span><span class=nx>addrs</span><span class=p>,</span> <span class=nx>opts</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>					<span class=p>=&gt;</span> <span class=kd>func</span> <span class=p>(</span><span class=nx>cc</span> <span class=o>*</span><span class=nx>ClientConn</span><span class=p>)</span> <span class=nf>newAddrConn</span><span class=p>(</span><span class=nx>addrs</span> <span class=p>[]</span><span class=nx>resolver</span><span class=p>.</span><span class=nx>Address</span><span class=p>,</span> <span class=nx>opts</span> <span class=nx>balancer</span><span class=p>.</span><span class=nx>NewSubConnOptions</span><span class=p>)</span> <span class=p>(</span><span class=o>*</span><span class=nx>addrConn</span><span class=p>,</span> <span class=kt>error</span><span class=p>)</span> 
+</span></span><span class=line><span class=cl>	
+</span></span></code></pre></td></tr></table></div></div><p>可以发现，经过一系列的调用最终调用到上面降到的newAddrConn方法。</p></div><footer class=post-footer><div class=post-tags><a href=/tags/grpc/>grpc</a></div><nav class=post-nav><a class=next href=/post/kubeedge-cloudcore/><span class="next-text nav-default">Kubeedge Cloudcore</span>
+<span class="next-text nav-mobile">Next</span>
+<i class="iconfont icon-right"></i></a></nav></footer></article></div><div id=vcomments></div><script src=//cdn1.lncld.net/static/js/3.0.4/av-min.js></script>
+<script src=//unpkg.com/valine/dist/Valine.min.js></script>
+<script type=text/javascript>new Valine({el:"#vcomments",appId:"fb6qCfVYGmIrC87K3STOS3V8-gzGzoHsz",appKey:"FilghKK7HHC4hMQHxhR90dDE",notify:!1,verify:!1,avatar:"mm",placeholder:"说点什么吧...",visitor:!1})</script></div></main><footer id=footer class=footer><div class=social-links><a href=mailto:hanglinux@163.com class="iconfont icon-email" title=email></a>
+<a href=https://github.com/fridayhub class="iconfont icon-github" title=github></a>
+<a href=https://fridayhub.github.io/index.xml type=application/rss+xml class="iconfont icon-rss" title=rss></a></div><div class=copyright><span class=power-by>Powered by <a class=hexo-link href=https://gohugo.io>Hugo</a></span>
+<span class=division>|</span>
+<span class=theme-info>Theme -
+<a class=theme-link href=https://github.com/olOwOlo/hugo-theme-even>Even</a></span><div class=busuanzi-footer><span id=busuanzi_container_site_pv>site pv: <span id=busuanzi_value_site_pv><img src=/img/spinner.svg alt=spinner.svg></span></span>
+<span class=division>|</span>
+<span id=busuanzi_container_site_uv>site uv: <span id=busuanzi_value_site_uv><img src=/img/spinner.svg alt=spinner.svg></span></span></div><span class=copyright-year>&copy;
+2017 -
+2022
+<span class=heart><i class="iconfont icon-heart"></i></span>
+<span class=author>friday</span></span></div></footer><div class=back-to-top id=back-to-top><i class="iconfont icon-up"></i></div></div><script src=https://cdn.jsdelivr.net/npm/jquery@3.2.1/dist/jquery.min.js integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin=anonymous></script>
+<script src=https://cdn.jsdelivr.net/npm/slideout@1.0.1/dist/slideout.min.js integrity="sha256-t+zJ/g8/KXIJMjSVQdnibt4dlaDxc9zXr/9oNPeWqdg=" crossorigin=anonymous></script>
+<script src=https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.js integrity="sha256-XVLffZaxoWfGUEbdzuLi7pwaUJv1cecsQJQqGLe7axY=" crossorigin=anonymous></script>
+<script type=text/javascript src=/js/main.min.30dad356188cdaba5047112eaa8bf5e85cb14ae7e803337403591fce94a531a0.js></script></body></html>
