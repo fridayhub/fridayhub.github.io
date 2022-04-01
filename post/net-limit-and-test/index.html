@@ -1,0 +1,124 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta http-equiv=x-ua-compatible content="IE=edge,chrome=1"><title>linux 限制网速和网速测试 - Friday - Here I record my experience</title><meta name=renderer content="webkit"><meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1"><meta http-equiv=cache-control content="no-transform"><meta http-equiv=cache-control content="no-siteapp"><meta name=theme-color content="#f8f5ec"><meta name=msapplication-navbutton-color content="#f8f5ec"><meta name=apple-mobile-web-app-capable content="yes"><meta name=apple-mobile-web-app-status-bar-style content="#f8f5ec"><meta name=author content="Friday"><meta name=description content="网络限速和测速工具"><meta name=keywords content="netlimit"><meta name=generator content="Hugo 0.96.0 with theme even"><link rel=canonical href=https://fridayhub.github.io/post/net-limit-and-test/><link rel=apple-touch-icon sizes=180x180 href=/apple-touch-icon.png><link rel=icon type=image/png sizes=32x32 href=/favicon-32x32.png><link rel=icon type=image/png sizes=16x16 href=/favicon-16x16.png><link rel=manifest href=/manifest.json><link rel=mask-icon href=/safari-pinned-tab.svg color=#5bbad5><script async src=//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js></script><meta name=referrer content="no-referrer-when-downgrade"><link href=/sass/main.min.c2803d17ea439bb194b104ce262b40c9118b45b7b108e27dadf43e96dd6664a3.css rel=stylesheet><link rel=stylesheet href=https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.css integrity="sha256-7TyXnr2YU040zfSP+rEcz29ggW4j56/ujTPwjMzyqFY=" crossorigin=anonymous><meta property="og:title" content="linux 限制网速和网速测试"><meta property="og:description" content="网络限速和测速工具"><meta property="og:type" content="article"><meta property="og:url" content="https://fridayhub.github.io/post/net-limit-and-test/"><meta property="article:section" content="post"><meta property="article:published_time" content="2022-04-01T14:23:58+08:00"><meta property="article:modified_time" content="2022-04-01T14:23:58+08:00"><meta itemprop=name content="linux 限制网速和网速测试"><meta itemprop=description content="网络限速和测速工具"><meta itemprop=datePublished content="2022-04-01T14:23:58+08:00"><meta itemprop=dateModified content="2022-04-01T14:23:58+08:00"><meta itemprop=wordCount content="430"><meta itemprop=keywords content="net,"><meta name=twitter:card content="summary"><meta name=twitter:title content="linux 限制网速和网速测试"><meta name=twitter:description content="网络限速和测速工具"><!--[if lte IE 9]><script src=https://cdnjs.cloudflare.com/ajax/libs/classlist/1.1.20170427/classList.min.js></script><![endif]--><!--[if lt IE 9]><script src=https://cdn.jsdelivr.net/npm/html5shiv@3.7.3/dist/html5shiv.min.js></script>
+<script src=https://cdn.jsdelivr.net/npm/respond.js@1.4.2/dest/respond.min.js></script><![endif]--></head><body><div id=mobile-navbar class=mobile-navbar><div class=mobile-header-logo><a href=/ class=logo>Friday</a></div><div class=mobile-navbar-icon><span></span>
+<span></span>
+<span></span></div></div><nav id=mobile-menu class="mobile-menu slideout-menu"><ul class=mobile-menu-list><a href=/><li class=mobile-menu-item>Home</li></a><a href=/post/><li class=mobile-menu-item>Archives</li></a><a href=/tags/><li class=mobile-menu-item>Tags</li></a><a href=/categories/><li class=mobile-menu-item>Categories</li></a><a href=/about/><li class=mobile-menu-item>About</li></a></ul></nav><div class=container id=mobile-panel><header id=header class=header><div class=logo-wrapper><a href=/ class=logo>Friday</a></div><nav class=site-navbar><ul id=menu class=menu><li class=menu-item><a class=menu-item-link href=/>Home</a></li><li class=menu-item><a class=menu-item-link href=/post/>Archives</a></li><li class=menu-item><a class=menu-item-link href=/tags/>Tags</a></li><li class=menu-item><a class=menu-item-link href=/categories/>Categories</a></li><li class=menu-item><a class=menu-item-link href=/about/>About</a></li></ul></nav></header><main id=main class=main><div class=content-wrapper><div id=content class=content><article class=post><header class=post-header><h1 class=post-title>linux 限制网速和网速测试</h1><div class=post-meta><span class=post-time>2022-04-01 14:23:58</span><div class=post-category><a href=/categories/net/>net</a></div><span class=more-meta>430 words</span>
+<span class=more-meta>1 min read</span>
+<span id=busuanzi_container_page_pv class=more-meta><span id=busuanzi_value_page_pv><img src=/img/spinner.svg alt=spinner.svg></span> times read</span></div></header><div class=post-toc id=post-toc><h2 class=post-toc-title>Contents</h2><div class=post-toc-content><nav id=TableOfContents><ul><li><ul><li><a href=#1wondershaperspeedtestpy安装>1、wondershaper、speedtest.py安装</a></li><li><a href=#2限速>2、限速</a></li><li><a href=#3测速>3、测速</a></li><li><a href=#4取消限速>4、取消限速</a></li></ul></li></ul></nav></div></div><div class=post-content><p>需要用到两个工具wondershaper、speedtest.py：</p><h3 id=1wondershaperspeedtestpy安装>1、wondershaper、speedtest.py安装</h3><p>下载安装：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>git clone https://github.com/magnific0/wondershaper.git
+</span></span></code></pre></td></tr></table></div></div><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>git clone https://github.com/sivel/speedtest-cli.git
+</span></span></code></pre></td></tr></table></div></div><h3 id=2限速>2、限速</h3><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span><span class=lnt>22
+</span><span class=lnt>23
+</span><span class=lnt>24
+</span><span class=lnt>25
+</span><span class=lnt>26
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl><span class=nb>cd</span> wondershaper
+</span></span><span class=line><span class=cl>./wondershaper -h
+</span></span><span class=line><span class=cl>Running as non root / sudo user
+</span></span><span class=line><span class=cl>USAGE: ./wondershaper <span class=o>[</span>-hcs<span class=o>]</span> <span class=o>[</span>-a &lt;adapter&gt;<span class=o>]</span> <span class=o>[</span>-d &lt;rate&gt;<span class=o>]</span> <span class=o>[</span>-u &lt;rate&gt;<span class=o>]</span>
+</span></span><span class=line><span class=cl>Limit the bandwidth of an adapter
+</span></span><span class=line><span class=cl>OPTIONS:
+</span></span><span class=line><span class=cl>   -h           Show this message
+</span></span><span class=line><span class=cl>   -a &lt;adapter&gt; Set the adapter
+</span></span><span class=line><span class=cl>   -d &lt;rate&gt;    Set maximum download rate <span class=o>(</span>in Kbps<span class=o>)</span> and/or
+</span></span><span class=line><span class=cl>   -u &lt;rate&gt;    Set maximum upload rate <span class=o>(</span>in Kbps<span class=o>)</span>
+</span></span><span class=line><span class=cl>   -p           Use presets in <span class=s2>&#34;/etc/systemd/wondershaper.conf&#34;</span>
+</span></span><span class=line><span class=cl>   -f &lt;file&gt;    Use alternative preset file
+</span></span><span class=line><span class=cl>   -c           Clear the limits from adapter
+</span></span><span class=line><span class=cl>   -s           Show the current status of adapter
+</span></span><span class=line><span class=cl>   -v           Show the current version
+</span></span><span class=line><span class=cl>   Configure HIPRIODST in <span class=s2>&#34;/etc/systemd/wondershaper.conf&#34;</span> <span class=k>for</span> hosts
+</span></span><span class=line><span class=cl>   requiring high priority i.e. in <span class=k>case</span> ssh uses dport 443.
+</span></span><span class=line><span class=cl>MODES:
+</span></span><span class=line><span class=cl>   wondershaper -a &lt;adapter&gt; -d &lt;rate&gt; -u &lt;rate&gt;
+</span></span><span class=line><span class=cl>   wondershaper -c -a &lt;adapter&gt;
+</span></span><span class=line><span class=cl>   wondershaper -s -a &lt;adapter&gt;
+</span></span><span class=line><span class=cl>EXAMPLES:
+</span></span><span class=line><span class=cl>   wondershaper -a eth0 -d <span class=m>1024</span> -u <span class=m>512</span>
+</span></span><span class=line><span class=cl>   wondershaper -a eth0 -u <span class=m>512</span>
+</span></span><span class=line><span class=cl>   wondershaper -c -a eth0
+</span></span><span class=line><span class=cl>   wondershaper -p -f foo.conf
+</span></span></code></pre></td></tr></table></div></div><p>可以看到，限速单位是Kbps.</p><p>限速命令：
+<code>sudo ./wondershaper -a enp5s0f0 -d 16384 -u 16384</code>
+限制上传速度和下载速度都为16Mbp/s，也就是2MBytes/s</p><h3 id=3测速>3、测速</h3><p><code>cd speedtest-cli</code></p><p>未限速前：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>python speedtest.py 
+</span></span><span class=line><span class=cl>Retrieving speedtest.net configuration...
+</span></span><span class=line><span class=cl>Testing from China Unicom <span class=o>(</span>xxx.xxx.xxx.xx<span class=o>)</span>...
+</span></span><span class=line><span class=cl>Retrieving speedtest.net server list...
+</span></span><span class=line><span class=cl>Selecting best server based on ping...
+</span></span><span class=line><span class=cl>Hosted by xx <span class=o>(</span>xx<span class=o>)</span> <span class=o>[</span>9.32 km<span class=o>]</span>: 25.042 ms
+</span></span><span class=line><span class=cl>Testing download speed................................................................................
+</span></span><span class=line><span class=cl>Download: 47.82 Mbit/s
+</span></span><span class=line><span class=cl>Testing upload speed................................................................................................
+</span></span><span class=line><span class=cl>Upload: 91.86 Mbit/s
+</span></span></code></pre></td></tr></table></div></div><p>限速后：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>python speedtest.py 
+</span></span><span class=line><span class=cl>Retrieving speedtest.net configuration...
+</span></span><span class=line><span class=cl>Testing from China Unicom <span class=o>(</span>xxx.xxx.xxx.xxx<span class=o>)</span>...
+</span></span><span class=line><span class=cl>Retrieving speedtest.net server list...
+</span></span><span class=line><span class=cl>Selecting best server based on ping...
+</span></span><span class=line><span class=cl>Hosted by xxx hello 5G <span class=o>(</span>xxx<span class=o>)</span> <span class=o>[</span>468.85 km<span class=o>]</span>: 27.891 ms
+</span></span><span class=line><span class=cl>Testing download speed................................................................................
+</span></span><span class=line><span class=cl>Download: 15.43 Mbit/s
+</span></span><span class=line><span class=cl>Testing upload speed................................................................................................
+</span></span><span class=line><span class=cl>Upload: 14.80 Mbit/s
+</span></span></code></pre></td></tr></table></div></div><h3 id=4取消限速>4、取消限速</h3><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-fallback data-lang=fallback><span class=line><span class=cl>sudo ./wondershaper -c enp5s0f0
+</span></span></code></pre></td></tr></table></div></div></div><footer class=post-footer><div class=post-tags><a href=/tags/net/>net</a></div><nav class=post-nav><a class=next href=/post/grpc-conn/><span class="next-text nav-default">Grpc 连接建立过程、断线重连、服务发现的配合</span>
+<span class="next-text nav-mobile">Next</span>
+<i class="iconfont icon-right"></i></a></nav></footer></article></div><div id=vcomments></div><script src=//cdn1.lncld.net/static/js/3.0.4/av-min.js></script>
+<script src=//unpkg.com/valine/dist/Valine.min.js></script>
+<script type=text/javascript>new Valine({el:"#vcomments",appId:"fb6qCfVYGmIrC87K3STOS3V8-gzGzoHsz",appKey:"FilghKK7HHC4hMQHxhR90dDE",notify:!1,verify:!1,avatar:"mm",placeholder:"说点什么吧...",visitor:!1})</script></div></main><footer id=footer class=footer><div class=social-links><a href=mailto:hanglinux@163.com class="iconfont icon-email" title=email></a>
+<a href=https://github.com/fridayhub class="iconfont icon-github" title=github></a>
+<a href=https://fridayhub.github.io/index.xml type=application/rss+xml class="iconfont icon-rss" title=rss></a></div><div class=copyright><span class=power-by>Powered by <a class=hexo-link href=https://gohugo.io>Hugo</a></span>
+<span class=division>|</span>
+<span class=theme-info>Theme -
+<a class=theme-link href=https://github.com/olOwOlo/hugo-theme-even>Even</a></span><div class=busuanzi-footer><span id=busuanzi_container_site_pv>site pv: <span id=busuanzi_value_site_pv><img src=/img/spinner.svg alt=spinner.svg></span></span>
+<span class=division>|</span>
+<span id=busuanzi_container_site_uv>site uv: <span id=busuanzi_value_site_uv><img src=/img/spinner.svg alt=spinner.svg></span></span></div><span class=copyright-year>&copy;
+2017 -
+2022
+<span class=heart><i class="iconfont icon-heart"></i></span>
+<span class=author>friday</span></span></div></footer><div class=back-to-top id=back-to-top><i class="iconfont icon-up"></i></div></div><script src=https://cdn.jsdelivr.net/npm/jquery@3.2.1/dist/jquery.min.js integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin=anonymous></script>
+<script src=https://cdn.jsdelivr.net/npm/slideout@1.0.1/dist/slideout.min.js integrity="sha256-t+zJ/g8/KXIJMjSVQdnibt4dlaDxc9zXr/9oNPeWqdg=" crossorigin=anonymous></script>
+<script src=https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.js integrity="sha256-XVLffZaxoWfGUEbdzuLi7pwaUJv1cecsQJQqGLe7axY=" crossorigin=anonymous></script>
+<script type=text/javascript src=/js/main.min.30dad356188cdaba5047112eaa8bf5e85cb14ae7e803337403591fce94a531a0.js></script></body></html>
