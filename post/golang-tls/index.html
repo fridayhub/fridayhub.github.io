@@ -1,0 +1,784 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta http-equiv=x-ua-compatible content="IE=edge,chrome=1"><title>Golang tls 双向加密 - Friday - Here I record my experience</title><meta name=renderer content="webkit"><meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1"><meta http-equiv=cache-control content="no-transform"><meta http-equiv=cache-control content="no-siteapp"><meta name=theme-color content="#f8f5ec"><meta name=msapplication-navbutton-color content="#f8f5ec"><meta name=apple-mobile-web-app-capable content="yes"><meta name=apple-mobile-web-app-status-bar-style content="#f8f5ec"><meta name=author content="friday"><meta name=description content="tls 十全大补丸"><meta name=keywords content="tls,kubeedge"><meta name=generator content="Hugo 0.107.0 with theme even"><link rel=canonical href=https://fridayhub.github.io/post/golang-tls/><link rel=apple-touch-icon sizes=180x180 href=/apple-touch-icon.png><link rel=icon type=image/png sizes=32x32 href=/favicon-32x32.png><link rel=icon type=image/png sizes=16x16 href=/favicon-16x16.png><link rel=manifest href=/manifest.json><link rel=mask-icon href=/safari-pinned-tab.svg color=#5bbad5><script async src=//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js></script><meta name=referrer content="no-referrer-when-downgrade"><link href=/sass/main.min.c2803d17ea439bb194b104ce262b40c9118b45b7b108e27dadf43e96dd6664a3.css rel=stylesheet><link rel=stylesheet href=https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.css integrity="sha256-7TyXnr2YU040zfSP+rEcz29ggW4j56/ujTPwjMzyqFY=" crossorigin=anonymous><meta property="og:title" content="Golang tls 双向加密"><meta property="og:description" content="tls 十全大补丸"><meta property="og:type" content="article"><meta property="og:url" content="https://fridayhub.github.io/post/golang-tls/"><meta property="article:section" content="post"><meta property="article:published_time" content="2022-12-05T10:42:59+08:00"><meta property="article:modified_time" content="2022-12-05T10:42:59+08:00"><meta itemprop=name content="Golang tls 双向加密"><meta itemprop=description content="tls 十全大补丸"><meta itemprop=datePublished content="2022-12-05T10:42:59+08:00"><meta itemprop=dateModified content="2022-12-05T10:42:59+08:00"><meta itemprop=wordCount content="4936"><meta itemprop=keywords content="tls,kubeedge,"><meta name=twitter:card content="summary"><meta name=twitter:title content="Golang tls 双向加密"><meta name=twitter:description content="tls 十全大补丸"><!--[if lte IE 9]><script src=https://cdnjs.cloudflare.com/ajax/libs/classlist/1.1.20170427/classList.min.js></script><![endif]--><!--[if lt IE 9]><script src=https://cdn.jsdelivr.net/npm/html5shiv@3.7.3/dist/html5shiv.min.js></script>
+<script src=https://cdn.jsdelivr.net/npm/respond.js@1.4.2/dest/respond.min.js></script><![endif]--></head><body><div id=mobile-navbar class=mobile-navbar><div class=mobile-header-logo><a href=/ class=logo>Friday</a></div><div class=mobile-navbar-icon><span></span>
+<span></span>
+<span></span></div></div><nav id=mobile-menu class="mobile-menu slideout-menu"><ul class=mobile-menu-list><a href=/><li class=mobile-menu-item>Home</li></a><a href=/post/><li class=mobile-menu-item>Archives</li></a><a href=/tags/><li class=mobile-menu-item>Tags</li></a><a href=/categories/><li class=mobile-menu-item>Categories</li></a><a href=/about/><li class=mobile-menu-item>About</li></a></ul></nav><div class=container id=mobile-panel><header id=header class=header><div class=logo-wrapper><a href=/ class=logo>Friday</a></div><nav class=site-navbar><ul id=menu class=menu><li class=menu-item><a class=menu-item-link href=/>Home</a></li><li class=menu-item><a class=menu-item-link href=/post/>Archives</a></li><li class=menu-item><a class=menu-item-link href=/tags/>Tags</a></li><li class=menu-item><a class=menu-item-link href=/categories/>Categories</a></li><li class=menu-item><a class=menu-item-link href=/about/>About</a></li></ul></nav></header><main id=main class=main><div class=content-wrapper><div id=content class=content><article class=post><header class=post-header><h1 class=post-title>Golang tls 双向加密</h1><div class=post-meta><span class=post-time>2022-12-05 10:42:59</span><div class=post-category><a href=/categories/tls/>tls</a>
+<a href=/categories/kubeedge/>kubeedge</a></div><span class=more-meta>4936 words</span>
+<span class=more-meta>10 mins read</span>
+<span id=busuanzi_container_page_pv class=more-meta><span id=busuanzi_value_page_pv><img src=/img/spinner.svg alt=spinner.svg></span> times read</span></div></header><div class=post-toc id=post-toc><h2 class=post-toc-title>Contents</h2><div class=post-toc-content><nav id=TableOfContents><ul><li><a href=#基本概念>基本概念：</a><ul><li><a href=#证书>证书</a></li><li><a href=#certificate-signing-requests证书签名请求pkcs10>Certificate signing requests（证书签名请求，PKCS#10）</a></li></ul></li><li><a href=#tls身份认证原理>TLS身份认证原理</a><ul><li><a href=#单向认证流程如下>单向认证流程如下：</a></li><li><a href=#证书与秘钥管理>证书与秘钥管理</a></li><li><a href=#双向认证流程>双向认证流程:</a></li><li><a href=#服务端代码>服务端代码：</a></li><li><a href=#客户端代码>客户端代码：</a></li></ul></li><li><a href=#kubeedge证书交换过程分析>kubeedge证书交换过程分析</a><ul><li><a href=#cloudcore>cloudcore：</a></li><li><a href=#edgecore>edgecore：</a></li><li><a href=#服务连接过程>服务连接过程：</a></li><li><a href=#cloudcore-1>cloudcore</a></li><li><a href=#edgecore-1>edgecore:</a></li></ul></li><li><a href=#问题-x509-certificate-is-valid-for-2222-not-for-1111>问题 x509: certificate is valid for 2.2.2.2, not for 1.1.1.1</a></li></ul></nav></div></div><div class=post-content><h2 id=基本概念>基本概念：</h2><h3 id=证书>证书</h3><p>证书是一个数据结构，其中包含一个 public key 和一个 name；
+权威机构对证书进行签名，签名的大概意思是：public key xxx 关联到了 name xx；</p><p>对证书进行签名的 entity 称为 issuer（或 certificate authority, CA）， 证书中的 entity 称为 subject。
+<img src=../../static/step-certificate-inspect.png alt=step-certificate-inspect></p><p><strong>x509</strong>:
+X.509 标准主要内容：证书的作用、证书文件的结构、证书管理方式、证书校验方式、证书的撤销等。</p><p>X.509 构建在 ASN.1 （Abstract Syntax Notation，抽象语法标注）之上，后者是另一个 ITU-T 标准 (X.208 and X.680)。</p><p><strong>ASN.1</strong> 定义数据类型，</p><p>可以将 ASN.1 理解成 X.509 的 JSON，<br>但实际上更像 protobuf、thrift 或 SQL DDL。<br>RFC 5280 用 ASN.1 来定义 X.509 证书，其中包括名字、秘钥、签名等信息。</p><p>ASN.1 有很多种编码规则， 但用于 X.509 和其他加密相关的，只有一种常见格式：DER —— 虽然有时也会用到 non-canonical 的 basic encoding rules (BER，基础编码规则) 。</p><p><strong>PEM</strong> (privacy enhanced email)：文本格式<br>DER 是二进制格式，不便复制粘贴。因此大部分证书都是以 PEM 格式打包的</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span><span class=lnt>5
+</span><span class=lnt>6
+</span><span class=lnt>7
+</span><span class=lnt>8
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-fallback data-lang=fallback><span class=line><span class=cl>-----BEGIN CERTIFICATE-----
+</span></span><span class=line><span class=cl>MIIBwzCCAWqgAwIBAgIRAIi5QRl9kz1wb+SUP20gB1kwCgYIKoZIzj0EAwIwGzEZ
+</span></span><span class=line><span class=cl>MBcGA1UEAxMQTDVkIFRlc3QgUm9vdCBDQTAeFw0xODExMDYyMjA0MDNaFw0yODEx
+</span></span><span class=line><span class=cl>BgNVHRMBAf8ECDAGAQH/AgEAMB0GA1UdDgQWBBRc+LHppFk8sflIpm/XKpbNMwx3
+</span></span><span class=line><span class=cl>SDAfBgNVHSMEGDAWgBTirEpzC7/gexnnz7ozjWKd71lz5DAKBggqhkjOPQQDAgNH
+</span></span><span class=line><span class=cl>ADBEAiAejDEfua7dud78lxWe9eYxYcM93mlUMFIzbWlOJzg+rgIgcdtU9wIKmn5q
+</span></span><span class=line><span class=cl>FU3iOiRP5VyLNmrsQD3/ItjUN1f1ouY=
+</span></span><span class=line><span class=cl>-----END CERTIFICATE-----
+</span></span></code></pre></td></tr></table></div></div><p>PEM 编码的证书通常以 <strong>.pem</strong>、<strong>.crt</strong> 或 <strong>.cer</strong> 为后缀.</p><p><strong>PKCS #7</strong>：Java 中常用<br>你可能会遇到的是一个称为 PKCS（Public Key Cryptography Standards，公钥加密标准）的标准的一部分， 它由 RSA labs 发布。</p><p>其中的第一个标准是 PKCS#7，后面被 IETF 重新冠名为 Cryptographic Message Syntax (CMS) ，其中可以包含多个证书（以 full certificate chain 方式编码）。</p><p>PKCS#7 在 Java 中使用广泛。常见扩展名是 .p7b and .p7c。</p><p><strong>PKCS #12</strong>：微软常用<br>另一个常见的打包格式 PKCS#12， 它能将一个证书链（这一点与 PKCS#7 类似）连同一个（加密之后的）私钥打包到一起。</p><p>微软的产品多用这种格式，常见后缀.pfx and .p12。</p><p>PKCS#7 和 PKCS#12 envelopes 仍然使用 ASN.1，这意味着 它们都能以原始 DER、BER 或 PEM 的格式编码</p><p><strong>公钥、私钥常见扩展名</strong><br>公钥：.pub or .pem<br>私钥：.prv, .key, or .pem</p><p>DN (distinguished names)<br>历史上，X.509 使用 X.500 distinguished names (DN) 来命名证书的使用者（name the subject of a certificate），即 subscriber。</p><p><strong>SAN (subject alternative name)</strong><br>常用的 SAN 有四种类型，绑定的都是广泛使用的名字：</p><ul><li>domain names (DNS)</li><li>email addresse</li><li>IP addresse</li><li>URI</li></ul><p><img src=../../static/inspect-san-dns.png alt=inspect-san-dns></p><h3 id=certificate-signing-requests证书签名请求pkcs10>Certificate signing requests（证书签名请求，PKCS#10）</h3><p>Subscriber 请求一个证书时，会向 CA 会提交一个 certificate signing request (CSR)。</p><p>CSR 也是一个 ASN.1 结构，定义在 PKCS#10。
+与证书类似，CSR 数据结构包括一个公钥、一个名字和一个签名。
+CSR 是自签名的，用与 CRS 中公钥对应的私钥自签名。</p><p>这个签名用于证明该 subscriber 有对应的私钥，能对任何用其公钥加密的东西进行解密。
+还使即使 CSR 被复制或转发，都没有能篡改其中的内容（篡改无效）。
+CSR 中包括了很多证书细节配置项。但在实际中，大部分配置项都会被 CA 忽略。大部分 CA 都使用自己的固定模板， 或提供一个 administrative 接口来收集这些信息。</p><h2 id=tls身份认证原理>TLS身份认证原理</h2><p>以单向的客户端认证服务端身份为例</p><p>首先我们需要生成一个用于签发数字证书的CA私钥和CA数字证书</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>openssl genrsa -out ca.key <span class=m>2048</span>
+</span></span><span class=line><span class=cl>openssl req -x509 -new -nodes -key ca.key -days <span class=m>5000</span> -out ca.crt -subj <span class=s2>&#34;/CN=fridayhub.cn&#34;</span>
+</span></span></code></pre></td></tr></table></div></div><p>然后需要生成服务端私钥和数字证书，并用CA私钥给服务端数字证书做签名。</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span><span class=lnt>5
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>openssl genrsa -out server.key <span class=m>2048</span>
+</span></span><span class=line><span class=cl><span class=c1># 生成服务端证书的 CSR</span>
+</span></span><span class=line><span class=cl>openssl req -new -key server.key -subj <span class=s2>&#34;/CN=localhost&#34;</span> -out server.csr
+</span></span><span class=line><span class=cl><span class=c1># 通过 CSR 向 CA 签发服务端证书</span>
+</span></span><span class=line><span class=cl>openssl x509 -req -in server.csr -CA ../root/ca.crt -CAkey ../root/ca.key -CAcreateserial -out server.crt -days <span class=m>5000</span>
+</span></span></code></pre></td></tr></table></div></div><h3 id=单向认证流程如下>单向认证流程如下：</h3><ol><li>客户端发送连接请求</li><li>服务将自己的数字证书（证书中包含服务端公钥和签名等信息）发给客户端</li><li>客户端利用本地的CA数字证书验证服务端下发的数字证书，以验证服务端身份</li><li>客户端随机生成一个session秘钥，并用服务端下发的数字证书中的公钥对这个秘钥加密，并发给服务端</li><li>服务端用自身私钥解密，然后服务端和客户端以后就用这个session秘钥进行加密通信
+以上流程中忽略了双方协商加密算法之类的步骤。如果是双向认证，则还有服务端要求客户端发送证书的过程[1]。</li></ol><p>实现TLS双向认证<br>要实现双向认证，还需要生成客户端的私钥和数字证书，并用CA私钥给服务端数字证书做签名。</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span><span class=lnt>5
+</span><span class=lnt>6
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl><span class=c1># 生成客户端秘钥</span>
+</span></span><span class=line><span class=cl>openssl genrsa -out client.key <span class=m>2048</span>
+</span></span><span class=line><span class=cl>生成客户端 CSR
+</span></span><span class=line><span class=cl>openssl req -new -key client.key -subj <span class=s2>&#34;/CN=localhost&#34;</span> -out client.csr
+</span></span><span class=line><span class=cl><span class=c1># 通过 CSR 向 CA 签发客户端证书</span>
+</span></span><span class=line><span class=cl>openssl x509 -req -in client.csr -CA ../root/ca.crt -CAkey ../root/ca.key -CAcreateserial -out client.crt -days <span class=m>5000</span>
+</span></span></code></pre></td></tr></table></div></div><h3 id=证书与秘钥管理>证书与秘钥管理</h3><p>要以TLS方式接入我们系统，设备端需要三个文件，CA数字证书，设备私钥，设备数字证书。<br>CA数字证书必须由我们颁发，没有保密要求。<br>设备私钥由厂商自己生成，设备私钥不能泄露。<br>设备数字证书须由我们颁发，需要厂商根据设备私钥先生成一个数字证书，再将该证书传给我们，由我们的CA私钥和CA证书对其签发生成真正的设备数字证书，在保证设备私钥不泄露的情况下，设备数字证书没有保密要求。</p><p>后端需要四个文件: CA私钥，CA数字证书，服务端私钥，服务端数字证书</p><p>CA私钥用来和CA数字证书一起签发服务端数字证书和设备端数字证书，必须保密。<br>CA数字证书还被服务端用来验证设备数字证书的真假，没有保密要求。<br>服务端私钥必须保密<br>服务端数字证书没有保密要求</p><h3 id=双向认证流程>双向认证流程:</h3><ol><li>浏览器发送一个连接请求给安全服务器。</li><li>服务器将自己的证书，以及同证书相关的信息发送给客户浏览器。</li><li>客户浏览器检查服务器送过来的证书是否是由自己信赖的CA中心所签发的。如果是，就继续执行协议；如果不是，客户浏览器就给客户一个警告消息：警告客户这个证书不是可以信赖的，询问客户是否需要继续。</li><li>接着客户浏览器比较证书里的消息，例如域名和公钥，与服务器刚刚发送的相关消息是否一致，如果是一致的，客户浏览器认可这个服务器的合法身份。</li><li>服务器要求客户发送客户自己的证书。收到后，服务器验证客户的证书，如果没有通过验证，拒绝连接；如果通过验证，服务器获得用户的公钥。</li><li>客户浏览器告诉服务器自己所能够支持的通讯对称密码方案。</li><li>服务器从客户发送过来的密码方案中，选择一种加密程度最高的密码方案，用客户的公钥加过密后通知浏览器。</li><li>浏览器针对这个密码方案，选择一个通话密钥，接着用服务器的公钥加过密后发送给服务器。</li><li>服务器接收到浏览器送过来的消息，用自己的私钥解密，获得通话密钥。</li><li>服务器、浏览器接下来的通讯都是用对称密码方案，对称密钥是加过密的。</li></ol><h3 id=服务端代码>服务端代码：</h3><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span><span class=lnt>22
+</span><span class=lnt>23
+</span><span class=lnt>24
+</span><span class=lnt>25
+</span><span class=lnt>26
+</span><span class=lnt>27
+</span><span class=lnt>28
+</span><span class=lnt>29
+</span><span class=lnt>30
+</span><span class=lnt>31
+</span><span class=lnt>32
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-golang data-lang=golang><span class=line><span class=cl> <span class=c1>// 加载服务端证书
+</span></span></span><span class=line><span class=cl><span class=c1></span> <span class=nx>srvCert</span><span class=p>,</span> <span class=nx>err</span> <span class=o>:=</span> <span class=nx>tls</span><span class=p>.</span><span class=nf>LoadX509KeyPair</span><span class=p>(</span><span class=s>&#34;server.crt&#34;</span><span class=p>,</span> <span class=s>&#34;server.key&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl> <span class=k>if</span> <span class=nx>err</span> <span class=o>!=</span> <span class=kc>nil</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>     <span class=nx>log</span><span class=p>.</span><span class=nf>Panic</span><span class=p>(</span><span class=s>&#34;try to load key &amp; crt got error&#34;</span><span class=p>,</span> <span class=nx>err</span><span class=p>)</span>
+</span></span><span class=line><span class=cl> <span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl> <span class=c1>// 加载 CA，并且添加进 caCertPool，这个 caCertPool 就是用来校验客户端证书的根证书列表
+</span></span></span><span class=line><span class=cl><span class=c1></span> <span class=nx>log</span><span class=p>.</span><span class=nf>Info</span><span class=p>(</span><span class=s>&#34;load ca ca.crt&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl> <span class=nx>caCrt</span><span class=p>,</span> <span class=nx>err</span> <span class=o>:=</span> <span class=nx>ioutil</span><span class=p>.</span><span class=nf>ReadFile</span><span class=p>(</span><span class=s>&#34;ca.crt&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl> <span class=k>if</span> <span class=nx>err</span> <span class=o>!=</span> <span class=kc>nil</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>     <span class=nx>log</span><span class=p>.</span><span class=nf>Panic</span><span class=p>(</span><span class=s>&#34;try to load ca got error:&#34;</span><span class=p>,</span><span class=nx>err</span><span class=p>)</span>
+</span></span><span class=line><span class=cl> <span class=p>}</span>
+</span></span><span class=line><span class=cl> <span class=nx>caCertPool</span> <span class=o>:=</span> <span class=nx>x509</span><span class=p>.</span><span class=nf>NewCertPool</span><span class=p>()</span>
+</span></span><span class=line><span class=cl> <span class=nx>caCertPool</span><span class=p>.</span><span class=nf>AppendCertsFromPEM</span><span class=p>(</span><span class=nx>caCrt</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl> <span class=c1>// https tls config
+</span></span></span><span class=line><span class=cl><span class=c1></span> <span class=nx>tlsConfig</span> <span class=o>:=</span> <span class=o>&amp;</span><span class=nx>tls</span><span class=p>.</span><span class=nx>Config</span><span class=p>{</span>
+</span></span><span class=line><span class=cl>     <span class=nx>Certificates</span><span class=p>:</span>       <span class=p>[]</span><span class=nx>tls</span><span class=p>.</span><span class=nx>Certificate</span><span class=p>{</span><span class=nx>srvCert</span><span class=p>},</span>
+</span></span><span class=line><span class=cl>     <span class=nx>ClientCAs</span><span class=p>:</span>          <span class=nx>caCertPool</span><span class=p>,</span>  <span class=c1>// 专用于校验客户端证书的 CA 池, 如果是ca机构，此项可以不填，通过加载操作系统的ca 证书。
+</span></span></span><span class=line><span class=cl><span class=c1></span>     <span class=nx>InsecureSkipVerify</span><span class=p>:</span> <span class=kc>false</span><span class=p>,</span>       <span class=c1>// 不接受不安全的连接
+</span></span></span><span class=line><span class=cl><span class=c1></span>     <span class=nx>ClientAuth</span><span class=p>:</span>         <span class=nx>tls</span><span class=p>.</span><span class=nx>RequireAndVerifyClientCert</span><span class=p>,</span>  <span class=c1>// 校验客户端证书
+</span></span></span><span class=line><span class=cl><span class=c1></span> <span class=p>}</span>
+</span></span><span class=line><span class=cl> <span class=nx>tlsConfig</span><span class=p>.</span><span class=nf>BuildNameToCertificate</span><span class=p>()</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1>// 监听连接
+</span></span></span><span class=line><span class=cl><span class=c1></span><span class=nx>ln</span><span class=p>,</span> <span class=nx>err</span> <span class=o>:=</span> <span class=nx>tls</span><span class=p>.</span><span class=nf>Listen</span><span class=p>(</span><span class=s>&#34;tcp&#34;</span><span class=p>,</span> <span class=s>&#34;:443&#34;</span><span class=p>,</span> <span class=nx>tlsConfig</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=k>if</span> <span class=nx>err</span> <span class=o>!=</span> <span class=kc>nil</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>   <span class=nx>log</span><span class=p>.</span><span class=nf>Errorf</span><span class=p>(</span><span class=s>&#34;try to listen tcp got error:%v&#34;</span><span class=p>,</span> <span class=nx>err</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>   <span class=nx>time</span><span class=p>.</span><span class=nf>Sleep</span><span class=p>(</span><span class=mi>3</span> <span class=o>*</span> <span class=nx>time</span><span class=p>.</span><span class=nx>Second</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>   <span class=k>continue</span> <span class=nx>LISTEN_LOOP</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span><span class=line><span class=cl><span class=nx>log</span><span class=p>.</span><span class=nf>Info</span><span class=p>(</span><span class=s>&#34;listening on 443...&#34;</span><span class=p>)</span>
+</span></span></code></pre></td></tr></table></div></div><h3 id=客户端代码>客户端代码：</h3><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span><span class=lnt>22
+</span><span class=lnt>23
+</span><span class=lnt>24
+</span><span class=lnt>25
+</span><span class=lnt>26
+</span><span class=lnt>27
+</span><span class=lnt>28
+</span><span class=lnt>29
+</span><span class=lnt>30
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=c1>// 加载客户端证书
+</span></span></span><span class=line><span class=cl><span class=c1></span> <span class=nx>cliCert</span><span class=p>,</span> <span class=nx>err</span> <span class=o>:=</span> <span class=nx>tls</span><span class=p>.</span><span class=nf>LoadX509KeyPair</span><span class=p>(</span><span class=s>&#34;client.crt&#34;</span><span class=p>,</span> <span class=s>&#34;client.key&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl> <span class=k>if</span> <span class=nx>err</span> <span class=o>!=</span> <span class=kc>nil</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>     <span class=nx>log</span><span class=p>.</span><span class=nf>Panic</span><span class=p>(</span><span class=s>&#34;try to load key &amp; crt got error&#34;</span><span class=p>,</span> <span class=nx>err</span><span class=p>)</span>
+</span></span><span class=line><span class=cl> <span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl> <span class=c1>// 加载 CA 根证书
+</span></span></span><span class=line><span class=cl><span class=c1></span> <span class=nx>log</span><span class=p>.</span><span class=nf>Info</span><span class=p>(</span><span class=s>&#34;load ca ca.crt&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl> <span class=nx>caCrt</span><span class=p>,</span> <span class=nx>err</span> <span class=o>:=</span> <span class=nx>ioutil</span><span class=p>.</span><span class=nf>ReadFile</span><span class=p>(</span><span class=s>&#34;ca.crt&#34;</span><span class=p>)</span> <span class=c1>// 这里server和client使用同一个ca
+</span></span></span><span class=line><span class=cl><span class=c1></span> <span class=k>if</span> <span class=nx>err</span> <span class=o>!=</span> <span class=kc>nil</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>     <span class=nx>log</span><span class=p>.</span><span class=nf>Panic</span><span class=p>(</span><span class=s>&#34;try to load ca got error&#34;</span><span class=p>,</span> <span class=nx>err</span><span class=p>)</span>
+</span></span><span class=line><span class=cl> <span class=p>}</span>
+</span></span><span class=line><span class=cl> <span class=nx>caCertPool</span> <span class=o>:=</span> <span class=nx>x509</span><span class=p>.</span><span class=nf>NewCertPool</span><span class=p>()</span>
+</span></span><span class=line><span class=cl> <span class=nx>caCertPool</span><span class=p>.</span><span class=nf>AppendCertsFromPEM</span><span class=p>(</span><span class=nx>caCrt</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl> <span class=c1>// https tls config
+</span></span></span><span class=line><span class=cl><span class=c1></span> <span class=nx>tlsConfig</span> <span class=o>:=</span> <span class=o>&amp;</span><span class=nx>tls</span><span class=p>.</span><span class=nx>Config</span><span class=p>{</span>
+</span></span><span class=line><span class=cl>     <span class=nx>Certificates</span><span class=p>:</span>       <span class=p>[]</span><span class=nx>tls</span><span class=p>.</span><span class=nx>Certificate</span><span class=p>{</span><span class=nx>cliCert</span><span class=p>},</span>
+</span></span><span class=line><span class=cl>     <span class=nx>RootCAs</span><span class=p>:</span>            <span class=nx>caCertPool</span><span class=p>,</span>  <span class=c1>// 校验服务端证书的 CA 池
+</span></span></span><span class=line><span class=cl><span class=c1></span>     <span class=nx>InsecureSkipVerify</span><span class=p>:</span> <span class=kc>false</span><span class=p>,</span>
+</span></span><span class=line><span class=cl> <span class=p>}</span>
+</span></span><span class=line><span class=cl> <span class=nx>tlsConfig</span><span class=p>.</span><span class=nf>BuildNameToCertificate</span><span class=p>()</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl> <span class=c1>// 发起连接
+</span></span></span><span class=line><span class=cl><span class=c1></span> <span class=nx>conn</span><span class=p>,</span> <span class=nx>err</span> <span class=o>:=</span> <span class=nx>tls</span><span class=p>.</span><span class=nf>Dial</span><span class=p>(</span><span class=s>&#34;tcp&#34;</span><span class=p>,</span> <span class=s>&#34;127.0.0.1:443&#34;</span><span class=p>,</span> <span class=nx>tlsConfig</span><span class=p>)</span>
+</span></span><span class=line><span class=cl> <span class=k>if</span> <span class=nx>err</span> <span class=o>!=</span> <span class=kc>nil</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>     <span class=nx>log</span><span class=p>.</span><span class=nf>Panic</span><span class=p>(</span><span class=s>&#34;try to dial tcp got error&#34;</span><span class=p>,</span> <span class=nx>err</span><span class=p>)</span>
+</span></span><span class=line><span class=cl> <span class=p>}</span>
+</span></span><span class=line><span class=cl> <span class=k>defer</span> <span class=nx>conn</span><span class=p>.</span><span class=nf>Close</span><span class=p>()</span>
+</span></span><span class=line><span class=cl> <span class=nx>log</span><span class=p>.</span><span class=nf>Info</span><span class=p>(</span><span class=s>&#34;connected to remote:%s&#34;</span><span class=p>,</span>  <span class=nx>conn</span><span class=p>.</span><span class=nf>RemoteAddr</span><span class=p>().</span><span class=nf>String</span><span class=p>())</span>
+</span></span></code></pre></td></tr></table></div></div><p>使用openssl查看和验证证书：<br>查看证书详细信息：
+<code>openssl x509 -noout -text -in server.crt</code></p><p>校验证书：</p><p>使用本地ca证书校验由自己颁发的服务器证书server.crt和客户端证书client.crt</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-fallback data-lang=fallback><span class=line><span class=cl>openssl verify -CAfile ca.crt server.crt
+</span></span><span class=line><span class=cl>openssl verify -CAfile ca.crt client.crt
+</span></span></code></pre></td></tr></table></div></div><h2 id=kubeedge证书交换过程分析>kubeedge证书交换过程分析</h2><p>流程梳理</p><ol><li>云端生成ca 公私钥，保存在 kubeedge namespace的 casecret secret中</li><li>使用生成云端公私钥，并用ca生成服务端证书，都保存在kubeedge namespace的 cloudcoresecret secret中</li><li>在云端获取tokensecret configmap中的token，这个token默认每12小时更新一次</li><li>edgecore 通过 serverip:10002/edge.crt 获取ca证书，需要带上token</li><li>edgecore 生成 私钥 server.key</li><li>edgecore 生成csr，请求cloucore serverip:10002/edge.crt 获取edgecore证书</li><li>cloudcore 接收到crs请求，使用同一套ca签发证书</li><li>云端保存证书为 server.crt</li></ol><h3 id=cloudcore>cloudcore：</h3><p>证书功能在clodhub中 <code>kubeedge/cloud/pkg/cloudhub/cloudhub.go</code>
+http server 配置： CloudHubHTTPS, 默认端口10002</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-fallback data-lang=fallback><span class=line><span class=cl>type CloudHubHTTPS struct {
+</span></span><span class=line><span class=cl>	// Enable indicates whether enable Https protocol
+</span></span><span class=line><span class=cl>	// default true
+</span></span><span class=line><span class=cl>	Enable bool `json:&#34;enable&#34;`
+</span></span><span class=line><span class=cl>	// Address indicates server ip address
+</span></span><span class=line><span class=cl>	// default 0.0.0.0
+</span></span><span class=line><span class=cl>	Address string `json:&#34;address,omitempty&#34;`
+</span></span><span class=line><span class=cl>	// Port indicates the open port for HTTPS server
+</span></span><span class=line><span class=cl>	// default 10002
+</span></span><span class=line><span class=cl>	Port uint32 `json:&#34;port,omitempty&#34;`
+</span></span><span class=line><span class=cl>}
+</span></span></code></pre></td></tr></table></div></div><p>http handler</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl>	<span class=nx>ws</span><span class=p>.</span><span class=nf>Route</span><span class=p>(</span><span class=nx>ws</span><span class=p>.</span><span class=nf>GET</span><span class=p>(</span><span class=nx>constants</span><span class=p>.</span><span class=nx>DefaultCertURL</span><span class=p>).</span><span class=nf>To</span><span class=p>(</span><span class=nx>edgeCoreClientCert</span><span class=p>))</span> <span class=c1>// /edge.crt 用于颁发边缘的证书
+</span></span></span><span class=line><span class=cl><span class=c1></span>	<span class=nx>ws</span><span class=p>.</span><span class=nf>Route</span><span class=p>(</span><span class=nx>ws</span><span class=p>.</span><span class=nf>GET</span><span class=p>(</span><span class=nx>constants</span><span class=p>.</span><span class=nx>DefaultCAURL</span><span class=p>).</span><span class=nf>To</span><span class=p>(</span><span class=nx>getCA</span><span class=p>))</span> <span class=c1>// /ca.crt 请求ca证书
+</span></span></span></code></pre></td></tr></table></div></div><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span><span class=lnt>22
+</span><span class=lnt>23
+</span><span class=lnt>24
+</span><span class=lnt>25
+</span><span class=lnt>26
+</span><span class=lnt>27
+</span><span class=lnt>28
+</span><span class=lnt>29
+</span><span class=lnt>30
+</span><span class=lnt>31
+</span><span class=lnt>32
+</span><span class=lnt>33
+</span><span class=lnt>34
+</span><span class=lnt>35
+</span><span class=lnt>36
+</span><span class=lnt>37
+</span><span class=lnt>38
+</span><span class=lnt>39
+</span><span class=lnt>40
+</span><span class=lnt>41
+</span><span class=lnt>42
+</span><span class=lnt>43
+</span><span class=lnt>44
+</span><span class=lnt>45
+</span><span class=lnt>46
+</span><span class=lnt>47
+</span><span class=lnt>48
+</span><span class=lnt>49
+</span><span class=lnt>50
+</span><span class=lnt>51
+</span><span class=lnt>52
+</span><span class=lnt>53
+</span><span class=lnt>54
+</span><span class=lnt>55
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=c1>// kubeedge/cloud/pkg/cloudhub/servers/httpserver/signcerts.go
+</span></span></span><span class=line><span class=cl><span class=c1>// 边缘证书颁发流程
+</span></span></span><span class=line><span class=cl><span class=c1></span><span class=kd>func</span> <span class=nf>edgeCoreClientCert</span><span class=p>(</span><span class=nx>request</span> <span class=o>*</span><span class=nx>restful</span><span class=p>.</span><span class=nx>Request</span><span class=p>,</span> <span class=nx>response</span> <span class=o>*</span><span class=nx>restful</span><span class=p>.</span><span class=nx>Response</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=nf>signEdgeCert</span><span class=p>(</span><span class=nx>response</span><span class=p>,</span> <span class=nx>request</span><span class=p>.</span><span class=nx>Request</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=kd>func</span> <span class=nf>signEdgeCert</span><span class=p>(</span><span class=nx>w</span> <span class=nx>http</span><span class=p>.</span><span class=nx>ResponseWriter</span><span class=p>,</span> <span class=nx>r</span> <span class=o>*</span><span class=nx>http</span><span class=p>.</span><span class=nx>Request</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=c1>// 获取csr
+</span></span></span><span class=line><span class=cl><span class=c1></span>    <span class=nx>r</span><span class=p>.</span><span class=nx>Body</span> <span class=p>=</span> <span class=nx>http</span><span class=p>.</span><span class=nf>MaxBytesReader</span><span class=p>(</span><span class=nx>w</span><span class=p>,</span> <span class=nx>r</span><span class=p>.</span><span class=nx>Body</span><span class=p>,</span> <span class=nx>constants</span><span class=p>.</span><span class=nx>MaxRespBodyLength</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>	<span class=nx>csrContent</span><span class=p>,</span> <span class=nx>err</span> <span class=o>:=</span> <span class=nx>io</span><span class=p>.</span><span class=nf>ReadAll</span><span class=p>(</span><span class=nx>r</span><span class=p>.</span><span class=nx>Body</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=nx>csr</span><span class=p>,</span> <span class=nx>err</span> <span class=o>:=</span> <span class=nx>x509</span><span class=p>.</span><span class=nf>ParseCertificateRequest</span><span class=p>(</span><span class=nx>csrContent</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>    <span class=c1>// 签发
+</span></span></span><span class=line><span class=cl><span class=c1></span>    <span class=nx>clientCertDER</span><span class=p>,</span> <span class=nx>err</span> <span class=o>:=</span> <span class=nf>signCerts</span><span class=p>(</span><span class=nx>csr</span><span class=p>.</span><span class=nx>Subject</span><span class=p>,</span> <span class=nx>csr</span><span class=p>.</span><span class=nx>PublicKey</span><span class=p>,</span> <span class=nx>usages</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=kd>func</span> <span class=nf>signCerts</span><span class=p>(</span><span class=nx>subInfo</span> <span class=nx>pkix</span><span class=p>.</span><span class=nx>Name</span><span class=p>,</span> <span class=nx>pbKey</span> <span class=nx>crypto</span><span class=p>.</span><span class=nx>PublicKey</span><span class=p>,</span> <span class=nx>usages</span> <span class=p>[]</span><span class=nx>x509</span><span class=p>.</span><span class=nx>ExtKeyUsage</span><span class=p>)</span> <span class=p>([]</span><span class=kt>byte</span><span class=p>,</span> <span class=kt>error</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=c1>// 准备cert config
+</span></span></span><span class=line><span class=cl><span class=c1></span>	<span class=nx>cfgs</span> <span class=o>:=</span> <span class=o>&amp;</span><span class=nx>certutil</span><span class=p>.</span><span class=nx>Config</span><span class=p>{</span>
+</span></span><span class=line><span class=cl>		<span class=nx>CommonName</span><span class=p>:</span>   <span class=nx>subInfo</span><span class=p>.</span><span class=nx>CommonName</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>		<span class=nx>Organization</span><span class=p>:</span> <span class=nx>subInfo</span><span class=p>.</span><span class=nx>Organization</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>		<span class=nx>Usages</span><span class=p>:</span>       <span class=nx>usages</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>	<span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>    <span class=c1>// 读取ca证书
+</span></span></span><span class=line><span class=cl><span class=c1></span>    <span class=nx>caCert</span><span class=p>,</span> <span class=nx>err</span> <span class=o>:=</span> <span class=nx>x509</span><span class=p>.</span><span class=nf>ParseCertificate</span><span class=p>(</span><span class=nx>ca</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>    <span class=c1>// 读取ca私钥
+</span></span></span><span class=line><span class=cl><span class=c1></span>    <span class=nx>caKey</span><span class=p>,</span> <span class=nx>err</span> <span class=o>:=</span> <span class=nx>x509</span><span class=p>.</span><span class=nf>ParseECPrivateKey</span><span class=p>(</span><span class=nx>caKeyDER</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>    <span class=c1>// 签发
+</span></span></span><span class=line><span class=cl><span class=c1></span>    <span class=nx>certDER</span><span class=p>,</span> <span class=nx>err</span> <span class=o>:=</span> <span class=nf>NewCertFromCa</span><span class=p>(</span><span class=nx>cfgs</span><span class=p>,</span> <span class=nx>caCert</span><span class=p>,</span> <span class=nx>clientKey</span><span class=p>,</span> <span class=nx>caKey</span><span class=p>,</span> <span class=nx>edgeCertSigningDuration</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1>// 生成证书
+</span></span></span><span class=line><span class=cl><span class=c1></span><span class=kd>func</span> <span class=nf>NewCertFromCa</span><span class=p>(</span><span class=nx>cfg</span> <span class=o>*</span><span class=nx>certutil</span><span class=p>.</span><span class=nx>Config</span><span class=p>,</span> <span class=nx>caCert</span> <span class=o>*</span><span class=nx>x509</span><span class=p>.</span><span class=nx>Certificate</span><span class=p>,</span> <span class=nx>serverKey</span> <span class=nx>crypto</span><span class=p>.</span><span class=nx>PublicKey</span><span class=p>,</span> <span class=nx>caKey</span> <span class=nx>crypto</span><span class=p>.</span><span class=nx>Signer</span><span class=p>,</span> <span class=nx>validalityPeriod</span> <span class=nx>time</span><span class=p>.</span><span class=nx>Duration</span><span class=p>)</span> <span class=p>([]</span><span class=kt>byte</span><span class=p>,</span> <span class=kt>error</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=c1>// 拼装模板
+</span></span></span><span class=line><span class=cl><span class=c1></span>    <span class=nx>certTmpl</span> <span class=o>:=</span> <span class=nx>x509</span><span class=p>.</span><span class=nx>Certificate</span><span class=p>{</span>
+</span></span><span class=line><span class=cl>		<span class=nx>Subject</span><span class=p>:</span> <span class=nx>pkix</span><span class=p>.</span><span class=nx>Name</span><span class=p>{</span>
+</span></span><span class=line><span class=cl>			<span class=nx>CommonName</span><span class=p>:</span>   <span class=nx>cfg</span><span class=p>.</span><span class=nx>CommonName</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>			<span class=nx>Organization</span><span class=p>:</span> <span class=nx>cfg</span><span class=p>.</span><span class=nx>Organization</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>		<span class=p>},</span>
+</span></span><span class=line><span class=cl>		<span class=nx>DNSNames</span><span class=p>:</span>     <span class=nx>cfg</span><span class=p>.</span><span class=nx>AltNames</span><span class=p>.</span><span class=nx>DNSNames</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>		<span class=nx>IPAddresses</span><span class=p>:</span>  <span class=nx>cfg</span><span class=p>.</span><span class=nx>AltNames</span><span class=p>.</span><span class=nx>IPs</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>		<span class=nx>SerialNumber</span><span class=p>:</span> <span class=nx>serial</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>		<span class=nx>NotBefore</span><span class=p>:</span>    <span class=nx>time</span><span class=p>.</span><span class=nf>Now</span><span class=p>().</span><span class=nf>UTC</span><span class=p>(),</span>
+</span></span><span class=line><span class=cl>		<span class=nx>NotAfter</span><span class=p>:</span>     <span class=nx>time</span><span class=p>.</span><span class=nf>Now</span><span class=p>().</span><span class=nf>Add</span><span class=p>(</span><span class=nx>time</span><span class=p>.</span><span class=nx>Hour</span> <span class=o>*</span> <span class=mi>24</span> <span class=o>*</span> <span class=nx>validalityPeriod</span><span class=p>),</span>
+</span></span><span class=line><span class=cl>		<span class=nx>KeyUsage</span><span class=p>:</span>     <span class=nx>x509</span><span class=p>.</span><span class=nx>KeyUsageKeyEncipherment</span> <span class=p>|</span> <span class=nx>x509</span><span class=p>.</span><span class=nx>KeyUsageDigitalSignature</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>		<span class=nx>ExtKeyUsage</span><span class=p>:</span>  <span class=nx>cfg</span><span class=p>.</span><span class=nx>Usages</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>	<span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>    <span class=c1>// 创建证书
+</span></span></span><span class=line><span class=cl><span class=c1></span>    <span class=nx>certDERBytes</span><span class=p>,</span> <span class=nx>err</span> <span class=o>:=</span> <span class=nx>x509</span><span class=p>.</span><span class=nf>CreateCertificate</span><span class=p>(</span><span class=nx>rand</span><span class=p>.</span><span class=nx>Reader</span><span class=p>,</span> <span class=o>&amp;</span><span class=nx>certTmpl</span><span class=p>,</span> <span class=nx>caCert</span><span class=p>,</span> <span class=nx>serverKey</span><span class=p>,</span> <span class=nx>caKey</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span></code></pre></td></tr></table></div></div><h3 id=edgecore>edgecore：</h3><p>edgecore主要在edgehub中 <code>kubeedge/edge/pkg/edgehub/certificate/certmanager.go</code></p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span><span class=lnt>22
+</span><span class=lnt>23
+</span><span class=lnt>24
+</span><span class=lnt>25
+</span><span class=lnt>26
+</span><span class=lnt>27
+</span><span class=lnt>28
+</span><span class=lnt>29
+</span><span class=lnt>30
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=c1>// 如果本地没有，则请求ca
+</span></span></span><span class=line><span class=cl><span class=c1></span><span class=kd>func</span> <span class=p>(</span><span class=nx>cm</span> <span class=o>*</span><span class=nx>CertManager</span><span class=p>)</span> <span class=nf>applyCerts</span><span class=p>()</span> <span class=kt>error</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=nx>cacert</span><span class=p>,</span> <span class=nx>err</span> <span class=o>:=</span> <span class=nf>GetCACert</span><span class=p>(</span><span class=nx>cm</span><span class=p>.</span><span class=nx>caURL</span><span class=p>)</span> <span class=c1>// http 请求不要验证
+</span></span></span><span class=line><span class=cl><span class=c1></span>
+</span></span><span class=line><span class=cl>    <span class=c1>// 使用token校验ca
+</span></span></span><span class=line><span class=cl><span class=c1></span>    <span class=nx>ok</span><span class=p>,</span> <span class=nx>hash</span><span class=p>,</span> <span class=nx>newHash</span> <span class=o>:=</span> <span class=nf>ValidateCACerts</span><span class=p>(</span><span class=nx>cacert</span><span class=p>,</span> <span class=nx>tokenParts</span><span class=p>[</span><span class=mi>0</span><span class=p>])</span> <span class=c1>// sha256校验hash值
+</span></span></span><span class=line><span class=cl><span class=c1></span>
+</span></span><span class=line><span class=cl>    <span class=c1>// 保存ca为文件 ca.crt
+</span></span></span><span class=line><span class=cl><span class=c1></span>    <span class=nx>ca</span><span class=p>,</span> <span class=nx>err</span> <span class=o>:=</span> <span class=nx>x509</span><span class=p>.</span><span class=nf>ParseCertificate</span><span class=p>(</span><span class=nx>cacert</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=nx>certutil</span><span class=p>.</span><span class=nf>WriteCert</span><span class=p>(</span><span class=nx>cm</span><span class=p>.</span><span class=nx>caFile</span><span class=p>,</span> <span class=nx>ca</span><span class=p>)</span> 
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>    <span class=c1>// 获取证书 server.crt
+</span></span></span><span class=line><span class=cl><span class=c1></span>    <span class=nx>pk</span><span class=p>,</span> <span class=nx>edgeCert</span><span class=p>,</span> <span class=nx>err</span> <span class=o>:=</span> <span class=nx>cm</span><span class=p>.</span><span class=nf>GetEdgeCert</span><span class=p>(</span><span class=nx>cm</span><span class=p>.</span><span class=nx>certURL</span><span class=p>,</span> <span class=nx>caPem</span><span class=p>,</span> <span class=nx>tls</span><span class=p>.</span><span class=nx>Certificate</span><span class=p>{},</span> <span class=nx>strings</span><span class=p>.</span><span class=nf>Join</span><span class=p>(</span><span class=nx>tokenParts</span><span class=p>[</span><span class=mi>1</span><span class=p>:],</span> <span class=s>&#34;.&#34;</span><span class=p>))</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>    <span class=c1>// 保存 edge.crt server.crt server.key
+</span></span></span><span class=line><span class=cl><span class=c1></span>    <span class=nx>crt</span><span class=p>,</span> <span class=nx>_</span> <span class=o>:=</span> <span class=nx>x509</span><span class=p>.</span><span class=nf>ParseCertificate</span><span class=p>(</span><span class=nx>edgeCert</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=nx>certutil</span><span class=p>.</span><span class=nf>WriteKeyAndCert</span><span class=p>(</span><span class=nx>cm</span><span class=p>.</span><span class=nx>keyFile</span><span class=p>,</span> <span class=nx>cm</span><span class=p>.</span><span class=nx>certFile</span><span class=p>,</span> <span class=nx>pk</span><span class=p>,</span> <span class=nx>crt</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1>// 生成私钥，并生成crs请求cloudcore签发证书
+</span></span></span><span class=line><span class=cl><span class=c1></span><span class=kd>func</span> <span class=p>(</span><span class=nx>cm</span> <span class=o>*</span><span class=nx>CertManager</span><span class=p>)</span> <span class=nf>GetEdgeCert</span><span class=p>(</span><span class=nx>url</span> <span class=kt>string</span><span class=p>,</span> <span class=nx>capem</span> <span class=p>[]</span><span class=kt>byte</span><span class=p>,</span> <span class=nx>cert</span> <span class=nx>tls</span><span class=p>.</span><span class=nx>Certificate</span><span class=p>,</span> <span class=nx>token</span> <span class=kt>string</span><span class=p>)</span> <span class=p>(</span><span class=o>*</span><span class=nx>ecdsa</span><span class=p>.</span><span class=nx>PrivateKey</span><span class=p>,</span> <span class=p>[]</span><span class=kt>byte</span><span class=p>,</span> <span class=kt>error</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=c1>// 生成私钥和crs
+</span></span></span><span class=line><span class=cl><span class=c1></span>    <span class=nx>pk</span><span class=p>,</span> <span class=nx>csr</span><span class=p>,</span> <span class=nx>err</span> <span class=o>:=</span> <span class=nx>cm</span><span class=p>.</span><span class=nf>getCSR</span><span class=p>()</span> 
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>    <span class=c1>// 请求并返回证书 
+</span></span></span><span class=line><span class=cl><span class=c1></span>    <span class=nx>req</span><span class=p>,</span> <span class=nx>err</span> <span class=o>:=</span> <span class=nx>http</span><span class=p>.</span><span class=nf>BuildRequest</span><span class=p>(</span><span class=nx>nethttp</span><span class=p>.</span><span class=nx>MethodGet</span><span class=p>,</span> <span class=nx>url</span><span class=p>,</span> <span class=nx>bytes</span><span class=p>.</span><span class=nf>NewReader</span><span class=p>(</span><span class=nx>csr</span><span class=p>),</span> <span class=nx>token</span><span class=p>,</span> <span class=nx>cm</span><span class=p>.</span><span class=nx>NodeName</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=nx>res</span><span class=p>,</span> <span class=nx>err</span> <span class=o>:=</span> <span class=nx>http</span><span class=p>.</span><span class=nf>SendRequest</span><span class=p>(</span><span class=nx>req</span><span class=p>,</span> <span class=nx>client</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=nx>content</span><span class=p>,</span> <span class=nx>err</span> <span class=o>:=</span> <span class=nx>io</span><span class=p>.</span><span class=nf>ReadAll</span><span class=p>(</span><span class=nx>io</span><span class=p>.</span><span class=nf>LimitReader</span><span class=p>(</span><span class=nx>res</span><span class=p>.</span><span class=nx>Body</span><span class=p>,</span> <span class=nx>constants</span><span class=p>.</span><span class=nx>MaxRespBodyLength</span><span class=p>))</span>
+</span></span><span class=line><span class=cl>    <span class=k>return</span> <span class=nx>pk</span><span class=p>,</span> <span class=nx>content</span><span class=p>,</span> <span class=kc>nil</span>    
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span></code></pre></td></tr></table></div></div><h3 id=服务连接过程>服务连接过程：</h3><h3 id=cloudcore-1>cloudcore</h3><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span><span class=lnt>22
+</span><span class=lnt>23
+</span><span class=lnt>24
+</span><span class=lnt>25
+</span><span class=lnt>26
+</span><span class=lnt>27
+</span><span class=lnt>28
+</span><span class=lnt>29
+</span><span class=lnt>30
+</span><span class=lnt>31
+</span><span class=lnt>32
+</span><span class=lnt>33
+</span><span class=lnt>34
+</span><span class=lnt>35
+</span><span class=lnt>36
+</span><span class=lnt>37
+</span><span class=lnt>38
+</span><span class=lnt>39
+</span><span class=lnt>40
+</span><span class=lnt>41
+</span><span class=lnt>42
+</span><span class=lnt>43
+</span><span class=lnt>44
+</span><span class=lnt>45
+</span><span class=lnt>46
+</span><span class=lnt>47
+</span><span class=lnt>48
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=c1>//kubeedge/cloud/pkg/cloudhub/servers/server.go
+</span></span></span><span class=line><span class=cl><span class=c1>// 服务启动
+</span></span></span><span class=line><span class=cl><span class=c1></span><span class=kd>func</span> <span class=nf>StartCloudHub</span><span class=p>(</span><span class=nx>messageq</span> <span class=o>*</span><span class=nx>channelq</span><span class=p>.</span><span class=nx>ChannelMessageQueue</span><span class=p>)</span>  <span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=k>go</span> <span class=nf>startWebsocketServer</span><span class=p>()</span>
+</span></span><span class=line><span class=cl>    <span class=c1>// go startQuicServer() 根据配置启动websocket或者 quic
+</span></span></span><span class=line><span class=cl><span class=c1></span><span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1>// 启动websocket服务
+</span></span></span><span class=line><span class=cl><span class=c1></span><span class=kd>func</span> <span class=nf>startWebsocketServer</span><span class=p>()</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=c1>// 读取证书相关
+</span></span></span><span class=line><span class=cl><span class=c1></span>    <span class=nx>tlsConfig</span> <span class=o>:=</span> <span class=nf>createTLSConfig</span><span class=p>(</span><span class=nx>hubconfig</span><span class=p>.</span><span class=nx>Config</span><span class=p>.</span><span class=nx>Ca</span><span class=p>,</span> <span class=nx>hubconfig</span><span class=p>.</span><span class=nx>Config</span><span class=p>.</span><span class=nx>Cert</span><span class=p>,</span> <span class=nx>hubconfig</span><span class=p>.</span><span class=nx>Config</span><span class=p>.</span><span class=nx>Key</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>    <span class=nx>svc</span> <span class=o>:=</span> <span class=nx>server</span><span class=p>.</span><span class=nx>Server</span><span class=p>{</span>
+</span></span><span class=line><span class=cl>		<span class=nx>Type</span><span class=p>:</span>       <span class=nx>api</span><span class=p>.</span><span class=nx>ProtocolTypeWS</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>		<span class=nx>TLSConfig</span><span class=p>:</span>  <span class=o>&amp;</span><span class=nx>tlsConfig</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>		<span class=nx>AutoRoute</span><span class=p>:</span>  <span class=kc>true</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>		<span class=nx>ConnNotify</span><span class=p>:</span> <span class=nx>handler</span><span class=p>.</span><span class=nx>CloudhubHandler</span><span class=p>.</span><span class=nx>OnRegister</span><span class=p>,</span> <span class=c1>// 连接会掉函数
+</span></span></span><span class=line><span class=cl><span class=c1></span>		<span class=nx>Addr</span><span class=p>:</span>       <span class=nx>fmt</span><span class=p>.</span><span class=nf>Sprintf</span><span class=p>(</span><span class=s>&#34;%s:%d&#34;</span><span class=p>,</span> <span class=nx>hubconfig</span><span class=p>.</span><span class=nx>Config</span><span class=p>.</span><span class=nx>WebSocket</span><span class=p>.</span><span class=nx>Address</span><span class=p>,</span> <span class=nx>hubconfig</span><span class=p>.</span><span class=nx>Config</span><span class=p>.</span><span class=nx>WebSocket</span><span class=p>.</span><span class=nx>Port</span><span class=p>),</span> <span class=c1>// 默认10000端口
+</span></span></span><span class=line><span class=cl><span class=c1></span>		<span class=nx>ExOpts</span><span class=p>:</span>     <span class=nx>api</span><span class=p>.</span><span class=nx>WSServerOption</span><span class=p>{</span><span class=nx>Path</span><span class=p>:</span> <span class=s>&#34;/&#34;</span><span class=p>},</span>
+</span></span><span class=line><span class=cl>	<span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>    <span class=nx>klog</span><span class=p>.</span><span class=nf>Exit</span><span class=p>(</span><span class=nx>svc</span><span class=p>.</span><span class=nf>ListenAndServeTLS</span><span class=p>(</span><span class=s>&#34;&#34;</span><span class=p>,</span> <span class=s>&#34;&#34;</span><span class=p>))</span> <span class=c1>// 监听端口开始服务
+</span></span></span><span class=line><span class=cl><span class=c1></span><span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1>// 准备ca证书，服务端证书
+</span></span></span><span class=line><span class=cl><span class=c1></span><span class=kd>func</span> <span class=nf>createTLSConfig</span><span class=p>(</span><span class=nx>ca</span><span class=p>,</span> <span class=nx>cert</span><span class=p>,</span> <span class=nx>key</span> <span class=p>[]</span><span class=kt>byte</span><span class=p>)</span> <span class=nx>tls</span><span class=p>.</span><span class=nx>Config</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>	<span class=c1>// init certificate
+</span></span></span><span class=line><span class=cl><span class=c1></span>	<span class=nx>pool</span> <span class=o>:=</span> <span class=nx>x509</span><span class=p>.</span><span class=nf>NewCertPool</span><span class=p>()</span>
+</span></span><span class=line><span class=cl>    <span class=c1>// 指定ca
+</span></span></span><span class=line><span class=cl><span class=c1></span>	<span class=nx>ok</span> <span class=o>:=</span> <span class=nx>pool</span><span class=p>.</span><span class=nf>AppendCertsFromPEM</span><span class=p>(</span><span class=nx>pem</span><span class=p>.</span><span class=nf>EncodeToMemory</span><span class=p>(</span><span class=o>&amp;</span><span class=nx>pem</span><span class=p>.</span><span class=nx>Block</span><span class=p>{</span><span class=nx>Type</span><span class=p>:</span> <span class=nx>certutil</span><span class=p>.</span><span class=nx>CertificateBlockType</span><span class=p>,</span> <span class=nx>Bytes</span><span class=p>:</span> <span class=nx>ca</span><span class=p>}))</span>
+</span></span><span class=line><span class=cl>	<span class=k>if</span> <span class=p>!</span><span class=nx>ok</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>		<span class=nb>panic</span><span class=p>(</span><span class=nx>fmt</span><span class=p>.</span><span class=nf>Errorf</span><span class=p>(</span><span class=s>&#34;fail to load ca content&#34;</span><span class=p>))</span>
+</span></span><span class=line><span class=cl>	<span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>    <span class=c1>// 服务端证书和私钥
+</span></span></span><span class=line><span class=cl><span class=c1></span>	<span class=nx>certificate</span><span class=p>,</span> <span class=nx>err</span> <span class=o>:=</span> <span class=nx>tls</span><span class=p>.</span><span class=nf>X509KeyPair</span><span class=p>(</span><span class=nx>pem</span><span class=p>.</span><span class=nf>EncodeToMemory</span><span class=p>(</span><span class=o>&amp;</span><span class=nx>pem</span><span class=p>.</span><span class=nx>Block</span><span class=p>{</span><span class=nx>Type</span><span class=p>:</span> <span class=nx>certutil</span><span class=p>.</span><span class=nx>CertificateBlockType</span><span class=p>,</span> <span class=nx>Bytes</span><span class=p>:</span> <span class=nx>cert</span><span class=p>}),</span> <span class=nx>pem</span><span class=p>.</span><span class=nf>EncodeToMemory</span><span class=p>(</span><span class=o>&amp;</span><span class=nx>pem</span><span class=p>.</span><span class=nx>Block</span><span class=p>{</span><span class=nx>Type</span><span class=p>:</span> <span class=s>&#34;PRIVATE KEY&#34;</span><span class=p>,</span> <span class=nx>Bytes</span><span class=p>:</span> <span class=nx>key</span><span class=p>}))</span>
+</span></span><span class=line><span class=cl>	<span class=k>if</span> <span class=nx>err</span> <span class=o>!=</span> <span class=kc>nil</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>		<span class=nb>panic</span><span class=p>(</span><span class=nx>err</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>	<span class=p>}</span>
+</span></span><span class=line><span class=cl>	<span class=k>return</span> <span class=nx>tls</span><span class=p>.</span><span class=nx>Config</span><span class=p>{</span>
+</span></span><span class=line><span class=cl>		<span class=nx>ClientCAs</span><span class=p>:</span>    <span class=nx>pool</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>		<span class=nx>ClientAuth</span><span class=p>:</span>   <span class=nx>tls</span><span class=p>.</span><span class=nx>RequireAndVerifyClientCert</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>		<span class=nx>Certificates</span><span class=p>:</span> <span class=p>[]</span><span class=nx>tls</span><span class=p>.</span><span class=nx>Certificate</span><span class=p>{</span><span class=nx>certificate</span><span class=p>},</span>
+</span></span><span class=line><span class=cl>		<span class=nx>MinVersion</span><span class=p>:</span>   <span class=nx>tls</span><span class=p>.</span><span class=nx>VersionTLS12</span><span class=p>,</span> <span class=c1>// tls版本
+</span></span></span><span class=line><span class=cl><span class=c1></span>		<span class=c1>// has to match cipher used by NewPrivateKey method, currently is ECDSA
+</span></span></span><span class=line><span class=cl><span class=c1></span>		<span class=nx>CipherSuites</span><span class=p>:</span> <span class=p>[]</span><span class=kt>uint16</span><span class=p>{</span><span class=nx>tls</span><span class=p>.</span><span class=nx>TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256</span><span class=p>},</span> <span class=c1>// 加密算法
+</span></span></span><span class=line><span class=cl><span class=c1></span>	<span class=p>}</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span></code></pre></td></tr></table></div></div><h3 id=edgecore-1>edgecore:</h3><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span><span class=lnt>22
+</span><span class=lnt>23
+</span><span class=lnt>24
+</span><span class=lnt>25
+</span><span class=lnt>26
+</span><span class=lnt>27
+</span><span class=lnt>28
+</span><span class=lnt>29
+</span><span class=lnt>30
+</span><span class=lnt>31
+</span><span class=lnt>32
+</span><span class=lnt>33
+</span><span class=lnt>34
+</span><span class=lnt>35
+</span><span class=lnt>36
+</span><span class=lnt>37
+</span><span class=lnt>38
+</span><span class=lnt>39
+</span><span class=lnt>40
+</span><span class=lnt>41
+</span><span class=lnt>42
+</span><span class=lnt>43
+</span><span class=lnt>44
+</span><span class=lnt>45
+</span><span class=lnt>46
+</span><span class=lnt>47
+</span><span class=lnt>48
+</span><span class=lnt>49
+</span><span class=lnt>50
+</span><span class=lnt>51
+</span><span class=lnt>52
+</span><span class=lnt>53
+</span><span class=lnt>54
+</span><span class=lnt>55
+</span><span class=lnt>56
+</span><span class=lnt>57
+</span><span class=lnt>58
+</span><span class=lnt>59
+</span><span class=lnt>60
+</span><span class=lnt>61
+</span><span class=lnt>62
+</span><span class=lnt>63
+</span><span class=lnt>64
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=c1>// /kubeedge/edge/pkg/edgehub/clients/factory.go
+</span></span></span><span class=line><span class=cl><span class=c1></span><span class=kd>func</span> <span class=nf>GetClient</span><span class=p>()</span> <span class=p>(</span><span class=nx>Adapter</span><span class=p>,</span> <span class=kt>error</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl><span class=nx>websocketConf</span> <span class=o>:=</span> <span class=nx>wsclient</span><span class=p>.</span><span class=nx>WebSocketConfig</span><span class=p>{</span>
+</span></span><span class=line><span class=cl>			<span class=nx>URL</span><span class=p>:</span>              <span class=nx>config</span><span class=p>.</span><span class=nx>WebSocketURL</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>			<span class=nx>CertFilePath</span><span class=p>:</span>     <span class=nx>config</span><span class=p>.</span><span class=nx>TLSCertFile</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>			<span class=nx>KeyFilePath</span><span class=p>:</span>      <span class=nx>config</span><span class=p>.</span><span class=nx>TLSPrivateKeyFile</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>			<span class=nx>HandshakeTimeout</span><span class=p>:</span> <span class=nx>time</span><span class=p>.</span><span class=nf>Duration</span><span class=p>(</span><span class=nx>config</span><span class=p>.</span><span class=nx>WebSocket</span><span class=p>.</span><span class=nx>HandshakeTimeout</span><span class=p>)</span> <span class=o>*</span> <span class=nx>time</span><span class=p>.</span><span class=nx>Second</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>			<span class=nx>ReadDeadline</span><span class=p>:</span>     <span class=nx>time</span><span class=p>.</span><span class=nf>Duration</span><span class=p>(</span><span class=nx>config</span><span class=p>.</span><span class=nx>WebSocket</span><span class=p>.</span><span class=nx>ReadDeadline</span><span class=p>)</span> <span class=o>*</span> <span class=nx>time</span><span class=p>.</span><span class=nx>Second</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>			<span class=nx>WriteDeadline</span><span class=p>:</span>    <span class=nx>time</span><span class=p>.</span><span class=nf>Duration</span><span class=p>(</span><span class=nx>config</span><span class=p>.</span><span class=nx>WebSocket</span><span class=p>.</span><span class=nx>WriteDeadline</span><span class=p>)</span> <span class=o>*</span> <span class=nx>time</span><span class=p>.</span><span class=nx>Second</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>			<span class=nx>ProjectID</span><span class=p>:</span>        <span class=nx>config</span><span class=p>.</span><span class=nx>ProjectID</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>			<span class=nx>NodeID</span><span class=p>:</span>           <span class=nx>config</span><span class=p>.</span><span class=nx>NodeName</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>		<span class=p>}</span>
+</span></span><span class=line><span class=cl>		<span class=k>return</span> <span class=nx>wsclient</span><span class=p>.</span><span class=nf>NewWebSocketClient</span><span class=p>(</span><span class=o>&amp;</span><span class=nx>websocketConf</span><span class=p>),</span> <span class=kc>nil</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1>// /kubeedge/edge/pkg/edgehub/clients/wsclient/websocket.go
+</span></span></span><span class=line><span class=cl><span class=c1>// websocket 初始化  双向tls 证书相关的都在这
+</span></span></span><span class=line><span class=cl><span class=c1></span><span class=kd>func</span> <span class=p>(</span><span class=nx>wsc</span> <span class=o>*</span><span class=nx>WebSocketClient</span><span class=p>)</span> <span class=nf>Init</span><span class=p>()</span> <span class=kt>error</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=c1>// 证书和私钥
+</span></span></span><span class=line><span class=cl><span class=c1></span>    <span class=nx>cert</span><span class=p>,</span> <span class=nx>err</span> <span class=o>:=</span> <span class=nx>tls</span><span class=p>.</span><span class=nf>LoadX509KeyPair</span><span class=p>(</span><span class=nx>wsc</span><span class=p>.</span><span class=nx>config</span><span class=p>.</span><span class=nx>CertFilePath</span><span class=p>,</span> <span class=nx>wsc</span><span class=p>.</span><span class=nx>config</span><span class=p>.</span><span class=nx>KeyFilePath</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>    <span class=c1>// ca 证书
+</span></span></span><span class=line><span class=cl><span class=c1></span>    <span class=nx>caCert</span><span class=p>,</span> <span class=nx>err</span> <span class=o>:=</span> <span class=nx>os</span><span class=p>.</span><span class=nf>ReadFile</span><span class=p>(</span><span class=nx>config</span><span class=p>.</span><span class=nx>Config</span><span class=p>.</span><span class=nx>TLSCAFile</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>    <span class=c1>// 将ca加入到rootCAs pool，之后验证证书就能找到私钥了
+</span></span></span><span class=line><span class=cl><span class=c1></span>    <span class=nx>pool</span> <span class=o>:=</span> <span class=nx>x509</span><span class=p>.</span><span class=nf>NewCertPool</span><span class=p>()</span>
+</span></span><span class=line><span class=cl>	<span class=k>if</span> <span class=nx>ok</span> <span class=o>:=</span> <span class=nx>pool</span><span class=p>.</span><span class=nf>AppendCertsFromPEM</span><span class=p>(</span><span class=nx>caCert</span><span class=p>);</span> <span class=p>!</span><span class=nx>ok</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>		<span class=k>return</span> <span class=nx>fmt</span><span class=p>.</span><span class=nf>Errorf</span><span class=p>(</span><span class=s>&#34;cannot parse the certificates&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>	<span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>	<span class=nx>tlsConfig</span> <span class=o>:=</span> <span class=o>&amp;</span><span class=nx>tls</span><span class=p>.</span><span class=nx>Config</span><span class=p>{</span>
+</span></span><span class=line><span class=cl>		<span class=nx>RootCAs</span><span class=p>:</span>            <span class=nx>pool</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>		<span class=nx>Certificates</span><span class=p>:</span>       <span class=p>[]</span><span class=nx>tls</span><span class=p>.</span><span class=nx>Certificate</span><span class=p>{</span><span class=nx>cert</span><span class=p>},</span>
+</span></span><span class=line><span class=cl>		<span class=nx>InsecureSkipVerify</span><span class=p>:</span> <span class=kc>false</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>	<span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>    <span class=nx>option</span> <span class=o>:=</span> <span class=nx>wsclient</span><span class=p>.</span><span class=nx>Options</span><span class=p>{</span>
+</span></span><span class=line><span class=cl>		<span class=nx>HandshakeTimeout</span><span class=p>:</span> <span class=nx>wsc</span><span class=p>.</span><span class=nx>config</span><span class=p>.</span><span class=nx>HandshakeTimeout</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>		<span class=nx>TLSConfig</span><span class=p>:</span>        <span class=nx>tlsConfig</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>		<span class=nx>Type</span><span class=p>:</span>             <span class=nx>api</span><span class=p>.</span><span class=nx>ProtocolTypeWS</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>		<span class=nx>Addr</span><span class=p>:</span>             <span class=nx>wsc</span><span class=p>.</span><span class=nx>config</span><span class=p>.</span><span class=nx>URL</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>		<span class=nx>AutoRoute</span><span class=p>:</span>        <span class=kc>false</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>		<span class=nx>ConnUse</span><span class=p>:</span>          <span class=nx>api</span><span class=p>.</span><span class=nx>UseTypeMessage</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>	<span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>    <span class=c1>// new client
+</span></span></span><span class=line><span class=cl><span class=c1></span>    <span class=nx>client</span> <span class=o>:=</span> <span class=o>&amp;</span><span class=nx>wsclient</span><span class=p>.</span><span class=nx>Client</span><span class=p>{</span><span class=nx>Options</span><span class=p>:</span> <span class=nx>option</span><span class=p>,</span> <span class=nx>ExOpts</span><span class=p>:</span> <span class=nx>exOpts</span><span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>    <span class=c1>// 向服务端发起连接
+</span></span></span><span class=line><span class=cl><span class=c1></span>    <span class=nx>connection</span><span class=p>,</span> <span class=nx>err</span> <span class=o>:=</span> <span class=nx>client</span><span class=p>.</span><span class=nf>Connect</span><span class=p>()</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1>// kubeedge/vendor/github.com/kubeedge/viaduct/pkg/client/client.go
+</span></span></span><span class=line><span class=cl><span class=c1>// 连接处理
+</span></span></span><span class=line><span class=cl><span class=c1></span><span class=kd>func</span> <span class=p>(</span><span class=nx>c</span> <span class=o>*</span><span class=nx>Client</span><span class=p>)</span> <span class=nf>Connect</span><span class=p>()</span> <span class=p>(</span><span class=nx>conn</span><span class=p>.</span><span class=nx>Connection</span><span class=p>,</span> <span class=kt>error</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=nx>protoClient</span> <span class=p>=</span> <span class=nf>NewWSClient</span><span class=p>(</span><span class=nx>c</span><span class=p>.</span><span class=nx>Options</span><span class=p>,</span> <span class=nx>c</span><span class=p>.</span><span class=nx>ExOpts</span><span class=p>)</span> <span class=c1>// 选用websocket
+</span></span></span><span class=line><span class=cl><span class=c1></span>
+</span></span><span class=line><span class=cl>    <span class=nx>protoConn</span><span class=p>,</span> <span class=nx>err</span> <span class=o>:=</span> <span class=nx>protoClient</span><span class=p>.</span><span class=nf>Connect</span><span class=p>()</span> <span class=c1>// 发起ws连接
+</span></span></span><span class=line><span class=cl><span class=c1></span><span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1>// kubeedge/staging/src/github.com/kubeedge/viaduct/pkg/client/ws.go
+</span></span></span><span class=line><span class=cl><span class=c1></span><span class=kd>func</span> <span class=p>(</span><span class=nx>c</span> <span class=o>*</span><span class=nx>WSClient</span><span class=p>)</span> <span class=nf>Connect</span><span class=p>()</span> <span class=p>(</span><span class=nx>conn</span><span class=p>.</span><span class=nx>Connection</span><span class=p>,</span> <span class=kt>error</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=nx>wsConn</span><span class=p>,</span> <span class=nx>resp</span><span class=p>,</span> <span class=nx>err</span> <span class=o>:=</span> <span class=nx>c</span><span class=p>.</span><span class=nx>dialer</span><span class=p>.</span><span class=nf>Dial</span><span class=p>(</span><span class=nx>c</span><span class=p>.</span><span class=nx>options</span><span class=p>.</span><span class=nx>Addr</span><span class=p>,</span> <span class=nx>header</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span></code></pre></td></tr></table></div></div><h2 id=问题-x509-certificate-is-valid-for-2222-not-for-1111>问题 x509: certificate is valid for 2.2.2.2, not for 1.1.1.1</h2><p>这个是因为客户端请求到服务端的证书后，会做校验，其中有一项就是校验dns或者ip，这个是在证书生成的时候配置的。
+以kubeedge为例：
+生成服务端证书：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=c1>// /kubeedge/cloud/pkg/cloudhub/servers/httpserver/signcerts.go
+</span></span></span><span class=line><span class=cl><span class=c1>// SignCerts creates server&#39;s certificate and key
+</span></span></span><span class=line><span class=cl><span class=c1></span><span class=kd>func</span> <span class=nf>SignCerts</span><span class=p>()</span> <span class=p>([]</span><span class=kt>byte</span><span class=p>,</span> <span class=p>[]</span><span class=kt>byte</span><span class=p>,</span> <span class=kt>error</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>	<span class=nx>cfg</span> <span class=o>:=</span> <span class=o>&amp;</span><span class=nx>certutil</span><span class=p>.</span><span class=nx>Config</span><span class=p>{</span>
+</span></span><span class=line><span class=cl>		<span class=nx>CommonName</span><span class=p>:</span>   <span class=nx>constants</span><span class=p>.</span><span class=nx>ProjectName</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>		<span class=nx>Organization</span><span class=p>:</span> <span class=p>[]</span><span class=kt>string</span><span class=p>{</span><span class=nx>constants</span><span class=p>.</span><span class=nx>ProjectName</span><span class=p>},</span>
+</span></span><span class=line><span class=cl>		<span class=nx>Usages</span><span class=p>:</span>       <span class=p>[]</span><span class=nx>x509</span><span class=p>.</span><span class=nx>ExtKeyUsage</span><span class=p>{</span><span class=nx>x509</span><span class=p>.</span><span class=nx>ExtKeyUsageServerAuth</span><span class=p>},</span>
+</span></span><span class=line><span class=cl>		<span class=nx>AltNames</span><span class=p>:</span> <span class=nx>certutil</span><span class=p>.</span><span class=nx>AltNames</span><span class=p>{</span>
+</span></span><span class=line><span class=cl>			<span class=nx>DNSNames</span><span class=p>:</span> <span class=nx>hubconfig</span><span class=p>.</span><span class=nx>Config</span><span class=p>.</span><span class=nx>DNSNames</span><span class=p>,</span> <span class=c1>//以上报错验证的项
+</span></span></span><span class=line><span class=cl><span class=c1></span>			<span class=nx>IPs</span><span class=p>:</span>      <span class=nf>getIps</span><span class=p>(</span><span class=nx>hubconfig</span><span class=p>.</span><span class=nx>Config</span><span class=p>.</span><span class=nx>AdvertiseAddress</span><span class=p>),</span> <span class=c1>//以上报错验证的项
+</span></span></span><span class=line><span class=cl><span class=c1></span>		<span class=p>},</span>
+</span></span><span class=line><span class=cl>	<span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>	<span class=nx>certDER</span><span class=p>,</span> <span class=nx>keyDER</span><span class=p>,</span> <span class=nx>err</span> <span class=o>:=</span> <span class=nf>NewCloudCoreCertDERandKey</span><span class=p>(</span><span class=nx>cfg</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>	<span class=k>if</span> <span class=nx>err</span> <span class=o>!=</span> <span class=kc>nil</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>		<span class=k>return</span> <span class=kc>nil</span><span class=p>,</span> <span class=kc>nil</span><span class=p>,</span> <span class=nx>err</span>
+</span></span><span class=line><span class=cl>	<span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>	<span class=k>return</span> <span class=nx>certDER</span><span class=p>,</span> <span class=nx>keyDER</span><span class=p>,</span> <span class=kc>nil</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span></code></pre></td></tr></table></div></div><p>就是当证书是在2.2.2.2生成的，然后把服务放在1.1.1.1运行，当客户端请求到证书以后，校验就会出错。</p><p>具体校验流程如下，逻辑比较长。</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span><span class=lnt>22
+</span><span class=lnt>23
+</span><span class=lnt>24
+</span><span class=lnt>25
+</span><span class=lnt>26
+</span><span class=lnt>27
+</span><span class=lnt>28
+</span><span class=lnt>29
+</span><span class=lnt>30
+</span><span class=lnt>31
+</span><span class=lnt>32
+</span><span class=lnt>33
+</span><span class=lnt>34
+</span><span class=lnt>35
+</span><span class=lnt>36
+</span><span class=lnt>37
+</span><span class=lnt>38
+</span><span class=lnt>39
+</span><span class=lnt>40
+</span><span class=lnt>41
+</span><span class=lnt>42
+</span><span class=lnt>43
+</span><span class=lnt>44
+</span><span class=lnt>45
+</span><span class=lnt>46
+</span><span class=lnt>47
+</span><span class=lnt>48
+</span><span class=lnt>49
+</span><span class=lnt>50
+</span><span class=lnt>51
+</span><span class=lnt>52
+</span><span class=lnt>53
+</span><span class=lnt>54
+</span><span class=lnt>55
+</span><span class=lnt>56
+</span><span class=lnt>57
+</span><span class=lnt>58
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=kd>func</span> <span class=p>(</span><span class=nx>wsc</span> <span class=o>*</span><span class=nx>WebSocketClient</span><span class=p>)</span> <span class=nf>Init</span><span class=p>()</span> <span class=kt>error</span> <span class=c1>// edge/pkg/edgehub/clients/wsclient/websocket.go
+</span></span></span><span class=line><span class=cl><span class=c1></span>	<span class=p>=&gt;</span> <span class=nx>option</span> <span class=o>:=</span> <span class=nx>wsclient</span><span class=p>.</span><span class=nx>Options</span><span class=p>{</span>
+</span></span><span class=line><span class=cl>			<span class=nx>HandshakeTimeout</span><span class=p>:</span> <span class=nx>wsc</span><span class=p>.</span><span class=nx>config</span><span class=p>.</span><span class=nx>HandshakeTimeout</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>			<span class=nx>TLSConfig</span><span class=p>:</span>        <span class=nx>tlsConfig</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>			<span class=nx>Type</span><span class=p>:</span>             <span class=nx>api</span><span class=p>.</span><span class=nx>ProtocolTypeWS</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>			<span class=nx>Addr</span><span class=p>:</span>             <span class=nx>wsc</span><span class=p>.</span><span class=nx>config</span><span class=p>.</span><span class=nx>URL</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>			<span class=nx>AutoRoute</span><span class=p>:</span>        <span class=kc>false</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>			<span class=nx>ConnUse</span><span class=p>:</span>          <span class=nx>api</span><span class=p>.</span><span class=nx>UseTypeMessage</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>		<span class=p>}</span>
+</span></span><span class=line><span class=cl>	<span class=p>=&gt;</span> <span class=nx>client</span> <span class=o>:=</span> <span class=o>&amp;</span><span class=nx>wsclient</span><span class=p>.</span><span class=nx>Client</span><span class=p>{</span><span class=nx>Options</span><span class=p>:</span> <span class=nx>option</span><span class=p>,</span> <span class=nx>ExOpts</span><span class=p>:</span> <span class=nx>exOpts</span><span class=p>}</span> <span class=c1>// 
+</span></span></span><span class=line><span class=cl><span class=c1></span>	<span class=p>=&gt;</span> <span class=nx>connection</span><span class=p>,</span> <span class=nx>err</span> <span class=o>:=</span> <span class=nx>client</span><span class=p>.</span><span class=nf>Connect</span><span class=p>()</span>
+</span></span><span class=line><span class=cl>	<span class=kd>func</span> <span class=p>(</span><span class=nx>c</span> <span class=o>*</span><span class=nx>Client</span><span class=p>)</span> <span class=nf>Connect</span><span class=p>()</span> <span class=p>(</span><span class=nx>conn</span><span class=p>.</span><span class=nx>Connection</span><span class=p>,</span> <span class=kt>error</span><span class=p>)</span>  <span class=c1>// staging/src/github.com/kubeedge/viaduct/pkg/client/client.go
+</span></span></span><span class=line><span class=cl><span class=c1></span>		<span class=p>=&gt;</span> <span class=nx>protoClient</span> <span class=p>=</span> <span class=nf>NewWSClient</span><span class=p>(</span><span class=nx>c</span><span class=p>.</span><span class=nx>Options</span><span class=p>,</span> <span class=nx>c</span><span class=p>.</span><span class=nx>ExOpts</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>		<span class=kd>func</span> <span class=nf>NewWSClient</span><span class=p>(</span><span class=nx>options</span> <span class=nx>Options</span><span class=p>,</span> <span class=nx>exOpts</span> <span class=kd>interface</span><span class=p>{})</span> <span class=o>*</span><span class=nx>WSClient</span>  <span class=c1>// staging/src/github.com/kubeedge/viaduct/pkg/client/ws.go
+</span></span></span><span class=line><span class=cl><span class=c1></span>		    <span class=p>=&gt;</span> <span class=nx>TLSClientConfig</span><span class=p>:</span>  <span class=nx>options</span><span class=p>.</span><span class=nx>TLSConfig</span>
+</span></span><span class=line><span class=cl>		<span class=p>=&gt;</span> <span class=nx>protoConn</span><span class=p>,</span> <span class=nx>err</span> <span class=o>:=</span> <span class=nx>protoClient</span><span class=p>.</span><span class=nf>Connect</span><span class=p>()</span>
+</span></span><span class=line><span class=cl>			<span class=kd>func</span> <span class=p>(</span><span class=nx>c</span> <span class=o>*</span><span class=nx>WSClient</span><span class=p>)</span> <span class=nf>Connect</span><span class=p>()</span> <span class=p>(</span><span class=nx>conn</span><span class=p>.</span><span class=nx>Connection</span><span class=p>,</span> <span class=kt>error</span><span class=p>)</span> <span class=p>{</span> <span class=c1>// staging/src/github.com/kubeedge/viaduct/pkg/client/ws.go
+</span></span></span><span class=line><span class=cl><span class=c1></span>			<span class=p>=&gt;</span> <span class=nx>wsConn</span><span class=p>,</span> <span class=nx>resp</span><span class=p>,</span> <span class=nx>err</span> <span class=o>:=</span> <span class=nx>c</span><span class=p>.</span><span class=nx>dialer</span><span class=p>.</span><span class=nf>Dial</span><span class=p>(</span><span class=nx>c</span><span class=p>.</span><span class=nx>options</span><span class=p>.</span><span class=nx>Addr</span><span class=p>,</span> <span class=nx>header</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>				<span class=p>=&gt;</span> <span class=kd>func</span> <span class=p>(</span><span class=nx>d</span> <span class=o>*</span><span class=nx>Dialer</span><span class=p>)</span> <span class=nf>Dial</span><span class=p>(</span><span class=nx>urlStr</span> <span class=kt>string</span><span class=p>,</span> <span class=nx>requestHeader</span> <span class=nx>http</span><span class=p>.</span><span class=nx>Header</span><span class=p>)</span> <span class=p>(</span><span class=o>*</span><span class=nx>Conn</span><span class=p>,</span> <span class=o>*</span><span class=nx>http</span><span class=p>.</span><span class=nx>Response</span><span class=p>,</span> <span class=kt>error</span><span class=p>)</span> <span class=c1>// github.com/gorilla/websocket@v1.4.2/client.go
+</span></span></span><span class=line><span class=cl><span class=c1></span>					<span class=p>=&gt;</span> <span class=kd>func</span> <span class=p>(</span><span class=nx>d</span> <span class=o>*</span><span class=nx>Dialer</span><span class=p>)</span> <span class=nf>DialContext</span><span class=p>(</span><span class=nx>ctx</span> <span class=nx>context</span><span class=p>.</span><span class=nx>Context</span><span class=p>,</span> <span class=nx>urlStr</span> <span class=kt>string</span><span class=p>,</span> <span class=nx>requestHeader</span> <span class=nx>http</span><span class=p>.</span><span class=nx>Header</span><span class=p>)</span> <span class=p>(</span><span class=o>*</span><span class=nx>Conn</span><span class=p>,</span> <span class=o>*</span><span class=nx>http</span><span class=p>.</span><span class=nx>Response</span><span class=p>,</span> <span class=kt>error</span><span class=p>)</span> 
+</span></span><span class=line><span class=cl>						<span class=p>=&gt;</span> <span class=nx>u</span><span class=p>,</span> <span class=nx>err</span> <span class=o>:=</span> <span class=nx>url</span><span class=p>.</span><span class=nf>Parse</span><span class=p>(</span><span class=nx>urlStr</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>						<span class=p>=&gt;</span> <span class=nx>hostPort</span><span class=p>,</span> <span class=nx>hostNoPort</span> <span class=o>:=</span> <span class=nf>hostPortNoPort</span><span class=p>(</span><span class=nx>u</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>							<span class=p>=&gt;</span> <span class=kd>func</span> <span class=nf>hostPortNoPort</span><span class=p>(</span><span class=nx>u</span> <span class=o>*</span><span class=nx>url</span><span class=p>.</span><span class=nx>URL</span><span class=p>)</span> <span class=p>(</span><span class=nx>hostPort</span><span class=p>,</span> <span class=nx>hostNoPort</span> <span class=kt>string</span><span class=p>)</span> 
+</span></span><span class=line><span class=cl>								<span class=p>=&gt;</span> <span class=nx>hostNoPort</span> <span class=p>=</span> <span class=nx>u</span><span class=p>.</span><span class=nx>Host</span>
+</span></span><span class=line><span class=cl>						<span class=p>=&gt;</span> <span class=k>if</span> <span class=nx>u</span><span class=p>.</span><span class=nx>Scheme</span> <span class=o>==</span> <span class=s>&#34;https&#34;</span>
+</span></span><span class=line><span class=cl>							<span class=p>=&gt;</span> <span class=nx>cfg</span><span class=p>.</span><span class=nx>ServerName</span> <span class=p>=</span> <span class=nx>hostNoPort</span>
+</span></span><span class=line><span class=cl>						<span class=p>=&gt;</span> <span class=nx>cfg</span> <span class=o>:=</span> <span class=nf>cloneTLSConfig</span><span class=p>(</span><span class=nx>d</span><span class=p>.</span><span class=nx>TLSClientConfig</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>						<span class=p>=&gt;</span> <span class=nx>tlsConn</span> <span class=o>:=</span> <span class=nx>tls</span><span class=p>.</span><span class=nf>Client</span><span class=p>(</span><span class=nx>netConn</span><span class=p>,</span> <span class=nx>cfg</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>						<span class=p>=&gt;</span> <span class=nf>doHandshake</span><span class=p>(</span><span class=nx>tlsConn</span><span class=p>,</span> <span class=nx>cfg</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>							<span class=kd>func</span> <span class=nf>doHandshake</span><span class=p>(</span><span class=nx>tlsConn</span> <span class=o>*</span><span class=nx>tls</span><span class=p>.</span><span class=nx>Conn</span><span class=p>,</span> <span class=nx>cfg</span> <span class=o>*</span><span class=nx>tls</span><span class=p>.</span><span class=nx>Config</span><span class=p>)</span> <span class=kt>error</span> <span class=c1>// github.com/gorilla/websocket@v1.4.2/client.go
+</span></span></span><span class=line><span class=cl><span class=c1></span>								<span class=p>=&gt;</span> <span class=nx>tlsConn</span><span class=p>.</span><span class=nf>Handshake</span><span class=p>()</span>
+</span></span><span class=line><span class=cl>								<span class=p>=&gt;</span> <span class=k>if</span> <span class=p>!</span><span class=nx>cfg</span><span class=p>.</span><span class=nx>InsecureSkipVerify</span>
+</span></span><span class=line><span class=cl>								<span class=p>=&gt;</span> <span class=nx>tlsConn</span><span class=p>.</span><span class=nf>VerifyHostname</span><span class=p>(</span><span class=nx>cfg</span><span class=p>.</span><span class=nx>ServerName</span><span class=p>)</span> 
+</span></span><span class=line><span class=cl>									<span class=p>=&gt;</span> <span class=kd>func</span> <span class=p>(</span><span class=nx>c</span> <span class=o>*</span><span class=nx>Conn</span><span class=p>)</span> <span class=nf>VerifyHostname</span><span class=p>(</span><span class=nx>host</span> <span class=kt>string</span><span class=p>)</span> <span class=kt>error</span>  <span class=c1>// /opt/go/src/crypto/tls/conn.go
+</span></span></span><span class=line><span class=cl><span class=c1></span>										<span class=p>=&gt;</span> <span class=k>return</span> <span class=nx>c</span><span class=p>.</span><span class=nx>peerCertificates</span><span class=p>[</span><span class=mi>0</span><span class=p>].</span><span class=nf>VerifyHostname</span><span class=p>(</span><span class=nx>host</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>											<span class=p>=&gt;</span> <span class=kd>func</span> <span class=p>(</span><span class=nx>c</span> <span class=o>*</span><span class=nx>Certificate</span><span class=p>)</span> <span class=nf>VerifyHostname</span><span class=p>(</span><span class=nx>h</span> <span class=kt>string</span><span class=p>)</span> <span class=kt>error</span>  <span class=c1>// /opt/go/src/crypto/x509/verify.go
+</span></span></span><span class=line><span class=cl><span class=c1></span>												<span class=p>=&gt;</span> <span class=nx>candidateIP</span> <span class=o>:=</span> <span class=nx>h</span>
+</span></span><span class=line><span class=cl>												<span class=p>=&gt;</span> <span class=k>if</span> <span class=nx>ip</span> <span class=o>:=</span> <span class=nx>net</span><span class=p>.</span><span class=nf>ParseIP</span><span class=p>(</span><span class=nx>candidateIP</span><span class=p>);</span>  <span class=c1>// 一般是内网情况 用ip
+</span></span></span><span class=line><span class=cl><span class=c1></span>												<span class=p>=&gt;</span> <span class=k>return</span> <span class=nx>HostnameError</span><span class=p>{</span><span class=nx>c</span><span class=p>,</span> <span class=nx>candidateIP</span><span class=p>}</span>
+</span></span><span class=line><span class=cl>													<span class=p>=&gt;</span> <span class=kd>func</span> <span class=p>(</span><span class=nx>h</span> <span class=nx>HostnameError</span><span class=p>)</span> <span class=nf>Error</span><span class=p>()</span> <span class=kt>string</span> 
+</span></span><span class=line><span class=cl>														<span class=p>=&gt;</span> <span class=k>return</span> <span class=s>&#34;x509: certificate is valid for &#34;</span> <span class=o>+</span> <span class=nx>valid</span> <span class=o>+</span> <span class=s>&#34;, not &#34;</span> <span class=o>+</span> <span class=nx>h</span><span class=p>.</span><span class=nx>Host</span>
+</span></span><span class=line><span class=cl>												<span class=p>=&gt;</span> <span class=k>for</span> <span class=nx>_</span><span class=p>,</span> <span class=nx>match</span> <span class=o>:=</span> <span class=k>range</span> <span class=nx>c</span><span class=p>.</span><span class=nx>DNSNames</span>  <span class=c1>// 一般是外网情况 用dns
+</span></span></span><span class=line><span class=cl><span class=c1></span>												<span class=p>=&gt;</span> <span class=k>return</span> <span class=nx>HostnameError</span><span class=p>{</span><span class=nx>c</span><span class=p>,</span> <span class=nx>h</span><span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=kd>func</span> <span class=nf>doHandshake</span><span class=p>(</span><span class=nx>tlsConn</span> <span class=o>*</span><span class=nx>tls</span><span class=p>.</span><span class=nx>Conn</span><span class=p>,</span> <span class=nx>cfg</span> <span class=o>*</span><span class=nx>tls</span><span class=p>.</span><span class=nx>Config</span><span class=p>)</span> <span class=c1>// /opt/go/src/crypto/tls/conn.go
+</span></span></span><span class=line><span class=cl><span class=c1></span>	<span class=p>=&gt;</span> <span class=nx>tlsConn</span><span class=p>.</span><span class=nf>Handshake</span><span class=p>()</span>
+</span></span><span class=line><span class=cl>		<span class=p>=&gt;</span> <span class=nx>c</span><span class=p>.</span><span class=nf>HandshakeContext</span><span class=p>(</span><span class=nx>context</span><span class=p>.</span><span class=nf>Background</span><span class=p>())</span>
+</span></span><span class=line><span class=cl>			<span class=p>=&gt;</span> <span class=nx>c</span><span class=p>.</span><span class=nf>handshakeContext</span><span class=p>(</span><span class=nx>ctx</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>				<span class=p>=&gt;</span> <span class=kd>func</span> <span class=p>(</span><span class=nx>c</span> <span class=o>*</span><span class=nx>Conn</span><span class=p>)</span> <span class=nf>handshakeContext</span><span class=p>(</span><span class=nx>ctx</span> <span class=nx>context</span><span class=p>.</span><span class=nx>Context</span><span class=p>)</span> <span class=p>(</span><span class=nx>ret</span> <span class=kt>error</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>					<span class=p>=&gt;</span> <span class=nx>c</span><span class=p>.</span><span class=nf>handshakeFn</span><span class=p>(</span><span class=nx>handshakeCtx</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>						<span class=p>=&gt;</span> <span class=kd>func</span> <span class=p>(</span><span class=nx>c</span> <span class=o>*</span><span class=nx>Conn</span><span class=p>)</span> <span class=nf>clientHandshake</span><span class=p>(</span><span class=nx>ctx</span> <span class=nx>context</span><span class=p>.</span><span class=nx>Context</span><span class=p>)</span> <span class=p>(</span><span class=nx>err</span> <span class=kt>error</span><span class=p>)</span> 
+</span></span><span class=line><span class=cl>							<span class=p>=&gt;</span> <span class=kd>func</span> <span class=p>(</span><span class=nx>hs</span> <span class=o>*</span><span class=nx>clientHandshakeState</span><span class=p>)</span> <span class=nf>handshake</span><span class=p>()</span> <span class=kt>error</span> 
+</span></span><span class=line><span class=cl>								<span class=p>=&gt;</span> <span class=nx>hs</span><span class=p>.</span><span class=nf>doFullHandshake</span><span class=p>()</span>
+</span></span><span class=line><span class=cl>								<span class=p>=&gt;</span> <span class=kd>func</span> <span class=p>(</span><span class=nx>hs</span> <span class=o>*</span><span class=nx>clientHandshakeState</span><span class=p>)</span> <span class=nf>doFullHandshake</span><span class=p>()</span> <span class=kt>error</span> 
+</span></span><span class=line><span class=cl>									<span class=p>=&gt;</span> <span class=nx>c</span><span class=p>.</span><span class=nf>verifyServerCertificate</span><span class=p>(</span><span class=nx>certMsg</span><span class=p>.</span><span class=nx>certificates</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>									<span class=p>=&gt;</span> <span class=kd>func</span> <span class=p>(</span><span class=nx>c</span> <span class=o>*</span><span class=nx>Conn</span><span class=p>)</span> <span class=nf>verifyServerCertificate</span><span class=p>(</span><span class=nx>certificates</span> <span class=p>[][]</span><span class=kt>byte</span><span class=p>)</span> <span class=kt>error</span>
+</span></span><span class=line><span class=cl>										<span class=p>=&gt;</span> <span class=nx>c</span><span class=p>.</span><span class=nx>peerCertificates</span> <span class=p>=</span> <span class=nx>certs</span>
+</span></span></code></pre></td></tr></table></div></div><p>参考：<br><a href=http://arthurchiao.art/blog/everything-about-pki-zh/>http://arthurchiao.art/blog/everything-about-pki-zh/</a></p></div><footer class=post-footer><div class=post-tags><a href=/tags/tls/>tls</a>
+<a href=/tags/kubeedge/>kubeedge</a></div><nav class=post-nav><a class=next href=/post/prometheus-install/><span class="next-text nav-default">Prometheus 监控套件安装配置</span>
+<span class="next-text nav-mobile">Next</span>
+<i class="iconfont icon-right"></i></a></nav></footer></article></div><div id=vcomments></div><script src=//cdn1.lncld.net/static/js/3.0.4/av-min.js></script>
+<script src=//unpkg.com/valine/dist/Valine.min.js></script>
+<script type=text/javascript>new Valine({el:"#vcomments",appId:"fb6qCfVYGmIrC87K3STOS3V8-gzGzoHsz",appKey:"FilghKK7HHC4hMQHxhR90dDE",notify:!1,verify:!1,avatar:"mm",placeholder:"说点什么吧...",visitor:!1})</script></div></main><footer id=footer class=footer><div class=social-links><a href=mailto:hanglinux@163.com class="iconfont icon-email" title=email></a>
+<a href=https://github.com/fridayhub class="iconfont icon-github" title=github></a>
+<a href=https://fridayhub.github.io/index.xml type=application/rss+xml class="iconfont icon-rss" title=rss></a></div><div class=copyright><span class=power-by>Powered by <a class=hexo-link href=https://gohugo.io>Hugo</a></span>
+<span class=division>|</span>
+<span class=theme-info>Theme -
+<a class=theme-link href=https://github.com/olOwOlo/hugo-theme-even>Even</a></span><div class=busuanzi-footer><span id=busuanzi_container_site_pv>site pv: <span id=busuanzi_value_site_pv><img src=/img/spinner.svg alt=spinner.svg></span></span>
+<span class=division>|</span>
+<span id=busuanzi_container_site_uv>site uv: <span id=busuanzi_value_site_uv><img src=/img/spinner.svg alt=spinner.svg></span></span></div><span class=copyright-year>&copy;
+2017 -
+2022
+<span class=heart><i class="iconfont icon-heart"></i></span>
+<span class=author>friday</span></span></div></footer><div class=back-to-top id=back-to-top><i class="iconfont icon-up"></i></div></div><script src=https://cdn.jsdelivr.net/npm/jquery@3.2.1/dist/jquery.min.js integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin=anonymous></script>
+<script src=https://cdn.jsdelivr.net/npm/slideout@1.0.1/dist/slideout.min.js integrity="sha256-t+zJ/g8/KXIJMjSVQdnibt4dlaDxc9zXr/9oNPeWqdg=" crossorigin=anonymous></script>
+<script src=https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.js integrity="sha256-XVLffZaxoWfGUEbdzuLi7pwaUJv1cecsQJQqGLe7axY=" crossorigin=anonymous></script>
+<script type=text/javascript src=/js/main.min.1c70606d1b733282f06230615f5561b5894924b6f9930ba2ab99cf1254f75a1a.js></script></body></html>
