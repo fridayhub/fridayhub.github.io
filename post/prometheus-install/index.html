@@ -1,0 +1,236 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta http-equiv=x-ua-compatible content="IE=edge,chrome=1"><title>Prometheus 监控套件安装配置 - Friday - Here I record my experience</title><meta name=renderer content="webkit"><meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1"><meta http-equiv=cache-control content="no-transform"><meta http-equiv=cache-control content="no-siteapp"><meta name=theme-color content="#f8f5ec"><meta name=msapplication-navbutton-color content="#f8f5ec"><meta name=apple-mobile-web-app-capable content="yes"><meta name=apple-mobile-web-app-status-bar-style content="#f8f5ec"><meta name=author content="friday"><meta name=description content><meta name=keywords content="prometheus"><meta name=generator content="Hugo 0.107.0 with theme even"><link rel=canonical href=https://fridayhub.github.io/post/prometheus-install/><link rel=apple-touch-icon sizes=180x180 href=/apple-touch-icon.png><link rel=icon type=image/png sizes=32x32 href=/favicon-32x32.png><link rel=icon type=image/png sizes=16x16 href=/favicon-16x16.png><link rel=manifest href=/manifest.json><link rel=mask-icon href=/safari-pinned-tab.svg color=#5bbad5><script async src=//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js></script><meta name=referrer content="no-referrer-when-downgrade"><link href=/sass/main.min.c2803d17ea439bb194b104ce262b40c9118b45b7b108e27dadf43e96dd6664a3.css rel=stylesheet><link rel=stylesheet href=https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.css integrity="sha256-7TyXnr2YU040zfSP+rEcz29ggW4j56/ujTPwjMzyqFY=" crossorigin=anonymous><meta property="og:title" content="Prometheus 监控套件安装配置"><meta property="og:description" content><meta property="og:type" content="article"><meta property="og:url" content="https://fridayhub.github.io/post/prometheus-install/"><meta property="article:section" content="post"><meta property="article:published_time" content="2022-12-02T09:58:57+08:00"><meta property="article:modified_time" content="2022-12-02T09:58:57+08:00"><meta itemprop=name content="Prometheus 监控套件安装配置"><meta itemprop=description content><meta itemprop=datePublished content="2022-12-02T09:58:57+08:00"><meta itemprop=dateModified content="2022-12-02T09:58:57+08:00"><meta itemprop=wordCount content="496"><meta itemprop=keywords content="prometheus,"><meta name=twitter:card content="summary"><meta name=twitter:title content="Prometheus 监控套件安装配置"><meta name=twitter:description content><!--[if lte IE 9]><script src=https://cdnjs.cloudflare.com/ajax/libs/classlist/1.1.20170427/classList.min.js></script><![endif]--><!--[if lt IE 9]><script src=https://cdn.jsdelivr.net/npm/html5shiv@3.7.3/dist/html5shiv.min.js></script>
+<script src=https://cdn.jsdelivr.net/npm/respond.js@1.4.2/dest/respond.min.js></script><![endif]--></head><body><div id=mobile-navbar class=mobile-navbar><div class=mobile-header-logo><a href=/ class=logo>Friday</a></div><div class=mobile-navbar-icon><span></span>
+<span></span>
+<span></span></div></div><nav id=mobile-menu class="mobile-menu slideout-menu"><ul class=mobile-menu-list><a href=/><li class=mobile-menu-item>Home</li></a><a href=/post/><li class=mobile-menu-item>Archives</li></a><a href=/tags/><li class=mobile-menu-item>Tags</li></a><a href=/categories/><li class=mobile-menu-item>Categories</li></a><a href=/about/><li class=mobile-menu-item>About</li></a></ul></nav><div class=container id=mobile-panel><header id=header class=header><div class=logo-wrapper><a href=/ class=logo>Friday</a></div><nav class=site-navbar><ul id=menu class=menu><li class=menu-item><a class=menu-item-link href=/>Home</a></li><li class=menu-item><a class=menu-item-link href=/post/>Archives</a></li><li class=menu-item><a class=menu-item-link href=/tags/>Tags</a></li><li class=menu-item><a class=menu-item-link href=/categories/>Categories</a></li><li class=menu-item><a class=menu-item-link href=/about/>About</a></li></ul></nav></header><main id=main class=main><div class=content-wrapper><div id=content class=content><article class=post><header class=post-header><h1 class=post-title>Prometheus 监控套件安装配置</h1><div class=post-meta><span class=post-time>2022-12-02 09:58:57</span><div class=post-category><a href=/categories/prometheus/>prometheus</a></div><span class=more-meta>496 words</span>
+<span class=more-meta>1 min read</span>
+<span id=busuanzi_container_page_pv class=more-meta><span id=busuanzi_value_page_pv><img src=/img/spinner.svg alt=spinner.svg></span> times read</span></div></header><div class=post-toc id=post-toc><h2 class=post-toc-title>Contents</h2><div class=post-toc-content><nav id=TableOfContents></nav></div></div><div class=post-content><ol><li>prometheus</li></ol><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-fallback data-lang=fallback><span class=line><span class=cl>wget https://github.com/prometheus/prometheus/releases/download/v2.40.4/prometheus-2.40.4.linux-amd64.tar.gz
+</span></span><span class=line><span class=cl>tar xzvf prometheus-2.40.4.linux-amd64.tar.gz
+</span></span><span class=line><span class=cl>mv prometheus-2.40.4.linux-amd64 /opt/prometheus
+</span></span></code></pre></td></tr></table></div></div><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-fallback data-lang=fallback><span class=line><span class=cl>[Unit]
+</span></span><span class=line><span class=cl>Description=Prometheus
+</span></span><span class=line><span class=cl>Documentation=https://prometheus.io/
+</span></span><span class=line><span class=cl>After=network.target
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>[Service]
+</span></span><span class=line><span class=cl>Type=simple
+</span></span><span class=line><span class=cl>ExecStart=/opt/prometheus/prometheus --config.file=/opt/prometheus/prometheus.yml
+</span></span><span class=line><span class=cl>Restart=on-failure
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>[Install]
+</span></span><span class=line><span class=cl>WantedBy=multi-user.target
+</span></span></code></pre></td></tr></table></div></div><p>systemctl enable prometheus
+控制页面: http://127.0.0.1:9090
+vim /opt/prometheus/prometheus.yml</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span><span class=lnt>22
+</span><span class=lnt>23
+</span><span class=lnt>24
+</span><span class=lnt>25
+</span><span class=lnt>26
+</span><span class=lnt>27
+</span><span class=lnt>28
+</span><span class=lnt>29
+</span><span class=lnt>30
+</span><span class=lnt>31
+</span><span class=lnt>32
+</span><span class=lnt>33
+</span><span class=lnt>34
+</span><span class=lnt>35
+</span><span class=lnt>36
+</span><span class=lnt>37
+</span><span class=lnt>38
+</span><span class=lnt>39
+</span><span class=lnt>40
+</span><span class=lnt>41
+</span><span class=lnt>42
+</span><span class=lnt>43
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-fallback data-lang=fallback><span class=line><span class=cl># my global config
+</span></span><span class=line><span class=cl>global:
+</span></span><span class=line><span class=cl>  scrape_interval: 15s # Set the scrape interval to every 15 seconds. Default is every 1 minute.
+</span></span><span class=line><span class=cl>  evaluation_interval: 15s # Evaluate rules every 15 seconds. The default is every 1 minute.
+</span></span><span class=line><span class=cl>  # scrape_timeout is set to the global default (10s).
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl># Alertmanager configuration
+</span></span><span class=line><span class=cl>alerting:
+</span></span><span class=line><span class=cl>  alertmanagers:
+</span></span><span class=line><span class=cl>    - static_configs:
+</span></span><span class=line><span class=cl>        - targets:
+</span></span><span class=line><span class=cl>          # - alertmanager:9093
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl># Load rules once and periodically evaluate them according to the global &#39;evaluation_interval&#39;.
+</span></span><span class=line><span class=cl>rule_files:
+</span></span><span class=line><span class=cl>  # - &#34;first_rules.yml&#34;
+</span></span><span class=line><span class=cl>  # - &#34;second_rules.yml&#34;
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl># A scrape configuration containing exactly one endpoint to scrape:
+</span></span><span class=line><span class=cl># Here it&#39;s Prometheus itself.
+</span></span><span class=line><span class=cl>scrape_configs:
+</span></span><span class=line><span class=cl>  # The job name is added as a label `job=&lt;job_name&gt;` to any timeseries scraped from this config.
+</span></span><span class=line><span class=cl>  - job_name: &#34;prometheus&#34;
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>    # metrics_path defaults to &#39;/metrics&#39;
+</span></span><span class=line><span class=cl>    # scheme defaults to &#39;http&#39;.
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>    static_configs:
+</span></span><span class=line><span class=cl>      - targets: [&#34;localhost:9090&#34;]
+</span></span><span class=line><span class=cl>  - job_name: node
+</span></span><span class=line><span class=cl>    static_configs:
+</span></span><span class=line><span class=cl>      - targets: [&#39;10.2.1.3:9100&#39;,&#39;10.2.1.2:9100&#39;]
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>  # kube-state-metrics
+</span></span><span class=line><span class=cl>  - job_name: k8s
+</span></span><span class=line><span class=cl>    static_configs:
+</span></span><span class=line><span class=cl>      - targets: [&#39;10.2.1.3:8080&#39;]
+</span></span><span class=line><span class=cl>  - job_name: &#39;pushgateway&#39;
+</span></span><span class=line><span class=cl>    honor_labels: true
+</span></span><span class=line><span class=cl>    static_configs:
+</span></span><span class=line><span class=cl>      - targets: [&#39;:9091&#39;]
+</span></span><span class=line><span class=cl>       labels:
+</span></span><span class=line><span class=cl>         instance: pushgateway
+</span></span></code></pre></td></tr></table></div></div><ol start=2><li>node_exporter:</li></ol><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-fallback data-lang=fallback><span class=line><span class=cl>wget https://github.com/prometheus/node_exporter/releases/download/v1.4.0/node_exporter-1.4.0.linux-amd64.tar.gz
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>tar xzfv node_exporter-1.4.0.linux-amd64.tar.gz -C /opt
+</span></span><span class=line><span class=cl>mv /opt/node_exporter-1.4.0.linux-amd64 /opt/node_exporter
+</span></span></code></pre></td></tr></table></div></div><p>service:</p><p>/lib/systemd/system/prometheus.service</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-fallback data-lang=fallback><span class=line><span class=cl>[Unit]
+</span></span><span class=line><span class=cl>Description=Prometheus exporter for machine metrics, written in Go with pluggable metric collectors.
+</span></span><span class=line><span class=cl>Documentation=https://github.com/prometheus/node_exporter
+</span></span><span class=line><span class=cl>After=network.target
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>[Service]
+</span></span><span class=line><span class=cl>LimitNOFILE=65535
+</span></span><span class=line><span class=cl>LimitNPROC=65535
+</span></span><span class=line><span class=cl>LimitCORE=infinity
+</span></span><span class=line><span class=cl>ExecStart=/opt/node_exporter/node_exporter
+</span></span><span class=line><span class=cl>Restart=on-failure
+</span></span><span class=line><span class=cl>StartLimitInterval=1
+</span></span><span class=line><span class=cl>RestartSec=3
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>[Install]
+</span></span><span class=line><span class=cl>WantedBy=multi-user.target
+</span></span></code></pre></td></tr></table></div></div><ol start=3><li>grafana:</li></ol><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-fallback data-lang=fallback><span class=line><span class=cl>wget https://dl.grafana.com/enterprise/release/grafana-enterprise_9.3.0_amd64.deb
+</span></span><span class=line><span class=cl>sudo apt-get install -y adduser libfontconfig1
+</span></span><span class=line><span class=cl>dpkg -i grafana-enterprise_9.3.0_amd64.deb
+</span></span><span class=line><span class=cl>systemctl enable grafana-server.service
+</span></span><span class=line><span class=cl>systemctl start grafana-server.service
+</span></span><span class=line><span class=cl>grafana-cli plugins install grafana-piechart-panel
+</span></span><span class=line><span class=cl># 如果超时，通过科学下载后
+</span></span><span class=line><span class=cl>unzip grafana-piechart-panel-1.6.4.any.zip
+</span></span><span class=line><span class=cl>mv grafana-piechart-panel /var/lib/grafana/plugins/
+</span></span><span class=line><span class=cl>systemctl restart grafana-server.service
+</span></span></code></pre></td></tr></table></div></div><p>页面：
+http://127.0.0.1:3000/ admin admin</p><p>k8s:Grafana导入id：13105 14518
+node_exporter:1860</p><ol start=4><li>kube-state-metrics 外部prometheus监控k8s集群。
+下载所有的文件：
+<a href=https://github.com/kubernetes/kube-state-metrics/tree/master/examples/standard>https://github.com/kubernetes/kube-state-metrics/tree/master/examples/standard</a></li></ol><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-fallback data-lang=fallback><span class=line><span class=cl># ls
+</span></span><span class=line><span class=cl>cluster-role-binding.yaml  cluster-role.yaml  deployment.yaml  service-account.yaml  service.yaml
+</span></span></code></pre></td></tr></table></div></div><p>修改deployment.yaml 将网络改为host模式：</p><p><code>hostNetwork: true</code></p><p>修改镜像地址：
+<code>image: bitnami/kube-state-metrics:2.1.0</code></p><p><code>kubectl apply -f ./</code></p><ol start=5><li>pushgateway:
+<code>wget https://github.com/prometheus/pushgateway/releases/download/v1.5.1/pushgateway-1.5.1.linux-amd64.tar.gz</code></li></ol><p><code>vim /lib/systemd/system/pushgateway.service</code></p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-fallback data-lang=fallback><span class=line><span class=cl>[Unit]
+</span></span><span class=line><span class=cl>Description=pushgateway
+</span></span><span class=line><span class=cl>Documentation=https://prometheus.io/
+</span></span><span class=line><span class=cl>After=network.target
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>[Service]
+</span></span><span class=line><span class=cl>Type=simple
+</span></span><span class=line><span class=cl>ExecStart=/opt/pushgateway/pushgateway
+</span></span><span class=line><span class=cl>Restart=on-failure
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>[Install]
+</span></span><span class=line><span class=cl>WantedBy=multi-user.target
+</span></span></code></pre></td></tr></table></div></div><p><code>mv pushgateway-1.5.1.linux-amd64 /opt/pushgateway</code></p></div><footer class=post-footer><div class=post-tags><a href=/tags/prometheus/>prometheus</a></div><nav class=post-nav><a class=next href=/post/ubuntu20.04-k8s/><span class="next-text nav-default">Ubuntu20 安装 k8s</span>
+<span class="next-text nav-mobile">Next</span>
+<i class="iconfont icon-right"></i></a></nav></footer></article></div><div id=vcomments></div><script src=//cdn1.lncld.net/static/js/3.0.4/av-min.js></script>
+<script src=//unpkg.com/valine/dist/Valine.min.js></script>
+<script type=text/javascript>new Valine({el:"#vcomments",appId:"fb6qCfVYGmIrC87K3STOS3V8-gzGzoHsz",appKey:"FilghKK7HHC4hMQHxhR90dDE",notify:!1,verify:!1,avatar:"mm",placeholder:"说点什么吧...",visitor:!1})</script></div></main><footer id=footer class=footer><div class=social-links><a href=mailto:hanglinux@163.com class="iconfont icon-email" title=email></a>
+<a href=https://github.com/fridayhub class="iconfont icon-github" title=github></a>
+<a href=https://fridayhub.github.io/index.xml type=application/rss+xml class="iconfont icon-rss" title=rss></a></div><div class=copyright><span class=power-by>Powered by <a class=hexo-link href=https://gohugo.io>Hugo</a></span>
+<span class=division>|</span>
+<span class=theme-info>Theme -
+<a class=theme-link href=https://github.com/olOwOlo/hugo-theme-even>Even</a></span><div class=busuanzi-footer><span id=busuanzi_container_site_pv>site pv: <span id=busuanzi_value_site_pv><img src=/img/spinner.svg alt=spinner.svg></span></span>
+<span class=division>|</span>
+<span id=busuanzi_container_site_uv>site uv: <span id=busuanzi_value_site_uv><img src=/img/spinner.svg alt=spinner.svg></span></span></div><span class=copyright-year>&copy;
+2017 -
+2022
+<span class=heart><i class="iconfont icon-heart"></i></span>
+<span class=author>friday</span></span></div></footer><div class=back-to-top id=back-to-top><i class="iconfont icon-up"></i></div></div><script src=https://cdn.jsdelivr.net/npm/jquery@3.2.1/dist/jquery.min.js integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin=anonymous></script>
+<script src=https://cdn.jsdelivr.net/npm/slideout@1.0.1/dist/slideout.min.js integrity="sha256-t+zJ/g8/KXIJMjSVQdnibt4dlaDxc9zXr/9oNPeWqdg=" crossorigin=anonymous></script>
+<script src=https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.js integrity="sha256-XVLffZaxoWfGUEbdzuLi7pwaUJv1cecsQJQqGLe7axY=" crossorigin=anonymous></script>
+<script type=text/javascript src=/js/main.min.1c70606d1b733282f06230615f5561b5894924b6f9930ba2ab99cf1254f75a1a.js></script></body></html>

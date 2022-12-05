@@ -1,0 +1,142 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta http-equiv=x-ua-compatible content="IE=edge,chrome=1"><title>Ubuntu20 安装 k8s - Friday - Here I record my experience</title><meta name=renderer content="webkit"><meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1"><meta http-equiv=cache-control content="no-transform"><meta http-equiv=cache-control content="no-siteapp"><meta name=theme-color content="#f8f5ec"><meta name=msapplication-navbutton-color content="#f8f5ec"><meta name=apple-mobile-web-app-capable content="yes"><meta name=apple-mobile-web-app-status-bar-style content="#f8f5ec"><meta name=author content="friday"><meta name=description content><meta name=keywords content="k8s,kubernetes"><meta name=generator content="Hugo 0.107.0 with theme even"><link rel=canonical href=https://fridayhub.github.io/post/ubuntu20.04-k8s/><link rel=apple-touch-icon sizes=180x180 href=/apple-touch-icon.png><link rel=icon type=image/png sizes=32x32 href=/favicon-32x32.png><link rel=icon type=image/png sizes=16x16 href=/favicon-16x16.png><link rel=manifest href=/manifest.json><link rel=mask-icon href=/safari-pinned-tab.svg color=#5bbad5><script async src=//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js></script><meta name=referrer content="no-referrer-when-downgrade"><link href=/sass/main.min.c2803d17ea439bb194b104ce262b40c9118b45b7b108e27dadf43e96dd6664a3.css rel=stylesheet><link rel=stylesheet href=https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.css integrity="sha256-7TyXnr2YU040zfSP+rEcz29ggW4j56/ujTPwjMzyqFY=" crossorigin=anonymous><meta property="og:title" content="Ubuntu20 安装 k8s"><meta property="og:description" content><meta property="og:type" content="article"><meta property="og:url" content="https://fridayhub.github.io/post/ubuntu20.04-k8s/"><meta property="article:section" content="post"><meta property="article:published_time" content="2022-12-01T14:04:55+08:00"><meta property="article:modified_time" content="2022-12-01T14:04:55+08:00"><meta itemprop=name content="Ubuntu20 安装 k8s"><meta itemprop=description content><meta itemprop=datePublished content="2022-12-01T14:04:55+08:00"><meta itemprop=dateModified content="2022-12-01T14:04:55+08:00"><meta itemprop=wordCount content="445"><meta itemprop=keywords content="k8s,kubernetes,"><meta name=twitter:card content="summary"><meta name=twitter:title content="Ubuntu20 安装 k8s"><meta name=twitter:description content><!--[if lte IE 9]><script src=https://cdnjs.cloudflare.com/ajax/libs/classlist/1.1.20170427/classList.min.js></script><![endif]--><!--[if lt IE 9]><script src=https://cdn.jsdelivr.net/npm/html5shiv@3.7.3/dist/html5shiv.min.js></script>
+<script src=https://cdn.jsdelivr.net/npm/respond.js@1.4.2/dest/respond.min.js></script><![endif]--></head><body><div id=mobile-navbar class=mobile-navbar><div class=mobile-header-logo><a href=/ class=logo>Friday</a></div><div class=mobile-navbar-icon><span></span>
+<span></span>
+<span></span></div></div><nav id=mobile-menu class="mobile-menu slideout-menu"><ul class=mobile-menu-list><a href=/><li class=mobile-menu-item>Home</li></a><a href=/post/><li class=mobile-menu-item>Archives</li></a><a href=/tags/><li class=mobile-menu-item>Tags</li></a><a href=/categories/><li class=mobile-menu-item>Categories</li></a><a href=/about/><li class=mobile-menu-item>About</li></a></ul></nav><div class=container id=mobile-panel><header id=header class=header><div class=logo-wrapper><a href=/ class=logo>Friday</a></div><nav class=site-navbar><ul id=menu class=menu><li class=menu-item><a class=menu-item-link href=/>Home</a></li><li class=menu-item><a class=menu-item-link href=/post/>Archives</a></li><li class=menu-item><a class=menu-item-link href=/tags/>Tags</a></li><li class=menu-item><a class=menu-item-link href=/categories/>Categories</a></li><li class=menu-item><a class=menu-item-link href=/about/>About</a></li></ul></nav></header><main id=main class=main><div class=content-wrapper><div id=content class=content><article class=post><header class=post-header><h1 class=post-title>Ubuntu20 安装 k8s</h1><div class=post-meta><span class=post-time>2022-12-01 14:04:55</span><div class=post-category><a href=/categories/k8s/>k8s</a>
+<a href=/categories/kubernetes/>kubernetes</a></div><span class=more-meta>445 words</span>
+<span class=more-meta>1 min read</span>
+<span id=busuanzi_container_page_pv class=more-meta><span id=busuanzi_value_page_pv><img src=/img/spinner.svg alt=spinner.svg></span> times read</span></div></header><div class=post-toc id=post-toc><h2 class=post-toc-title>Contents</h2><div class=post-toc-content><nav id=TableOfContents></nav></div></div><div class=post-content><ol><li>关闭swap：
+swapoff -a</li></ol><p>#永久关闭
+sudo vi /etc/fstab
+#/swap</p><ol start=2><li>安装k8s
+apt-get update && apt-get install -y apt-transport-https</li></ol><p>curl <a href=https://mirrors.aliyun.com/kubernetes/apt/doc/apt-key.gpg>https://mirrors.aliyun.com/kubernetes/apt/doc/apt-key.gpg</a> | apt-key add -</p><p>cat &#171;EOF >/etc/apt/sources.list.d/kubernetes.list
+deb <a href=https://mirrors.aliyun.com/kubernetes/apt/>https://mirrors.aliyun.com/kubernetes/apt/</a> kubernetes-xenial main
+EOF</p><p>apt-get update
+apt-get install kubelet=1.20.15-00 kubeadm=1.20.15-00 kubectl=1.20.15-00</p><ol start=3><li>生成默认配置</li></ol><p><code>kubeadm config print init-defaults > k8s-init-default.yaml</code></p><ol start=4><li>修改：</li></ol><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span><span class=lnt>5
+</span><span class=lnt>6
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-fallback data-lang=fallback><span class=line><span class=cl>localAPIEndpoint.advertiseAddress #改为master ip
+</span></span><span class=line><span class=cl>nodeRegistration.name #主机名
+</span></span><span class=line><span class=cl>imageRepository: registry.aliyuncs.com/google_containers #指定仓库
+</span></span><span class=line><span class=cl>kubernetesVersion: v1.20.15
+</span></span><span class=line><span class=cl>networking
+</span></span><span class=line><span class=cl>  podSubnet: 10.244.0.0/16 #新增
+</span></span></code></pre></td></tr></table></div></div><ol start=5><li>测试初始化：</li></ol><p><code>kubeadm init --dry-run</code></p><ol start=6><li>查看使用的镜像版本：</li></ol><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span><span class=lnt>5
+</span><span class=lnt>6
+</span><span class=lnt>7
+</span><span class=lnt>8
+</span><span class=lnt>9
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-fallback data-lang=fallback><span class=line><span class=cl>kubeadm config images list
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>k8s.gcr.io/kube-apiserver:v1.20.15
+</span></span><span class=line><span class=cl>k8s.gcr.io/kube-controller-manager:v1.20.15
+</span></span><span class=line><span class=cl>k8s.gcr.io/kube-scheduler:v1.20.15
+</span></span><span class=line><span class=cl>k8s.gcr.io/kube-proxy:v1.20.15
+</span></span><span class=line><span class=cl>k8s.gcr.io/pause:3.2
+</span></span><span class=line><span class=cl>k8s.gcr.io/etcd:3.4.13-0
+</span></span><span class=line><span class=cl>k8s.gcr.io/coredns:1.7.0
+</span></span></code></pre></td></tr></table></div></div><p>提前拉取镜像(通过指定仓库，这一步可以不做)：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl><span class=cp>#!/bin/bash
+</span></span></span><span class=line><span class=cl><span class=cp></span>
+</span></span><span class=line><span class=cl><span class=nv>images</span><span class=o>=(</span>
+</span></span><span class=line><span class=cl>kube-apiserver:v1.20.15
+</span></span><span class=line><span class=cl>kube-controller-manager:v1.20.15
+</span></span><span class=line><span class=cl>kube-scheduler:v1.20.15
+</span></span><span class=line><span class=cl>kube-proxy:vv1.20.15
+</span></span><span class=line><span class=cl>pause:3.2
+</span></span><span class=line><span class=cl>etcd:3.4.13-0
+</span></span><span class=line><span class=cl>coredns:1.7.0
+</span></span><span class=line><span class=cl><span class=o>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=k>for</span> imageName in <span class=si>${</span><span class=nv>images</span><span class=p>[@]</span><span class=si>}</span> <span class=p>;</span> <span class=k>do</span>
+</span></span><span class=line><span class=cl>    docker pull registry.cn-hangzhou.aliyuncs.com/google_containers/<span class=nv>$imageName</span>
+</span></span><span class=line><span class=cl>    docker tag registry.cn-hangzhou.aliyuncs.com/google_containers/<span class=nv>$imageName</span> k8s.gcr.io/<span class=nv>$imageName</span>
+</span></span><span class=line><span class=cl>    docker rmi registry.cn-hangzhou.aliyuncs.com/google_containers/<span class=nv>$imageName</span>
+</span></span><span class=line><span class=cl><span class=k>done</span>
+</span></span></code></pre></td></tr></table></div></div><ol start=7><li>指定仓库后，查看image list：</li></ol><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span><span class=lnt>5
+</span><span class=lnt>6
+</span><span class=lnt>7
+</span><span class=lnt>8
+</span><span class=lnt>9
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-fallback data-lang=fallback><span class=line><span class=cl>kubeadm config images list --config k8s-init-default.yaml 
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>registry.aliyuncs.com/google_containers/kube-apiserver:v1.20.15
+</span></span><span class=line><span class=cl>registry.aliyuncs.com/google_containers/kube-controller-manager:v1.20.15
+</span></span><span class=line><span class=cl>registry.aliyuncs.com/google_containers/kube-scheduler:v1.20.15
+</span></span><span class=line><span class=cl>registry.aliyuncs.com/google_containers/kube-proxy:v1.20.15
+</span></span><span class=line><span class=cl>registry.aliyuncs.com/google_containers/pause:3.2
+</span></span><span class=line><span class=cl>registry.aliyuncs.com/google_containers/etcd:3.4.13-0
+</span></span><span class=line><span class=cl>registry.aliyuncs.com/google_containers/coredns:1.7.0
+</span></span></code></pre></td></tr></table></div></div><ol start=8><li>提前拉取镜像，防止kubeadm init超时:</li></ol><p><code>kubeadm config images pull --config=k8s-init-default.yaml</code></p><ol start=9><li>开始安装：</li></ol><p><code>kubeadm init --config=k8s-init-default.yaml</code></p><p>出现：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span><span class=lnt>5
+</span><span class=lnt>6
+</span><span class=lnt>7
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-fallback data-lang=fallback><span class=line><span class=cl>Your Kubernetes control-plane has initialized successfully!
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>To start using your cluster, you need to run the following as a regular user:
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>  mkdir -p $HOME/.kube
+</span></span><span class=line><span class=cl>  sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+</span></span><span class=line><span class=cl>  sudo chown $(id -u):$(id -g) $HOME/.kube/config
+</span></span></code></pre></td></tr></table></div></div><p>说明安装成功。</p><ol start=10><li>安装网络插件：</li></ol><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-fallback data-lang=fallback><span class=line><span class=cl>wget https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>kubectl apply -f kube-flannel.yml
+</span></span></code></pre></td></tr></table></div></div><ol start=11><li>work node 修改hostname:
+hostnamectl set-hostname work-node-name
+vim /etc/hosts 修改127.0.0.1那一项</li><li>加入集群
+在所有work node上执行1、2两步。
+在master上执行：</li></ol><p><code>kubeadm token create --print-join-command</code></p><p>在work node上执行以上命令的执行结果</p></div><footer class=post-footer><div class=post-tags><a href=/tags/k8s/>k8s</a>
+<a href=/tags/kubernetes/>kubernetes</a></div><nav class=post-nav><a class=prev href=/post/prometheus-install/><i class="iconfont icon-left"></i>
+<span class="prev-text nav-default">Prometheus 监控套件安装配置</span>
+<span class="prev-text nav-mobile">Prev</span></a>
+<a class=next href=/post/k8s-restore/><span class="next-text nav-default">K8s etcd数据恢复</span>
+<span class="next-text nav-mobile">Next</span>
+<i class="iconfont icon-right"></i></a></nav></footer></article></div><div id=vcomments></div><script src=//cdn1.lncld.net/static/js/3.0.4/av-min.js></script>
+<script src=//unpkg.com/valine/dist/Valine.min.js></script>
+<script type=text/javascript>new Valine({el:"#vcomments",appId:"fb6qCfVYGmIrC87K3STOS3V8-gzGzoHsz",appKey:"FilghKK7HHC4hMQHxhR90dDE",notify:!1,verify:!1,avatar:"mm",placeholder:"说点什么吧...",visitor:!1})</script></div></main><footer id=footer class=footer><div class=social-links><a href=mailto:hanglinux@163.com class="iconfont icon-email" title=email></a>
+<a href=https://github.com/fridayhub class="iconfont icon-github" title=github></a>
+<a href=https://fridayhub.github.io/index.xml type=application/rss+xml class="iconfont icon-rss" title=rss></a></div><div class=copyright><span class=power-by>Powered by <a class=hexo-link href=https://gohugo.io>Hugo</a></span>
+<span class=division>|</span>
+<span class=theme-info>Theme -
+<a class=theme-link href=https://github.com/olOwOlo/hugo-theme-even>Even</a></span><div class=busuanzi-footer><span id=busuanzi_container_site_pv>site pv: <span id=busuanzi_value_site_pv><img src=/img/spinner.svg alt=spinner.svg></span></span>
+<span class=division>|</span>
+<span id=busuanzi_container_site_uv>site uv: <span id=busuanzi_value_site_uv><img src=/img/spinner.svg alt=spinner.svg></span></span></div><span class=copyright-year>&copy;
+2017 -
+2022
+<span class=heart><i class="iconfont icon-heart"></i></span>
+<span class=author>friday</span></span></div></footer><div class=back-to-top id=back-to-top><i class="iconfont icon-up"></i></div></div><script src=https://cdn.jsdelivr.net/npm/jquery@3.2.1/dist/jquery.min.js integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin=anonymous></script>
+<script src=https://cdn.jsdelivr.net/npm/slideout@1.0.1/dist/slideout.min.js integrity="sha256-t+zJ/g8/KXIJMjSVQdnibt4dlaDxc9zXr/9oNPeWqdg=" crossorigin=anonymous></script>
+<script src=https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.js integrity="sha256-XVLffZaxoWfGUEbdzuLi7pwaUJv1cecsQJQqGLe7axY=" crossorigin=anonymous></script>
+<script type=text/javascript src=/js/main.min.1c70606d1b733282f06230615f5561b5894924b6f9930ba2ab99cf1254f75a1a.js></script></body></html>
