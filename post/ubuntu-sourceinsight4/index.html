@@ -1,0 +1,54 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta http-equiv=x-ua-compatible content="IE=edge,chrome=1"><title>Ubuntu 20.04 安装 Sourceinsight4 - Friday - Here I record my experience</title><meta name=renderer content="webkit"><meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1"><meta http-equiv=cache-control content="no-transform"><meta http-equiv=cache-control content="no-siteapp"><meta name=theme-color content="#f8f5ec"><meta name=msapplication-navbutton-color content="#f8f5ec"><meta name=apple-mobile-web-app-capable content="yes"><meta name=apple-mobile-web-app-status-bar-style content="#f8f5ec"><meta name=author content="friday"><meta name=description content><meta name=keywords content="sourceinsight"><meta name=generator content="Hugo 0.110.0 with theme even"><link rel=canonical href=https://fridayhub.github.io/post/ubuntu-sourceinsight4/><link rel=apple-touch-icon sizes=180x180 href=/apple-touch-icon.png><link rel=icon type=image/png sizes=32x32 href=/favicon-32x32.png><link rel=icon type=image/png sizes=16x16 href=/favicon-16x16.png><link rel=manifest href=/manifest.json><link rel=mask-icon href=/safari-pinned-tab.svg color=#5bbad5><script async src=//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js></script><meta name=referrer content="no-referrer-when-downgrade"><link href=/sass/main.min.c2803d17ea439bb194b104ce262b40c9118b45b7b108e27dadf43e96dd6664a3.css rel=stylesheet><link rel=stylesheet href=https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.css integrity="sha256-7TyXnr2YU040zfSP+rEcz29ggW4j56/ujTPwjMzyqFY=" crossorigin=anonymous><meta property="og:title" content="Ubuntu 20.04 安装 Sourceinsight4"><meta property="og:description" content><meta property="og:type" content="article"><meta property="og:url" content="https://fridayhub.github.io/post/ubuntu-sourceinsight4/"><meta property="article:section" content="post"><meta property="article:published_time" content="2023-01-31T14:48:05+08:00"><meta property="article:modified_time" content="2023-01-31T14:48:05+08:00"><meta itemprop=name content="Ubuntu 20.04 安装 Sourceinsight4"><meta itemprop=description content><meta itemprop=datePublished content="2023-01-31T14:48:05+08:00"><meta itemprop=dateModified content="2023-01-31T14:48:05+08:00"><meta itemprop=wordCount content="1018"><meta itemprop=keywords content="sourceinsight,"><meta name=twitter:card content="summary"><meta name=twitter:title content="Ubuntu 20.04 安装 Sourceinsight4"><meta name=twitter:description content><!--[if lte IE 9]><script src=https://cdnjs.cloudflare.com/ajax/libs/classlist/1.1.20170427/classList.min.js></script><![endif]--><!--[if lt IE 9]><script src=https://cdn.jsdelivr.net/npm/html5shiv@3.7.3/dist/html5shiv.min.js></script>
+<script src=https://cdn.jsdelivr.net/npm/respond.js@1.4.2/dest/respond.min.js></script><![endif]--></head><body><div id=mobile-navbar class=mobile-navbar><div class=mobile-header-logo><a href=/ class=logo>Friday</a></div><div class=mobile-navbar-icon><span></span>
+<span></span>
+<span></span></div></div><nav id=mobile-menu class="mobile-menu slideout-menu"><ul class=mobile-menu-list><a href=/><li class=mobile-menu-item>Home</li></a><a href=/post/><li class=mobile-menu-item>Archives</li></a><a href=/tags/><li class=mobile-menu-item>Tags</li></a><a href=/categories/><li class=mobile-menu-item>Categories</li></a><a href=/about/><li class=mobile-menu-item>About</li></a></ul></nav><div class=container id=mobile-panel><header id=header class=header><div class=logo-wrapper><a href=/ class=logo>Friday</a></div><nav class=site-navbar><ul id=menu class=menu><li class=menu-item><a class=menu-item-link href=/>Home</a></li><li class=menu-item><a class=menu-item-link href=/post/>Archives</a></li><li class=menu-item><a class=menu-item-link href=/tags/>Tags</a></li><li class=menu-item><a class=menu-item-link href=/categories/>Categories</a></li><li class=menu-item><a class=menu-item-link href=/about/>About</a></li></ul></nav></header><main id=main class=main><div class=content-wrapper><div id=content class=content><article class=post><header class=post-header><h1 class=post-title>Ubuntu 20.04 安装 Sourceinsight4</h1><div class=post-meta><span class=post-time>2023-01-31 14:48:05</span><div class=post-category><a href=/categories/sourceinsight/>sourceinsight</a></div><span class=more-meta>1018 words</span>
+<span class=more-meta>3 mins read</span>
+<span id=busuanzi_container_page_pv class=more-meta><span id=busuanzi_value_page_pv><img src=/img/spinner.svg alt=spinner.svg></span> times read</span></div></header><div class=post-content><p>下载：Source_Insight.rar
+链接: <a href=https://pan.baidu.com/s/1N6nR6C1A1U1u-uEkfwHGVw>https://pan.baidu.com/s/1N6nR6C1A1U1u-uEkfwHGVw</a> 提取码: 91cw</p><p>1）如果之前安装过sourceinsight，需清理安装环境，防止之前有残留文件 (因路径中有空格，所以路径中有转义字符)</p><p><code>rm -rf /root/.wine/drive_c/Program\ Files\ /Source\ Insight\ 4.0</code></p><p><code>rm -rf /root/.wine/drive_c/ProgramData/Source\ Insight</code></p><p>2）安装sourceinsight4</p><p><code>unrar x Source_Insight.rar</code></p><p><code>wine sourceinsight40121-setup.exe</code></p><p>3）修改sourceinsight4.exe文件</p><p>用16进制打开exe文件：</p><p><code>root@linux:~/.wine/drive_c/Program Files (x86)/Source Insight 4.0# hexedit sourceinsight4.exe</code></p><p>将c800 0000 742a中的74修改成eb，注意，有2处需要修改，ctrl+W保存，ctrl+X退出。</p><p>4）生成license文件</p><p><code>unrar si4_kgen_unis.rar</code></p><p><code>wine si4_kgen_unis.exe</code></p><p>ActID、Serial可以随便点几次，然后点击Generate生产lic文件，并保存下来。</p><p>5）打开sourceinsight，导入刚刚生成的lic文件</p><p><code>wine ~/.wine/drive_c/Program\ Files\ /Source\ Insight\ 4.0/sourceinsight4.exe</code></p><p>（由于wine自身问题，第一次启动sourceinsight，点击菜单栏可能没有反应，把sourceinsight最小化，再最大化，就正常了）</p><p>6）禁止sourceinsight联网检查license</p><p>sourceinsight会频繁向服务器发送信息，检查license的合法性，通过抓包，发现license服务器ip及域名如下：sls.sourceinsight.com
+所以可执行命令 <code>iptables -t filter -w -I OUTPUT -p tcp -d 54.186.228.3 -j DROP</code>把送往license服务器的报文禁掉即可。</p><p>7）开机启动规则</p><p><code>iptables-save > /etc/iptables.rules</code></p><p><code>vi /etc/network/if-pre-up.d/ip_rules.sh</code></p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl><span class=cp>#!/bin/bash
+</span></span></span><span class=line><span class=cl><span class=cp></span> iptables-restore &lt; /etc/iptables.rules
+</span></span></code></pre></td></tr></table></div></div><p><code>chmod 755 /etc/network/if-pre-up.d/ip_rules.sh</code></p><p>8）中文</p><pre><code>上传win10里面的字体文件（windows/fonts/）到~/.wine/drive_c/windows/fonts/
+
+`cp Dengb.ttf  Dengl.ttf  Deng.ttf  msyhbd.ttc  msyhl.ttc  msyh.ttc  simfang.ttf  simkai.ttf  SIMLI.TTF  simsun.ttc
+ ~/.wine/drive_c/windows/Fonts`
+
+用win10的riched20.dll替换：
+```bash
+cd ~/.wine/drive_c/windows/system32
+mv riched20.dll riched20.dll_bak
+cp ~/Downloads/riched20.dll ./
+```
+
+编辑注册表：
+```bash
+wine regedit
+[HKEY_LOCAL_MACHINE\\Software\\Microsoft\\WindowsNT\\CurrentVersion\\FontSubstitutes]
+MS Shell Dlg = SimSun
+MS Shell Dlg 2 = SimSun
+Tahoma = SimSun (手动新建字符串)```
+</code></pre><p>9）窗口默认字体大小设置
+<img src=../../static/sourceinsight-fonts.png alt=fonts></p><p>窗口字体大小与样式设置步骤：</p><p>Preferences->Colors&Fonts->Set Panel Fonts and Colors。
+这里设置只对上面</p><p>窗口1：符号窗口（Symbol Window）和窗口4：项目文件夹浏览窗口（Project Folder Browser）有效，另外两个窗口无效。</p><p>窗口2：上下文窗口（Context Window）字体大小设置如下：
+在面板内右击->Context Window Options->scaling。</p><p>窗口3：引用关系窗口（Relation Window）字体大小设置如下：
+窗口内右击->Relation Window Options->Font</p><p>10） 增加字体<br>在win10中找到字体：C:\Windows\Fonts
+Courier New</p><p>有四个文件：<code>cp courbd.ttf courbi.ttf couri.ttf cour.ttf ~/.wine/drive_c/windows/Fonts</code></p><p>重新打开souceinsight可以选择.</p></div><footer class=post-footer><div class=post-tags><a href=/tags/sourceinsight/>sourceinsight</a></div><nav class=post-nav><a class=next href=/post/golang-tls/><span class="next-text nav-default">Golang tls 双向加密</span>
+<span class="next-text nav-mobile">Next</span>
+<i class="iconfont icon-right"></i></a></nav></footer></article></div><div id=vcomments></div><script src=//cdn1.lncld.net/static/js/3.0.4/av-min.js></script>
+<script src=//unpkg.com/valine/dist/Valine.min.js></script>
+<script type=text/javascript>new Valine({el:"#vcomments",appId:"fb6qCfVYGmIrC87K3STOS3V8-gzGzoHsz",appKey:"FilghKK7HHC4hMQHxhR90dDE",notify:!1,verify:!1,avatar:"mm",placeholder:"说点什么吧...",visitor:!1})</script></div></main><footer id=footer class=footer><div class=social-links><a href=mailto:hanglinux@163.com class="iconfont icon-email" title=email></a>
+<a href=https://github.com/fridayhub class="iconfont icon-github" title=github></a>
+<a href=https://fridayhub.github.io/index.xml type=application/rss+xml class="iconfont icon-rss" title=rss></a></div><div class=copyright><span class=power-by>Powered by <a class=hexo-link href=https://gohugo.io>Hugo</a></span>
+<span class=division>|</span>
+<span class=theme-info>Theme -
+<a class=theme-link href=https://github.com/olOwOlo/hugo-theme-even>Even</a></span><div class=busuanzi-footer><span id=busuanzi_container_site_pv>site pv: <span id=busuanzi_value_site_pv><img src=/img/spinner.svg alt=spinner.svg></span></span>
+<span class=division>|</span>
+<span id=busuanzi_container_site_uv>site uv: <span id=busuanzi_value_site_uv><img src=/img/spinner.svg alt=spinner.svg></span></span></div><span class=copyright-year>&copy;
+2017 -
+2023
+<span class=heart><i class="iconfont icon-heart"></i></span>
+<span class=author>friday</span></span></div></footer><div class=back-to-top id=back-to-top><i class="iconfont icon-up"></i></div></div><script src=https://cdn.jsdelivr.net/npm/jquery@3.2.1/dist/jquery.min.js integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin=anonymous></script>
+<script src=https://cdn.jsdelivr.net/npm/slideout@1.0.1/dist/slideout.min.js integrity="sha256-t+zJ/g8/KXIJMjSVQdnibt4dlaDxc9zXr/9oNPeWqdg=" crossorigin=anonymous></script>
+<script src=https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.js integrity="sha256-XVLffZaxoWfGUEbdzuLi7pwaUJv1cecsQJQqGLe7axY=" crossorigin=anonymous></script>
+<script type=text/javascript src=/js/main.min.1c70606d1b733282f06230615f5561b5894924b6f9930ba2ab99cf1254f75a1a.js></script></body></html>
