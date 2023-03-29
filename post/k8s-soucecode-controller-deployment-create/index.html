@@ -1,0 +1,532 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta http-equiv=x-ua-compatible content="IE=edge,chrome=1"><title>K8s Soucecode Controller Deployment Create - Friday - Here I record my experience</title><meta name=renderer content="webkit"><meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1"><meta http-equiv=cache-control content="no-transform"><meta http-equiv=cache-control content="no-siteapp"><meta name=theme-color content="#f8f5ec"><meta name=msapplication-navbutton-color content="#f8f5ec"><meta name=apple-mobile-web-app-capable content="yes"><meta name=apple-mobile-web-app-status-bar-style content="#f8f5ec"><meta name=author content="fridayhub"><meta name=description content="k8s source code analysis, controller create deployemnt"><meta name=keywords content="kubernetes,k8s"><meta name=generator content="Hugo 0.110.0 with theme even"><link rel=canonical href=https://fridayhub.github.io/post/k8s-soucecode-controller-deployment-create/><link rel=apple-touch-icon sizes=180x180 href=/apple-touch-icon.png><link rel=icon type=image/png sizes=32x32 href=/favicon-32x32.png><link rel=icon type=image/png sizes=16x16 href=/favicon-16x16.png><link rel=manifest href=/manifest.json><link rel=mask-icon href=/safari-pinned-tab.svg color=#5bbad5><script async src=//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js></script><meta name=referrer content="no-referrer-when-downgrade"><link href=/sass/main.min.c2803d17ea439bb194b104ce262b40c9118b45b7b108e27dadf43e96dd6664a3.css rel=stylesheet><link rel=stylesheet href=https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.css integrity="sha256-7TyXnr2YU040zfSP+rEcz29ggW4j56/ujTPwjMzyqFY=" crossorigin=anonymous><meta property="og:title" content="K8s Soucecode Controller Deployment Create"><meta property="og:description" content="k8s source code analysis, controller create deployemnt"><meta property="og:type" content="article"><meta property="og:url" content="https://fridayhub.github.io/post/k8s-soucecode-controller-deployment-create/"><meta property="article:section" content="post"><meta property="article:published_time" content="2023-03-28T10:00:33+08:00"><meta property="article:modified_time" content="2023-03-28T10:00:33+08:00"><meta itemprop=name content="K8s Soucecode Controller Deployment Create"><meta itemprop=description content="k8s source code analysis, controller create deployemnt"><meta itemprop=datePublished content="2023-03-28T10:00:33+08:00"><meta itemprop=dateModified content="2023-03-28T10:00:33+08:00"><meta itemprop=wordCount content="3263"><meta itemprop=keywords content="kubernetes,k8s,"><meta name=twitter:card content="summary"><meta name=twitter:title content="K8s Soucecode Controller Deployment Create"><meta name=twitter:description content="k8s source code analysis, controller create deployemnt"><!--[if lte IE 9]><script src=https://cdnjs.cloudflare.com/ajax/libs/classlist/1.1.20170427/classList.min.js></script><![endif]--><!--[if lt IE 9]><script src=https://cdn.jsdelivr.net/npm/html5shiv@3.7.3/dist/html5shiv.min.js></script>
+<script src=https://cdn.jsdelivr.net/npm/respond.js@1.4.2/dest/respond.min.js></script><![endif]--></head><body><div id=mobile-navbar class=mobile-navbar><div class=mobile-header-logo><a href=/ class=logo>Friday</a></div><div class=mobile-navbar-icon><span></span>
+<span></span>
+<span></span></div></div><nav id=mobile-menu class="mobile-menu slideout-menu"><ul class=mobile-menu-list><a href=/><li class=mobile-menu-item>Home</li></a><a href=/post/><li class=mobile-menu-item>Archives</li></a><a href=/tags/><li class=mobile-menu-item>Tags</li></a><a href=/categories/><li class=mobile-menu-item>Categories</li></a><a href=/about/><li class=mobile-menu-item>About</li></a></ul></nav><div class=container id=mobile-panel><header id=header class=header><div class=logo-wrapper><a href=/ class=logo>Friday</a></div><nav class=site-navbar><ul id=menu class=menu><li class=menu-item><a class=menu-item-link href=/>Home</a></li><li class=menu-item><a class=menu-item-link href=/post/>Archives</a></li><li class=menu-item><a class=menu-item-link href=/tags/>Tags</a></li><li class=menu-item><a class=menu-item-link href=/categories/>Categories</a></li><li class=menu-item><a class=menu-item-link href=/about/>About</a></li></ul></nav></header><main id=main class=main><div class=content-wrapper><div id=content class=content><article class=post><header class=post-header><h1 class=post-title>K8s Soucecode Controller Deployment Create</h1><div class=post-meta><span class=post-time>2023-03-28 10:00:33</span><div class=post-category><a href=/categories/kubernetes/>kubernetes</a>
+<a href=/categories/k8s/>k8s</a></div><span class=more-meta>3263 words</span>
+<span class=more-meta>7 mins read</span>
+<span id=busuanzi_container_page_pv class=more-meta><span id=busuanzi_value_page_pv><img src=/img/spinner.svg alt=spinner.svg></span> times read</span></div></header><div class=post-content><p>本系列主要分析 k8s中的deployment如下问题：</p><ul><li>为什么被创建pod</li><li>如何调度</li><li>为什么被销毁</li></ul><h2 id=前置知识>前置知识</h2><h3 id=组件>组件</h3><p>k8s中有多个组件，其中最主要的有kube-apiserver、etcd、kube-scheduler、kube-controller-manager、kubelet、kube-proxy。<br>鉴于本文的目的，本次只对kube-scheduler、kube-controller-manager 两个组件的部分行为做重点分析，kube-apiserver顺带分析一部分。</p><h3 id=组件功能>组件功能</h3><p>官方文档已经讲的比较透彻，把官方文档搬运过来的目的，是为了后续分析更加顺畅。
+kube-scheduler：
+Control plane component that watches for newly created Pods with no assigned node, and selects a node for them to run on.
+主要是负责将pod调度到node上。</p><p>kube-controller-manager：</p><ul><li>Node controller: Responsible for noticing and responding when nodes go down。负责跟踪并更新node状态。</li><li>EndpointSlice controller: Populates EndpointSlice objects (to provide a link between Services and Pods).</li><li>Job controller: Watches for Job objects that represent one-off tasks, then creates Pods to run those tasks to completion.
+以上两项其主要目的是保证pod在正确的状态，运行正确的数量。</li></ul><h3 id=informer>Informer</h3><p>Kubernetes使用Informer代替Controller去访问API Server，Controller的所有操作都和Informer进行交互,Informer使用ListAndWatch的机制.
+Informer负责与Kubernetes APlServer进行Watch操作, Watch的资源,可以是Kubernetes内置资源对象,也可以是CRD.</p><h3 id=源码分析>源码分析</h3><h4 id=初始化>初始化</h4><p>所有的源码只贴出来相关函数中，本次分析侧重的代码部分。</p><p>创建DeploymentController初始化操作：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span><span class=lnt>22
+</span><span class=lnt>23
+</span><span class=lnt>24
+</span><span class=lnt>25
+</span><span class=lnt>26
+</span><span class=lnt>27
+</span><span class=lnt>28
+</span><span class=lnt>29
+</span><span class=lnt>30
+</span><span class=lnt>31
+</span><span class=lnt>32
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=c1>// kubernetes/pkg/controller/deployment/deployment_controller.go
+</span></span></span><span class=line><span class=cl><span class=c1></span><span class=kd>func</span> <span class=nf>NewDeploymentController</span><span class=p>(</span><span class=nx>dInformer</span> <span class=nx>appsinformers</span><span class=p>.</span><span class=nx>DeploymentInformer</span><span class=p>,</span> <span class=nx>rsInformer</span> <span class=nx>appsinformers</span><span class=p>.</span><span class=nx>ReplicaSetInformer</span><span class=p>,</span> <span class=nx>podInformer</span> <span class=nx>coreinformers</span><span class=p>.</span><span class=nx>PodInformer</span><span class=p>,</span> <span class=nx>client</span> <span class=nx>clientset</span><span class=p>.</span><span class=nx>Interface</span><span class=p>)</span> <span class=p>(</span><span class=o>*</span><span class=nx>DeploymentController</span><span class=p>,</span> <span class=kt>error</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=c1>// ...
+</span></span></span><span class=line><span class=cl><span class=c1></span>    <span class=nx>dc</span> <span class=o>:=</span> <span class=o>&amp;</span><span class=nx>DeploymentController</span><span class=p>{</span>
+</span></span><span class=line><span class=cl>		<span class=nx>client</span><span class=p>:</span>        <span class=nx>client</span><span class=p>,</span>  <span class=c1>// 初始化k8s client，通过client-go中的informer机制，与其他组件通信
+</span></span></span><span class=line><span class=cl><span class=c1></span>		<span class=nx>eventRecorder</span><span class=p>:</span> <span class=nx>eventBroadcaster</span><span class=p>.</span><span class=nf>NewRecorder</span><span class=p>(</span><span class=nx>scheme</span><span class=p>.</span><span class=nx>Scheme</span><span class=p>,</span> <span class=nx>v1</span><span class=p>.</span><span class=nx>EventSource</span><span class=p>{</span><span class=nx>Component</span><span class=p>:</span> <span class=s>&#34;deployment-controller&#34;</span><span class=p>}),</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>        <span class=c1>// 初始化限速队列，informer接收到的所有资源，都在这个队列里
+</span></span></span><span class=line><span class=cl><span class=c1></span>		<span class=nx>queue</span><span class=p>:</span>         <span class=nx>workqueue</span><span class=p>.</span><span class=nf>NewNamedRateLimitingQueue</span><span class=p>(</span><span class=nx>workqueue</span><span class=p>.</span><span class=nf>DefaultControllerRateLimiter</span><span class=p>(),</span> <span class=s>&#34;deployment&#34;</span><span class=p>),</span> 
+</span></span><span class=line><span class=cl>	<span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>    <span class=c1>// 真正的消费并处理deployment的方法
+</span></span></span><span class=line><span class=cl><span class=c1></span>    <span class=nx>dc</span><span class=p>.</span><span class=nx>syncHandler</span> <span class=p>=</span> <span class=nx>dc</span><span class=p>.</span><span class=nx>syncDeployment</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>    <span class=c1>// 初始化入队deployment资源的函数
+</span></span></span><span class=line><span class=cl><span class=c1></span>    <span class=nx>dc</span><span class=p>.</span><span class=nx>enqueueDeployment</span> <span class=p>=</span> <span class=nx>dc</span><span class=p>.</span><span class=nx>enqueue</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>    <span class=c1>// 初始化deployment和replicaSet的EventHandler
+</span></span></span><span class=line><span class=cl><span class=c1></span>    <span class=nx>dInformer</span><span class=p>.</span><span class=nf>Informer</span><span class=p>().</span><span class=nf>AddEventHandler</span><span class=p>(</span><span class=nx>cache</span><span class=p>.</span><span class=nx>ResourceEventHandlerFuncs</span><span class=p>{</span>
+</span></span><span class=line><span class=cl>		<span class=nx>AddFunc</span><span class=p>:</span>    <span class=nx>dc</span><span class=p>.</span><span class=nx>addDeployment</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>		<span class=nx>UpdateFunc</span><span class=p>:</span> <span class=nx>dc</span><span class=p>.</span><span class=nx>updateDeployment</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>		<span class=c1>// This will enter the sync loop and no-op, because the deployment has been deleted from the store.
+</span></span></span><span class=line><span class=cl><span class=c1></span>		<span class=nx>DeleteFunc</span><span class=p>:</span> <span class=nx>dc</span><span class=p>.</span><span class=nx>deleteDeployment</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>	<span class=p>})</span>
+</span></span><span class=line><span class=cl>	<span class=nx>rsInformer</span><span class=p>.</span><span class=nf>Informer</span><span class=p>().</span><span class=nf>AddEventHandler</span><span class=p>(</span><span class=nx>cache</span><span class=p>.</span><span class=nx>ResourceEventHandlerFuncs</span><span class=p>{</span>
+</span></span><span class=line><span class=cl>		<span class=nx>AddFunc</span><span class=p>:</span>    <span class=nx>dc</span><span class=p>.</span><span class=nx>addReplicaSet</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>		<span class=nx>UpdateFunc</span><span class=p>:</span> <span class=nx>dc</span><span class=p>.</span><span class=nx>updateReplicaSet</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>		<span class=nx>DeleteFunc</span><span class=p>:</span> <span class=nx>dc</span><span class=p>.</span><span class=nx>deleteReplicaSet</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>	<span class=p>})</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>    <span class=c1>// ...
+</span></span></span><span class=line><span class=cl><span class=c1></span><span class=p>}</span>
+</span></span></code></pre></td></tr></table></div></div><p>enqueue 是一个入队函数，参数是deployment资源对象，所有deployment、replicaset的EventHandler接收到数据后，最终调用此函数入队资源的key</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=kd>func</span> <span class=p>(</span><span class=nx>dc</span> <span class=o>*</span><span class=nx>DeploymentController</span><span class=p>)</span> <span class=nf>enqueue</span><span class=p>(</span><span class=nx>deployment</span> <span class=o>*</span><span class=nx>apps</span><span class=p>.</span><span class=nx>Deployment</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=c1>//获取到的key形式：namespace/deploymentName （gvs/fengniaohezi-1673511852282-deployment-nginx）
+</span></span></span><span class=line><span class=cl><span class=c1></span>	<span class=nx>key</span><span class=p>,</span> <span class=nx>err</span> <span class=o>:=</span> <span class=nx>controller</span><span class=p>.</span><span class=nf>KeyFunc</span><span class=p>(</span><span class=nx>deployment</span><span class=p>)</span> 
+</span></span><span class=line><span class=cl>	<span class=k>if</span> <span class=nx>err</span> <span class=o>!=</span> <span class=kc>nil</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>		<span class=nx>utilruntime</span><span class=p>.</span><span class=nf>HandleError</span><span class=p>(</span><span class=nx>fmt</span><span class=p>.</span><span class=nf>Errorf</span><span class=p>(</span><span class=s>&#34;Couldn&#39;t get key for object %#v: %v&#34;</span><span class=p>,</span> <span class=nx>deployment</span><span class=p>,</span> <span class=nx>err</span><span class=p>))</span>
+</span></span><span class=line><span class=cl>		<span class=k>return</span>
+</span></span><span class=line><span class=cl>	<span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>	<span class=nx>dc</span><span class=p>.</span><span class=nx>queue</span><span class=p>.</span><span class=nf>Add</span><span class=p>(</span><span class=nx>key</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span></code></pre></td></tr></table></div></div><p>// 挑两个EventHandler看一下</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=kd>func</span> <span class=p>(</span><span class=nx>dc</span> <span class=o>*</span><span class=nx>DeploymentController</span><span class=p>)</span> <span class=nf>addDeployment</span><span class=p>(</span><span class=nx>obj</span> <span class=kd>interface</span><span class=p>{})</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>	<span class=nx>d</span> <span class=o>:=</span> <span class=nx>obj</span><span class=p>.(</span><span class=o>*</span><span class=nx>apps</span><span class=p>.</span><span class=nx>Deployment</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>	<span class=nx>klog</span><span class=p>.</span><span class=nf>V</span><span class=p>(</span><span class=mi>4</span><span class=p>).</span><span class=nf>Infof</span><span class=p>(</span><span class=s>&#34;Adding deployment %s&#34;</span><span class=p>,</span> <span class=nx>d</span><span class=p>.</span><span class=nx>Name</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>	<span class=nx>dc</span><span class=p>.</span><span class=nf>enqueueDeployment</span><span class=p>(</span><span class=nx>d</span><span class=p>)</span> <span class=c1>//调用enqueue入队
+</span></span></span><span class=line><span class=cl><span class=c1></span><span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=kd>func</span> <span class=p>(</span><span class=nx>dc</span> <span class=o>*</span><span class=nx>DeploymentController</span><span class=p>)</span> <span class=nf>updateDeployment</span><span class=p>(</span><span class=nx>old</span><span class=p>,</span> <span class=nx>cur</span> <span class=kd>interface</span><span class=p>{})</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>	<span class=nx>oldD</span> <span class=o>:=</span> <span class=nx>old</span><span class=p>.(</span><span class=o>*</span><span class=nx>apps</span><span class=p>.</span><span class=nx>Deployment</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>	<span class=nx>curD</span> <span class=o>:=</span> <span class=nx>cur</span><span class=p>.(</span><span class=o>*</span><span class=nx>apps</span><span class=p>.</span><span class=nx>Deployment</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>	<span class=nx>klog</span><span class=p>.</span><span class=nf>V</span><span class=p>(</span><span class=mi>4</span><span class=p>).</span><span class=nf>Infof</span><span class=p>(</span><span class=s>&#34;Updating deployment %s&#34;</span><span class=p>,</span> <span class=nx>oldD</span><span class=p>.</span><span class=nx>Name</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>	<span class=nx>dc</span><span class=p>.</span><span class=nf>enqueueDeployment</span><span class=p>(</span><span class=nx>curD</span><span class=p>)</span> <span class=c1>//调用enqueue入队
+</span></span></span><span class=line><span class=cl><span class=c1></span><span class=p>}</span>
+</span></span></code></pre></td></tr></table></div></div><p>所以DeploymentController通过informer收到deployment资源操作后，通过必要的逻辑判断，最终都是入队dc.queue，进行后续的事件循环。</p><h4 id=启动>启动</h4><p>DeploymentController被创建后，调用Run方法，启动controller</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=c1>// kubernetes/cmd/kube-controller-manager/app/apps.go
+</span></span></span><span class=line><span class=cl><span class=c1></span><span class=kd>func</span> <span class=nf>startDeploymentController</span><span class=p>(</span><span class=nx>ctx</span> <span class=nx>ControllerContext</span><span class=p>)</span> <span class=p>(</span><span class=nx>http</span><span class=p>.</span><span class=nx>Handler</span><span class=p>,</span> <span class=kt>bool</span><span class=p>,</span> <span class=kt>error</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=nx>dc</span><span class=p>,</span> <span class=nx>err</span> <span class=o>:=</span> <span class=nx>deployment</span><span class=p>.</span><span class=nf>NewDeploymentController</span><span class=p>(</span>
+</span></span><span class=line><span class=cl>		<span class=nx>ctx</span><span class=p>.</span><span class=nx>InformerFactory</span><span class=p>.</span><span class=nf>Apps</span><span class=p>().</span><span class=nf>V1</span><span class=p>().</span><span class=nf>Deployments</span><span class=p>(),</span>
+</span></span><span class=line><span class=cl>		<span class=nx>ctx</span><span class=p>.</span><span class=nx>InformerFactory</span><span class=p>.</span><span class=nf>Apps</span><span class=p>().</span><span class=nf>V1</span><span class=p>().</span><span class=nf>ReplicaSets</span><span class=p>(),</span>
+</span></span><span class=line><span class=cl>		<span class=nx>ctx</span><span class=p>.</span><span class=nx>InformerFactory</span><span class=p>.</span><span class=nf>Core</span><span class=p>().</span><span class=nf>V1</span><span class=p>().</span><span class=nf>Pods</span><span class=p>(),</span>
+</span></span><span class=line><span class=cl>		<span class=nx>ctx</span><span class=p>.</span><span class=nx>ClientBuilder</span><span class=p>.</span><span class=nf>ClientOrDie</span><span class=p>(</span><span class=s>&#34;deployment-controller&#34;</span><span class=p>),</span>
+</span></span><span class=line><span class=cl>	<span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>    <span class=c1>// 这里启动DeploymentController
+</span></span></span><span class=line><span class=cl><span class=c1></span>    <span class=k>go</span> <span class=nx>dc</span><span class=p>.</span><span class=nf>Run</span><span class=p>(</span><span class=nb>int</span><span class=p>(</span><span class=nx>ctx</span><span class=p>.</span><span class=nx>ComponentConfig</span><span class=p>.</span><span class=nx>DeploymentController</span><span class=p>.</span><span class=nx>ConcurrentDeploymentSyncs</span><span class=p>),</span> <span class=nx>ctx</span><span class=p>.</span><span class=nx>Stop</span><span class=p>)</span> 
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span></code></pre></td></tr></table></div></div><p>看看Run方法中，我们关心的部分：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span><span class=lnt>5
+</span><span class=lnt>6
+</span><span class=lnt>7
+</span><span class=lnt>8
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=kd>func</span> <span class=p>(</span><span class=nx>dc</span> <span class=o>*</span><span class=nx>DeploymentController</span><span class=p>)</span> <span class=nf>Run</span><span class=p>(</span><span class=nx>workers</span> <span class=kt>int</span><span class=p>,</span> <span class=nx>stopCh</span> <span class=o>&lt;-</span><span class=kd>chan</span> <span class=kd>struct</span><span class=p>{})</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=c1>// ...
+</span></span></span><span class=line><span class=cl><span class=c1></span>    <span class=k>for</span> <span class=nx>i</span> <span class=o>:=</span> <span class=mi>0</span><span class=p>;</span> <span class=nx>i</span> <span class=p>&lt;</span> <span class=nx>workers</span><span class=p>;</span> <span class=nx>i</span><span class=o>++</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>		<span class=k>go</span> <span class=nx>wait</span><span class=p>.</span><span class=nf>Until</span><span class=p>(</span><span class=nx>dc</span><span class=p>.</span><span class=nx>worker</span><span class=p>,</span> <span class=nx>time</span><span class=p>.</span><span class=nx>Second</span><span class=p>,</span> <span class=nx>stopCh</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>	<span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>     <span class=c1>// ...
+</span></span></span><span class=line><span class=cl><span class=c1></span><span class=p>}</span>
+</span></span></code></pre></td></tr></table></div></div><p>Run方法中根据配置的workers值，每秒钟调用一次 dc.worker 方法</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=c1>// worker runs a worker thread that just dequeues items, processes them, and marks them done.
+</span></span></span><span class=line><span class=cl><span class=c1>// It enforces that the syncHandler is never invoked concurrently with the same key.
+</span></span></span><span class=line><span class=cl><span class=c1></span><span class=kd>func</span> <span class=p>(</span><span class=nx>dc</span> <span class=o>*</span><span class=nx>DeploymentController</span><span class=p>)</span> <span class=nf>worker</span><span class=p>()</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>	<span class=k>for</span> <span class=nx>dc</span><span class=p>.</span><span class=nf>processNextWorkItem</span><span class=p>()</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>	<span class=p>}</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=kd>func</span> <span class=p>(</span><span class=nx>dc</span> <span class=o>*</span><span class=nx>DeploymentController</span><span class=p>)</span> <span class=nf>processNextWorkItem</span><span class=p>()</span> <span class=kt>bool</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=nx>key</span><span class=p>,</span> <span class=nx>quit</span> <span class=o>:=</span> <span class=nx>dc</span><span class=p>.</span><span class=nx>queue</span><span class=p>.</span><span class=nf>Get</span><span class=p>()</span> <span class=c1>// 从队列取出一个key
+</span></span></span><span class=line><span class=cl><span class=c1></span>    <span class=c1>// 开始处理deployment,通过上面的New方法得知，调用的是func (dc *DeploymentController) syncDeployment(key string) error
+</span></span></span><span class=line><span class=cl><span class=c1></span>    <span class=nx>err</span> <span class=o>:=</span> <span class=nx>dc</span><span class=p>.</span><span class=nf>syncHandler</span><span class=p>(</span><span class=nx>key</span><span class=p>.(</span><span class=kt>string</span><span class=p>))</span> 
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span></code></pre></td></tr></table></div></div><p>worker 的注释已经写的很好了，出队一个资源的key，然后处理资源，不会对同一个资源做并发操作。</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=kd>func</span> <span class=p>(</span><span class=nx>dc</span> <span class=o>*</span><span class=nx>DeploymentController</span><span class=p>)</span> <span class=nf>syncDeployment</span><span class=p>(</span><span class=nx>key</span> <span class=kt>string</span><span class=p>)</span> <span class=kt>error</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=c1>// 从Informer.Lister()中拿到deployment
+</span></span></span><span class=line><span class=cl><span class=c1></span>    <span class=nx>deployment</span><span class=p>,</span> <span class=nx>err</span> <span class=o>:=</span> <span class=nx>dc</span><span class=p>.</span><span class=nx>dLister</span><span class=p>.</span><span class=nf>Deployments</span><span class=p>(</span><span class=nx>namespace</span><span class=p>).</span><span class=nf>Get</span><span class=p>(</span><span class=nx>name</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=c1>// ...
+</span></span></span><span class=line><span class=cl><span class=c1></span>    <span class=c1>// 判断deployment.Spec.Strategy.Type, 如果是创建资源，RecreateDeploymentStrategyType =  &#34;Recreate&#34;
+</span></span></span><span class=line><span class=cl><span class=c1></span>    <span class=k>switch</span> <span class=nx>d</span><span class=p>.</span><span class=nx>Spec</span><span class=p>.</span><span class=nx>Strategy</span><span class=p>.</span><span class=nx>Type</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>	<span class=k>case</span> <span class=nx>apps</span><span class=p>.</span><span class=nx>RecreateDeploymentStrategyType</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>		<span class=k>return</span> <span class=nx>dc</span><span class=p>.</span><span class=nf>rolloutRecreate</span><span class=p>(</span><span class=nx>d</span><span class=p>,</span> <span class=nx>rsList</span><span class=p>,</span> <span class=nx>podMap</span><span class=p>)</span> <span class=c1>// 创建replicaSet
+</span></span></span><span class=line><span class=cl><span class=c1></span>	<span class=k>case</span> <span class=nx>apps</span><span class=p>.</span><span class=nx>RollingUpdateDeploymentStrategyType</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>		<span class=k>return</span> <span class=nx>dc</span><span class=p>.</span><span class=nf>rolloutRolling</span><span class=p>(</span><span class=nx>d</span><span class=p>,</span> <span class=nx>rsList</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>	<span class=p>}</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span></code></pre></td></tr></table></div></div><p>进入到replicaSet的逻辑：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span><span class=lnt>22
+</span><span class=lnt>23
+</span><span class=lnt>24
+</span><span class=lnt>25
+</span><span class=lnt>26
+</span><span class=lnt>27
+</span><span class=lnt>28
+</span><span class=lnt>29
+</span><span class=lnt>30
+</span><span class=lnt>31
+</span><span class=lnt>32
+</span><span class=lnt>33
+</span><span class=lnt>34
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=c1>// kubernetes/pkg/controller/deployment/recreate.go
+</span></span></span><span class=line><span class=cl><span class=c1></span><span class=kd>func</span> <span class=p>(</span><span class=nx>dc</span> <span class=o>*</span><span class=nx>DeploymentController</span><span class=p>)</span> <span class=nf>rolloutRecreate</span><span class=p>(</span><span class=nx>d</span> <span class=o>*</span><span class=nx>apps</span><span class=p>.</span><span class=nx>Deployment</span><span class=p>,</span> <span class=nx>rsList</span> <span class=p>[]</span><span class=o>*</span><span class=nx>apps</span><span class=p>.</span><span class=nx>ReplicaSet</span><span class=p>,</span> <span class=nx>podMap</span> <span class=kd>map</span><span class=p>[</span><span class=nx>types</span><span class=p>.</span><span class=nx>UID</span><span class=p>][]</span><span class=o>*</span><span class=nx>v1</span><span class=p>.</span><span class=nx>Pod</span><span class=p>)</span> <span class=kt>error</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=c1>// 如果没有对应的replicaSet则创建：
+</span></span></span><span class=line><span class=cl><span class=c1></span>    <span class=nx>newRS</span><span class=p>,</span> <span class=nx>oldRSs</span><span class=p>,</span> <span class=nx>err</span> <span class=o>:=</span> <span class=nx>dc</span><span class=p>.</span><span class=nf>getAllReplicaSetsAndSyncRevision</span><span class=p>(</span><span class=nx>d</span><span class=p>,</span> <span class=nx>rsList</span><span class=p>,</span> <span class=kc>false</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>    <span class=c1>// scale up new replica set.
+</span></span></span><span class=line><span class=cl><span class=c1></span>	<span class=k>if</span> <span class=nx>_</span><span class=p>,</span> <span class=nx>err</span> <span class=o>:=</span> <span class=nx>dc</span><span class=p>.</span><span class=nf>scaleUpNewReplicaSetForRecreate</span><span class=p>(</span><span class=nx>newRS</span><span class=p>,</span> <span class=nx>d</span><span class=p>);</span> <span class=nx>err</span> <span class=o>!=</span> <span class=kc>nil</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>		<span class=k>return</span> <span class=nx>err</span>
+</span></span><span class=line><span class=cl>	<span class=p>}</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1>// scaleUpNewReplicaSetForRecreate scales up new replica set when deployment strategy is &#34;Recreate&#34;.
+</span></span></span><span class=line><span class=cl><span class=c1></span><span class=kd>func</span> <span class=p>(</span><span class=nx>dc</span> <span class=o>*</span><span class=nx>DeploymentController</span><span class=p>)</span> <span class=nf>scaleUpNewReplicaSetForRecreate</span><span class=p>(</span><span class=nx>newRS</span> <span class=o>*</span><span class=nx>apps</span><span class=p>.</span><span class=nx>ReplicaSet</span><span class=p>,</span> <span class=nx>deployment</span> <span class=o>*</span><span class=nx>apps</span><span class=p>.</span><span class=nx>Deployment</span><span class=p>)</span> <span class=p>(</span><span class=kt>bool</span><span class=p>,</span> <span class=kt>error</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>	<span class=nx>scaled</span><span class=p>,</span> <span class=nx>_</span><span class=p>,</span> <span class=nx>err</span> <span class=o>:=</span> <span class=nx>dc</span><span class=p>.</span><span class=nf>scaleReplicaSetAndRecordEvent</span><span class=p>(</span><span class=nx>newRS</span><span class=p>,</span> <span class=o>*</span><span class=p>(</span><span class=nx>deployment</span><span class=p>.</span><span class=nx>Spec</span><span class=p>.</span><span class=nx>Replicas</span><span class=p>),</span> <span class=nx>deployment</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>	<span class=k>return</span> <span class=nx>scaled</span><span class=p>,</span> <span class=nx>err</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=kd>func</span> <span class=p>(</span><span class=nx>dc</span> <span class=o>*</span><span class=nx>DeploymentController</span><span class=p>)</span> <span class=nf>scaleReplicaSetAndRecordEvent</span><span class=p>(</span><span class=nx>rs</span> <span class=o>*</span><span class=nx>apps</span><span class=p>.</span><span class=nx>ReplicaSet</span><span class=p>,</span> <span class=nx>newScale</span> <span class=kt>int32</span><span class=p>,</span> <span class=nx>deployment</span> <span class=o>*</span><span class=nx>apps</span><span class=p>.</span><span class=nx>Deployment</span><span class=p>)</span> <span class=p>(</span><span class=kt>bool</span><span class=p>,</span> <span class=o>*</span><span class=nx>apps</span><span class=p>.</span><span class=nx>ReplicaSet</span><span class=p>,</span> <span class=kt>error</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>    <span class=c1>// 这里判断是要增加还是减少pod
+</span></span></span><span class=line><span class=cl><span class=c1></span>    <span class=k>if</span> <span class=o>*</span><span class=p>(</span><span class=nx>rs</span><span class=p>.</span><span class=nx>Spec</span><span class=p>.</span><span class=nx>Replicas</span><span class=p>)</span> <span class=p>&lt;</span> <span class=nx>newScale</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>		<span class=nx>scalingOperation</span> <span class=p>=</span> <span class=s>&#34;up&#34;</span>
+</span></span><span class=line><span class=cl>	<span class=p>}</span> <span class=k>else</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>		<span class=nx>scalingOperation</span> <span class=p>=</span> <span class=s>&#34;down&#34;</span>
+</span></span><span class=line><span class=cl>	<span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>    <span class=c1>// 创建replicaSet 的event
+</span></span></span><span class=line><span class=cl><span class=c1></span>    <span class=nx>scaled</span><span class=p>,</span> <span class=nx>newRS</span><span class=p>,</span> <span class=nx>err</span> <span class=o>:=</span> <span class=nx>dc</span><span class=p>.</span><span class=nf>scaleReplicaSet</span><span class=p>(</span><span class=nx>rs</span><span class=p>,</span> <span class=nx>newScale</span><span class=p>,</span> <span class=nx>deployment</span><span class=p>,</span> <span class=nx>scalingOperation</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=kd>func</span> <span class=p>(</span><span class=nx>dc</span> <span class=o>*</span><span class=nx>DeploymentController</span><span class=p>)</span> <span class=nf>scaleReplicaSet</span><span class=p>(</span><span class=nx>rs</span> <span class=o>*</span><span class=nx>apps</span><span class=p>.</span><span class=nx>ReplicaSet</span><span class=p>,</span> <span class=nx>newScale</span> <span class=kt>int32</span><span class=p>,</span> <span class=nx>deployment</span> <span class=o>*</span><span class=nx>apps</span><span class=p>.</span><span class=nx>Deployment</span><span class=p>,</span> <span class=nx>scalingOperation</span> <span class=kt>string</span><span class=p>)</span> <span class=p>(</span><span class=kt>bool</span><span class=p>,</span> <span class=o>*</span><span class=nx>apps</span><span class=p>.</span><span class=nx>ReplicaSet</span><span class=p>,</span> <span class=kt>error</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=c1>// 调client-go创建replicaSet update event
+</span></span></span><span class=line><span class=cl><span class=c1></span>   <span class=nx>rs</span><span class=p>,</span> <span class=nx>err</span> <span class=p>=</span> <span class=nx>dc</span><span class=p>.</span><span class=nx>client</span><span class=p>.</span><span class=nf>AppsV1</span><span class=p>().</span><span class=nf>ReplicaSets</span><span class=p>(</span><span class=nx>rsCopy</span><span class=p>.</span><span class=nx>Namespace</span><span class=p>).</span><span class=nf>Update</span><span class=p>(</span><span class=nx>context</span><span class=p>.</span><span class=nf>TODO</span><span class=p>(),</span> <span class=nx>rsCopy</span><span class=p>,</span> <span class=nx>metav1</span><span class=p>.</span><span class=nx>UpdateOptions</span><span class=p>{})</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span></code></pre></td></tr></table></div></div><p>至此deployment的创建的使命结束，进入到ReplicaSets的逻辑。</p><h3 id=replicasets>ReplicaSets</h3><p>replicaSet的代码路径 kubernetes/pkg/controller/replicaset/replica_set.go，
+同样的也经过一些列的初始化操作，如下：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=kd>func</span> <span class=nf>NewBaseController</span><span class=p>(</span><span class=nx>rsInformer</span> <span class=nx>appsinformers</span><span class=p>.</span><span class=nx>ReplicaSetInformer</span><span class=p>,</span> <span class=nx>podInformer</span> <span class=nx>coreinformers</span><span class=p>.</span><span class=nx>PodInformer</span><span class=p>,</span> <span class=nx>kubeClient</span> <span class=nx>clientset</span><span class=p>.</span><span class=nx>Interface</span><span class=p>,</span> <span class=nx>burstReplicas</span> <span class=kt>int</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>	<span class=nx>gvk</span> <span class=nx>schema</span><span class=p>.</span><span class=nx>GroupVersionKind</span><span class=p>,</span> <span class=nx>metricOwnerName</span><span class=p>,</span> <span class=nx>queueName</span> <span class=kt>string</span><span class=p>,</span> <span class=nx>podControl</span> <span class=nx>controller</span><span class=p>.</span><span class=nx>PodControlInterface</span><span class=p>)</span> <span class=o>*</span><span class=nx>ReplicaSetController</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=nx>rsc</span> <span class=o>:=</span> <span class=o>&amp;</span><span class=nx>ReplicaSetController</span><span class=p>{</span>
+</span></span><span class=line><span class=cl>		<span class=nx>GroupVersionKind</span><span class=p>:</span> <span class=nx>gvk</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>		<span class=nx>kubeClient</span><span class=p>:</span>       <span class=nx>kubeClient</span><span class=p>,</span> <span class=c1>// 初始化client-go
+</span></span></span><span class=line><span class=cl><span class=c1></span>		<span class=nx>podControl</span><span class=p>:</span>       <span class=nx>podControl</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>		<span class=nx>burstReplicas</span><span class=p>:</span>    <span class=nx>burstReplicas</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>		<span class=nx>expectations</span><span class=p>:</span>     <span class=nx>controller</span><span class=p>.</span><span class=nf>NewUIDTrackingControllerExpectations</span><span class=p>(</span><span class=nx>controller</span><span class=p>.</span><span class=nf>NewControllerExpectations</span><span class=p>()),</span>
+</span></span><span class=line><span class=cl>		<span class=nx>queue</span><span class=p>:</span>            <span class=nx>workqueue</span><span class=p>.</span><span class=nf>NewNamedRateLimitingQueue</span><span class=p>(</span><span class=nx>workqueue</span><span class=p>.</span><span class=nf>DefaultControllerRateLimiter</span><span class=p>(),</span> <span class=nx>queueName</span><span class=p>),</span> <span class=c1>// 初始化限速队列
+</span></span></span><span class=line><span class=cl><span class=c1></span>	<span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>    <span class=c1>// 事件驱动的入口点，接受replicaSet的evnet，和deployment一样，最终是入队 queue
+</span></span></span><span class=line><span class=cl><span class=c1></span>    <span class=nx>rsInformer</span><span class=p>.</span><span class=nf>Informer</span><span class=p>().</span><span class=nf>AddEventHandler</span><span class=p>(</span><span class=nx>cache</span><span class=p>.</span><span class=nx>ResourceEventHandlerFuncs</span><span class=p>{</span>
+</span></span><span class=line><span class=cl>		<span class=nx>AddFunc</span><span class=p>:</span>    <span class=nx>rsc</span><span class=p>.</span><span class=nx>addRS</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>		<span class=nx>UpdateFunc</span><span class=p>:</span> <span class=nx>rsc</span><span class=p>.</span><span class=nx>updateRS</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>		<span class=nx>DeleteFunc</span><span class=p>:</span> <span class=nx>rsc</span><span class=p>.</span><span class=nx>deleteRS</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>	<span class=p>})</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>    <span class=c1>// 真正的replicaSet处理函数
+</span></span></span><span class=line><span class=cl><span class=c1></span>    <span class=nx>rsc</span><span class=p>.</span><span class=nx>syncHandler</span> <span class=p>=</span> <span class=nx>rsc</span><span class=p>.</span><span class=nx>syncReplicaSet</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span></code></pre></td></tr></table></div></div><p>因为整理逻辑框架与deployment类似，快速过一下代码：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=c1>// Run begins watching and syncing.
+</span></span></span><span class=line><span class=cl><span class=c1></span><span class=kd>func</span> <span class=p>(</span><span class=nx>rsc</span> <span class=o>*</span><span class=nx>ReplicaSetController</span><span class=p>)</span> <span class=nf>Run</span><span class=p>(</span><span class=nx>workers</span> <span class=kt>int</span><span class=p>,</span> <span class=nx>stopCh</span> <span class=o>&lt;-</span><span class=kd>chan</span> <span class=kd>struct</span><span class=p>{})</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=k>go</span> <span class=nx>wait</span><span class=p>.</span><span class=nf>Until</span><span class=p>(</span><span class=nx>rsc</span><span class=p>.</span><span class=nx>worker</span><span class=p>,</span> <span class=nx>time</span><span class=p>.</span><span class=nx>Second</span><span class=p>,</span> <span class=nx>stopCh</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=kd>func</span> <span class=p>(</span><span class=nx>rsc</span> <span class=o>*</span><span class=nx>ReplicaSetController</span><span class=p>)</span> <span class=nf>worker</span><span class=p>()</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>	<span class=k>for</span> <span class=nx>rsc</span><span class=p>.</span><span class=nf>processNextWorkItem</span><span class=p>()</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>	<span class=p>}</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=kd>func</span> <span class=p>(</span><span class=nx>rsc</span> <span class=o>*</span><span class=nx>ReplicaSetController</span><span class=p>)</span> <span class=nf>processNextWorkItem</span><span class=p>()</span> <span class=kt>bool</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=nx>err</span> <span class=o>:=</span> <span class=nx>rsc</span><span class=p>.</span><span class=nf>syncHandler</span><span class=p>(</span><span class=nx>key</span><span class=p>.(</span><span class=kt>string</span><span class=p>))</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span></code></pre></td></tr></table></div></div><p>核心的syncReplicaSet，处理逻辑开始：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span><span class=lnt>5
+</span><span class=lnt>6
+</span><span class=lnt>7
+</span><span class=lnt>8
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=kd>func</span> <span class=p>(</span><span class=nx>rsc</span> <span class=o>*</span><span class=nx>ReplicaSetController</span><span class=p>)</span> <span class=nf>syncReplicaSet</span><span class=p>(</span><span class=nx>key</span> <span class=kt>string</span><span class=p>)</span> <span class=kt>error</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=nx>namespace</span><span class=p>,</span> <span class=nx>name</span><span class=p>,</span> <span class=nx>err</span> <span class=o>:=</span> <span class=nx>cache</span><span class=p>.</span><span class=nf>SplitMetaNamespaceKey</span><span class=p>(</span><span class=nx>key</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=c1>// 同样的通过key，先拿到资源
+</span></span></span><span class=line><span class=cl><span class=c1></span>    <span class=nx>rs</span><span class=p>,</span> <span class=nx>err</span> <span class=o>:=</span> <span class=nx>rsc</span><span class=p>.</span><span class=nx>rsLister</span><span class=p>.</span><span class=nf>ReplicaSets</span><span class=p>(</span><span class=nx>namespace</span><span class=p>).</span><span class=nf>Get</span><span class=p>(</span><span class=nx>name</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>    <span class=c1>// 维护pod数量，达到rs的要求，好戏从这里开始
+</span></span></span><span class=line><span class=cl><span class=c1></span>    <span class=nx>manageReplicasErr</span> <span class=p>=</span> <span class=nx>rsc</span><span class=p>.</span><span class=nf>manageReplicas</span><span class=p>(</span><span class=nx>filteredPods</span><span class=p>,</span> <span class=nx>rs</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span></code></pre></td></tr></table></div></div><p>manageReplicas 主要是根据传入的参宿检查、判断，并更新replicas</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=kd>func</span> <span class=p>(</span><span class=nx>rsc</span> <span class=o>*</span><span class=nx>ReplicaSetController</span><span class=p>)</span> <span class=nf>manageReplicas</span><span class=p>(</span><span class=nx>filteredPods</span> <span class=p>[]</span><span class=o>*</span><span class=nx>v1</span><span class=p>.</span><span class=nx>Pod</span><span class=p>,</span> <span class=nx>rs</span> <span class=o>*</span><span class=nx>apps</span><span class=p>.</span><span class=nx>ReplicaSet</span><span class=p>)</span> <span class=kt>error</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=c1>// 计算pod 的diff
+</span></span></span><span class=line><span class=cl><span class=c1></span>    <span class=nx>diff</span> <span class=o>:=</span> <span class=nb>len</span><span class=p>(</span><span class=nx>filteredPods</span><span class=p>)</span> <span class=o>-</span> <span class=nb>int</span><span class=p>(</span><span class=o>*</span><span class=p>(</span><span class=nx>rs</span><span class=p>.</span><span class=nx>Spec</span><span class=p>.</span><span class=nx>Replicas</span><span class=p>))</span>
+</span></span><span class=line><span class=cl>    <span class=k>if</span> <span class=nx>diff</span> <span class=p>&lt;</span> <span class=mi>0</span> <span class=p>{</span> <span class=c1>// 需要增加pod
+</span></span></span><span class=line><span class=cl><span class=c1></span>        <span class=c1>// slowStartBatch 批量创建pod，出错则退出
+</span></span></span><span class=line><span class=cl><span class=c1></span>        <span class=nx>successfulCreations</span><span class=p>,</span> <span class=nx>err</span> <span class=o>:=</span> <span class=nf>slowStartBatch</span><span class=p>(</span><span class=nx>diff</span><span class=p>,</span> <span class=nx>controller</span><span class=p>.</span><span class=nx>SlowStartInitialBatchSize</span><span class=p>,</span> <span class=kd>func</span><span class=p>()</span> <span class=kt>error</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>            <span class=nx>err</span> <span class=o>:=</span> <span class=nx>rsc</span><span class=p>.</span><span class=nx>podControl</span><span class=p>.</span><span class=nf>CreatePodsWithControllerRef</span><span class=p>(</span><span class=nx>rs</span><span class=p>.</span><span class=nx>Namespace</span><span class=p>,</span> <span class=o>&amp;</span><span class=nx>rs</span><span class=p>.</span><span class=nx>Spec</span><span class=p>.</span><span class=nx>Template</span><span class=p>,</span> <span class=nx>rs</span><span class=p>,</span> <span class=nx>metav1</span><span class=p>.</span><span class=nf>NewControllerRef</span><span class=p>(</span><span class=nx>rs</span><span class=p>,</span> <span class=nx>rsc</span><span class=p>.</span><span class=nx>GroupVersionKind</span><span class=p>))</span>
+</span></span><span class=line><span class=cl>        <span class=p>})</span>
+</span></span><span class=line><span class=cl>    <span class=p>}</span> <span class=k>else</span> <span class=k>if</span> <span class=nx>diff</span> <span class=p>&gt;</span> <span class=mi>0</span> <span class=p>{</span> <span class=c1>// 需要减少pod
+</span></span></span><span class=line><span class=cl><span class=c1></span>        <span class=nx>err</span> <span class=o>:=</span> <span class=nx>rsc</span><span class=p>.</span><span class=nx>podControl</span><span class=p>.</span><span class=nf>DeletePod</span><span class=p>(</span><span class=nx>rs</span><span class=p>.</span><span class=nx>Namespace</span><span class=p>,</span> <span class=nx>targetPod</span><span class=p>.</span><span class=nx>Name</span><span class=p>,</span> <span class=nx>rs</span><span class=p>);</span>  <span class=c1>// 删除pod
+</span></span></span><span class=line><span class=cl><span class=c1></span>    <span class=p>}</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span></code></pre></td></tr></table></div></div><p>CreatePodsWithControllerRef 是一个interface，默认的实现在 kubernetes/pkg/controller/controller_utils.go</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span><span class=lnt>5
+</span><span class=lnt>6
+</span><span class=lnt>7
+</span><span class=lnt>8
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=kd>func</span> <span class=p>(</span><span class=nx>r</span> <span class=nx>RealPodControl</span><span class=p>)</span> <span class=nf>CreatePodsWithControllerRef</span><span class=p>(</span><span class=nx>namespace</span> <span class=kt>string</span><span class=p>,</span> <span class=nx>template</span> <span class=o>*</span><span class=nx>v1</span><span class=p>.</span><span class=nx>PodTemplateSpec</span><span class=p>,</span> <span class=nx>controllerObject</span> <span class=nx>runtime</span><span class=p>.</span><span class=nx>Object</span><span class=p>,</span> <span class=nx>controllerRef</span> <span class=o>*</span><span class=nx>metav1</span><span class=p>.</span><span class=nx>OwnerReference</span><span class=p>)</span> <span class=kt>error</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>	<span class=k>return</span> <span class=nx>r</span><span class=p>.</span><span class=nf>createPods</span><span class=p>(</span><span class=s>&#34;&#34;</span><span class=p>,</span> <span class=nx>namespace</span><span class=p>,</span> <span class=nx>template</span><span class=p>,</span> <span class=nx>controllerObject</span><span class=p>,</span> <span class=nx>controllerRef</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=kd>func</span> <span class=p>(</span><span class=nx>r</span> <span class=nx>RealPodControl</span><span class=p>)</span> <span class=nf>createPods</span><span class=p>(</span><span class=nx>nodeName</span><span class=p>,</span> <span class=nx>namespace</span> <span class=kt>string</span><span class=p>,</span> <span class=nx>template</span> <span class=o>*</span><span class=nx>v1</span><span class=p>.</span><span class=nx>PodTemplateSpec</span><span class=p>,</span> <span class=nx>object</span> <span class=nx>runtime</span><span class=p>.</span><span class=nx>Object</span><span class=p>,</span> <span class=nx>controllerRef</span> <span class=o>*</span><span class=nx>metav1</span><span class=p>.</span><span class=nx>OwnerReference</span><span class=p>)</span> <span class=kt>error</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=c1>// 核心的也是调用client-go 通过informer通知pod controller创建pod
+</span></span></span><span class=line><span class=cl><span class=c1></span>    <span class=nx>newPod</span><span class=p>,</span> <span class=nx>err</span> <span class=o>:=</span> <span class=nx>r</span><span class=p>.</span><span class=nx>KubeClient</span><span class=p>.</span><span class=nf>CoreV1</span><span class=p>().</span><span class=nf>Pods</span><span class=p>(</span><span class=nx>namespace</span><span class=p>).</span><span class=nf>Create</span><span class=p>(</span><span class=nx>context</span><span class=p>.</span><span class=nf>TODO</span><span class=p>(),</span> <span class=nx>pod</span><span class=p>,</span> <span class=nx>metav1</span><span class=p>.</span><span class=nx>CreateOptions</span><span class=p>{})</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span></code></pre></td></tr></table></div></div><p>至此pod创建流程基本结束，有一个未解决的问题是，toleration相关的赋值，并没有在上面的代码分析中看到。
+最终发现，toleration相关操作，在api-server中赋值的，
+以下只对api-server toleration相关流程简单分析：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span><span class=lnt>22
+</span><span class=lnt>23
+</span><span class=lnt>24
+</span><span class=lnt>25
+</span><span class=lnt>26
+</span><span class=lnt>27
+</span><span class=lnt>28
+</span><span class=lnt>29
+</span><span class=lnt>30
+</span><span class=lnt>31
+</span><span class=lnt>32
+</span><span class=lnt>33
+</span><span class=lnt>34
+</span><span class=lnt>35
+</span><span class=lnt>36
+</span><span class=lnt>37
+</span><span class=lnt>38
+</span><span class=lnt>39
+</span><span class=lnt>40
+</span><span class=lnt>41
+</span><span class=lnt>42
+</span><span class=lnt>43
+</span><span class=lnt>44
+</span><span class=lnt>45
+</span><span class=lnt>46
+</span><span class=lnt>47
+</span><span class=lnt>48
+</span><span class=lnt>49
+</span><span class=lnt>50
+</span><span class=lnt>51
+</span><span class=lnt>52
+</span><span class=lnt>53
+</span><span class=lnt>54
+</span><span class=lnt>55
+</span><span class=lnt>56
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=c1>// kubernetes/vendor/k8s.io/apiserver/pkg/endpoints/installer.go
+</span></span></span><span class=line><span class=cl><span class=c1></span><span class=err>注册</span><span class=nx>handler</span>
+</span></span><span class=line><span class=cl><span class=kd>func</span> <span class=p>(</span><span class=nx>a</span> <span class=o>*</span><span class=nx>APIInstaller</span><span class=p>)</span> <span class=nf>registerResourceHandlers</span><span class=p>(</span><span class=nx>path</span> <span class=kt>string</span><span class=p>,</span> <span class=nx>storage</span> <span class=nx>rest</span><span class=p>.</span><span class=nx>Storage</span><span class=p>,</span> <span class=nx>ws</span> <span class=o>*</span><span class=nx>restful</span><span class=p>.</span><span class=nx>WebService</span><span class=p>)</span> <span class=p>(</span><span class=o>*</span><span class=nx>metav1</span><span class=p>.</span><span class=nx>APIResource</span><span class=p>,</span> <span class=kt>error</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=k>for</span> <span class=nx>_</span><span class=p>,</span> <span class=nx>action</span> <span class=o>:=</span> <span class=k>range</span> <span class=nx>actions</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>        <span class=k>switch</span> <span class=nx>action</span><span class=p>.</span><span class=nx>Verb</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>            <span class=k>case</span> <span class=s>&#34;PUT&#34;</span><span class=p>:</span> <span class=c1>// Update a resource.
+</span></span></span><span class=line><span class=cl><span class=c1></span>                <span class=nx>handler</span> <span class=o>:=</span> <span class=nx>metrics</span><span class=p>.</span><span class=nf>InstrumentRouteFunc</span><span class=p>(</span><span class=nx>action</span><span class=p>.</span><span class=nx>Verb</span><span class=p>,</span> <span class=nx>group</span><span class=p>,</span> <span class=nx>version</span><span class=p>,</span> <span class=nx>resource</span><span class=p>,</span> <span class=nx>subresource</span><span class=p>,</span> <span class=nx>requestScope</span><span class=p>,</span> <span class=nx>metrics</span><span class=p>.</span><span class=nx>APIServerComponent</span><span class=p>,</span> <span class=nf>restfulUpdateResource</span><span class=p>(</span><span class=nx>updater</span><span class=p>,</span> <span class=nx>reqScope</span><span class=p>,</span> <span class=nx>admit</span><span class=p>))</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>            <span class=k>case</span> <span class=s>&#34;POST&#34;</span><span class=p>:</span> <span class=c1>// Create a resource.
+</span></span></span><span class=line><span class=cl><span class=c1></span>                <span class=nx>handler</span> <span class=p>=</span> <span class=nx>metrics</span><span class=p>.</span><span class=nf>InstrumentRouteFunc</span><span class=p>(</span><span class=nx>action</span><span class=p>.</span><span class=nx>Verb</span><span class=p>,</span> <span class=nx>group</span><span class=p>,</span> <span class=nx>version</span><span class=p>,</span> <span class=nx>resource</span><span class=p>,</span> <span class=nx>subresource</span><span class=p>,</span> <span class=nx>requestScope</span><span class=p>,</span> <span class=nx>metrics</span><span class=p>.</span><span class=nx>APIServerComponent</span><span class=p>,</span> <span class=nx>handler</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>        <span class=p>}</span>
+</span></span><span class=line><span class=cl>    <span class=p>}</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=kd>func</span> <span class=nf>restfulUpdateResource</span><span class=p>(</span><span class=nx>r</span> <span class=nx>rest</span><span class=p>.</span><span class=nx>Updater</span><span class=p>,</span> <span class=nx>scope</span> <span class=nx>handlers</span><span class=p>.</span><span class=nx>RequestScope</span><span class=p>,</span> <span class=nx>admit</span> <span class=nx>admission</span><span class=p>.</span><span class=nx>Interface</span><span class=p>)</span> <span class=nx>restful</span><span class=p>.</span><span class=nx>RouteFunction</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>	<span class=k>return</span> <span class=kd>func</span><span class=p>(</span><span class=nx>req</span> <span class=o>*</span><span class=nx>restful</span><span class=p>.</span><span class=nx>Request</span><span class=p>,</span> <span class=nx>res</span> <span class=o>*</span><span class=nx>restful</span><span class=p>.</span><span class=nx>Response</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>		<span class=nx>handlers</span><span class=p>.</span><span class=nf>UpdateResource</span><span class=p>(</span><span class=nx>r</span><span class=p>,</span> <span class=o>&amp;</span><span class=nx>scope</span><span class=p>,</span> <span class=nx>admit</span><span class=p>)(</span><span class=nx>res</span><span class=p>.</span><span class=nx>ResponseWriter</span><span class=p>,</span> <span class=nx>req</span><span class=p>.</span><span class=nx>Request</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>	<span class=p>}</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=kd>func</span> <span class=nf>UpdateResource</span><span class=p>(</span><span class=nx>r</span> <span class=nx>rest</span><span class=p>.</span><span class=nx>Updater</span><span class=p>,</span> <span class=nx>scope</span> <span class=o>*</span><span class=nx>RequestScope</span><span class=p>,</span> <span class=nx>admit</span> <span class=nx>admission</span><span class=p>.</span><span class=nx>Interface</span><span class=p>)</span> <span class=nx>http</span><span class=p>.</span><span class=nx>HandlerFunc</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=k>if</span> <span class=nx>mutatingAdmission</span><span class=p>,</span> <span class=nx>ok</span> <span class=o>:=</span> <span class=nx>admit</span><span class=p>.(</span><span class=nx>admission</span><span class=p>.</span><span class=nx>MutationInterface</span><span class=p>);</span> <span class=nx>ok</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>        <span class=k>if</span> <span class=nx>mutatingAdmission</span><span class=p>.</span><span class=nf>Handles</span><span class=p>(</span><span class=nx>admission</span><span class=p>.</span><span class=nx>Update</span><span class=p>)</span> <span class=p>{</span> <span class=c1>// 调用 Admit
+</span></span></span><span class=line><span class=cl><span class=c1></span>						<span class=k>return</span> <span class=nx>newObj</span><span class=p>,</span> <span class=nx>mutatingAdmission</span><span class=p>.</span><span class=nf>Admit</span><span class=p>(</span><span class=nx>ctx</span><span class=p>,</span> <span class=nx>admission</span><span class=p>.</span><span class=nf>NewAttributesRecord</span><span class=p>(</span><span class=nx>newObj</span><span class=p>,</span> <span class=nx>oldObj</span><span class=p>,</span> <span class=nx>scope</span><span class=p>.</span><span class=nx>Kind</span><span class=p>,</span> <span class=nx>namespace</span><span class=p>,</span> <span class=nx>name</span><span class=p>,</span> <span class=nx>scope</span><span class=p>.</span><span class=nx>Resource</span><span class=p>,</span> <span class=nx>scope</span><span class=p>.</span><span class=nx>Subresource</span><span class=p>,</span> <span class=nx>admission</span><span class=p>.</span><span class=nx>Update</span><span class=p>,</span> <span class=nx>options</span><span class=p>,</span> <span class=nx>dryrun</span><span class=p>.</span><span class=nf>IsDryRun</span><span class=p>(</span><span class=nx>options</span><span class=p>.</span><span class=nx>DryRun</span><span class=p>),</span> <span class=nx>userInfo</span><span class=p>),</span> <span class=nx>scope</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>					<span class=p>}</span>
+</span></span><span class=line><span class=cl>    <span class=p>}</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1>// kubernetes/plugin/pkg/admission/defaulttolerationseconds/admission.go
+</span></span></span><span class=line><span class=cl><span class=c1></span><span class=nx>TaintNodeNotReady</span> <span class=p>=</span> <span class=s>&#34;node.kubernetes.io/not-ready&#34;</span>
+</span></span><span class=line><span class=cl><span class=nx>TaintNodeUnreachable</span> <span class=p>=</span> <span class=s>&#34;node.kubernetes.io/unreachable&#34;</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=kd>func</span> <span class=p>(</span><span class=nx>p</span> <span class=o>*</span><span class=nx>Plugin</span><span class=p>)</span> <span class=nf>Admit</span><span class=p>(</span><span class=nx>ctx</span> <span class=nx>context</span><span class=p>.</span><span class=nx>Context</span><span class=p>,</span> <span class=nx>attributes</span> <span class=nx>admission</span><span class=p>.</span><span class=nx>Attributes</span><span class=p>,</span> <span class=nx>o</span> <span class=nx>admission</span><span class=p>.</span><span class=nx>ObjectInterfaces</span><span class=p>)</span> <span class=p>(</span><span class=nx>err</span> <span class=kt>error</span><span class=p>){</span>
+</span></span><span class=line><span class=cl>    <span class=k>for</span> <span class=nx>_</span><span class=p>,</span> <span class=nx>toleration</span> <span class=o>:=</span> <span class=k>range</span> <span class=nx>tolerations</span> <span class=p>{</span> <span class=c1>// 检查toleration是否被设置
+</span></span></span><span class=line><span class=cl><span class=c1></span>		<span class=k>if</span> <span class=p>(</span><span class=nx>toleration</span><span class=p>.</span><span class=nx>Key</span> <span class=o>==</span> <span class=nx>v1</span><span class=p>.</span><span class=nx>TaintNodeNotReady</span> <span class=o>||</span> <span class=nb>len</span><span class=p>(</span><span class=nx>toleration</span><span class=p>.</span><span class=nx>Key</span><span class=p>)</span> <span class=o>==</span> <span class=mi>0</span><span class=p>)</span> <span class=o>&amp;&amp;</span>
+</span></span><span class=line><span class=cl>			<span class=p>(</span><span class=nx>toleration</span><span class=p>.</span><span class=nx>Effect</span> <span class=o>==</span> <span class=nx>api</span><span class=p>.</span><span class=nx>TaintEffectNoExecute</span> <span class=o>||</span> <span class=nb>len</span><span class=p>(</span><span class=nx>toleration</span><span class=p>.</span><span class=nx>Effect</span><span class=p>)</span> <span class=o>==</span> <span class=mi>0</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>			<span class=nx>toleratesNodeNotReady</span> <span class=p>=</span> <span class=kc>true</span>
+</span></span><span class=line><span class=cl>		<span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>		<span class=k>if</span> <span class=p>(</span><span class=nx>toleration</span><span class=p>.</span><span class=nx>Key</span> <span class=o>==</span> <span class=nx>v1</span><span class=p>.</span><span class=nx>TaintNodeUnreachable</span> <span class=o>||</span> <span class=nb>len</span><span class=p>(</span><span class=nx>toleration</span><span class=p>.</span><span class=nx>Key</span><span class=p>)</span> <span class=o>==</span> <span class=mi>0</span><span class=p>)</span> <span class=o>&amp;&amp;</span>
+</span></span><span class=line><span class=cl>			<span class=p>(</span><span class=nx>toleration</span><span class=p>.</span><span class=nx>Effect</span> <span class=o>==</span> <span class=nx>api</span><span class=p>.</span><span class=nx>TaintEffectNoExecute</span> <span class=o>||</span> <span class=nb>len</span><span class=p>(</span><span class=nx>toleration</span><span class=p>.</span><span class=nx>Effect</span><span class=p>)</span> <span class=o>==</span> <span class=mi>0</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>			<span class=nx>toleratesNodeUnreachable</span> <span class=p>=</span> <span class=kc>true</span>
+</span></span><span class=line><span class=cl>		<span class=p>}</span>
+</span></span><span class=line><span class=cl>	<span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>    <span class=c1>// 如果没有被配置，则配置相关toleration
+</span></span></span><span class=line><span class=cl><span class=c1></span>	<span class=k>if</span> <span class=p>!</span><span class=nx>toleratesNodeNotReady</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>		<span class=nx>pod</span><span class=p>.</span><span class=nx>Spec</span><span class=p>.</span><span class=nx>Tolerations</span> <span class=p>=</span> <span class=nb>append</span><span class=p>(</span><span class=nx>pod</span><span class=p>.</span><span class=nx>Spec</span><span class=p>.</span><span class=nx>Tolerations</span><span class=p>,</span> <span class=nx>notReadyToleration</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>	<span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>	<span class=k>if</span> <span class=p>!</span><span class=nx>toleratesNodeUnreachable</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>		<span class=nx>pod</span><span class=p>.</span><span class=nx>Spec</span><span class=p>.</span><span class=nx>Tolerations</span> <span class=p>=</span> <span class=nb>append</span><span class=p>(</span><span class=nx>pod</span><span class=p>.</span><span class=nx>Spec</span><span class=p>.</span><span class=nx>Tolerations</span><span class=p>,</span> <span class=nx>unreachableToleration</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>	<span class=p>}</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span></code></pre></td></tr></table></div></div></div><footer class=post-footer><div class=post-tags><a href=/tags/kubernetes/>kubernetes</a>
+<a href=/tags/k8s/>k8s</a></div><nav class=post-nav><a class=next href=/post/kubeedge-downstream/><span class="next-text nav-default">Kubeedge 同步k8s资源下发到边缘流程分析</span>
+<span class="next-text nav-mobile">Next</span>
+<i class="iconfont icon-right"></i></a></nav></footer></article></div></div></main><footer id=footer class=footer><div class=social-links><a href=mailto:hanglinux@163.com class="iconfont icon-email" title=email></a>
+<a href=https://github.com/fridayhub class="iconfont icon-github" title=github></a>
+<a href=https://fridayhub.github.io/index.xml type=application/rss+xml class="iconfont icon-rss" title=rss></a></div><div class=copyright><span class=power-by>Powered by <a class=hexo-link href=https://gohugo.io>Hugo</a></span>
+<span class=division>|</span>
+<span class=theme-info>Theme -
+<a class=theme-link href=https://github.com/olOwOlo/hugo-theme-even>Even</a></span><div class=busuanzi-footer><span id=busuanzi_container_site_pv>site pv: <span id=busuanzi_value_site_pv><img src=/img/spinner.svg alt=spinner.svg></span></span>
+<span class=division>|</span>
+<span id=busuanzi_container_site_uv>site uv: <span id=busuanzi_value_site_uv><img src=/img/spinner.svg alt=spinner.svg></span></span></div><span class=copyright-year>&copy;
+2017 -
+2023
+<span class=heart><i class="iconfont icon-heart"></i></span>
+<span class=author>friday</span></span></div></footer><div class=back-to-top id=back-to-top><i class="iconfont icon-up"></i></div></div><script src=https://cdn.jsdelivr.net/npm/jquery@3.2.1/dist/jquery.min.js integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin=anonymous></script>
+<script src=https://cdn.jsdelivr.net/npm/slideout@1.0.1/dist/slideout.min.js integrity="sha256-t+zJ/g8/KXIJMjSVQdnibt4dlaDxc9zXr/9oNPeWqdg=" crossorigin=anonymous></script>
+<script src=https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.js integrity="sha256-XVLffZaxoWfGUEbdzuLi7pwaUJv1cecsQJQqGLe7axY=" crossorigin=anonymous></script>
+<script type=text/javascript src=/js/main.min.1c70606d1b733282f06230615f5561b5894924b6f9930ba2ab99cf1254f75a1a.js></script></body></html>
