@@ -1,0 +1,857 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta http-equiv=x-ua-compatible content="IE=edge,chrome=1"><title>K8s 源码分析 Pod的创建和驱逐 - Friday - Here I record my experience</title><meta name=renderer content="webkit"><meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1"><meta http-equiv=cache-control content="no-transform"><meta http-equiv=cache-control content="no-siteapp"><meta name=theme-color content="#f8f5ec"><meta name=msapplication-navbutton-color content="#f8f5ec"><meta name=apple-mobile-web-app-capable content="yes"><meta name=apple-mobile-web-app-status-bar-style content="#f8f5ec"><meta name=author content="fridayhub"><meta name=description content="k8s source code analysis, controller create pod"><meta name=keywords content="kubernetes,k8s"><meta name=generator content="Hugo 0.110.0 with theme even"><link rel=canonical href=https://fridayhub.github.io/post/k8s-soucecode-pod-create-gc/><link rel=apple-touch-icon sizes=180x180 href=/apple-touch-icon.png><link rel=icon type=image/png sizes=32x32 href=/favicon-32x32.png><link rel=icon type=image/png sizes=16x16 href=/favicon-16x16.png><link rel=manifest href=/manifest.json><link rel=mask-icon href=/safari-pinned-tab.svg color=#5bbad5><script async src=//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js></script><meta name=referrer content="no-referrer-when-downgrade"><link href=/sass/main.min.c2803d17ea439bb194b104ce262b40c9118b45b7b108e27dadf43e96dd6664a3.css rel=stylesheet><link rel=stylesheet href=https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.css integrity="sha256-7TyXnr2YU040zfSP+rEcz29ggW4j56/ujTPwjMzyqFY=" crossorigin=anonymous><meta property="og:title" content="K8s 源码分析 Pod的创建和驱逐"><meta property="og:description" content="k8s source code analysis, controller create pod"><meta property="og:type" content="article"><meta property="og:url" content="https://fridayhub.github.io/post/k8s-soucecode-pod-create-gc/"><meta property="article:section" content="post"><meta property="article:published_time" content="2023-03-29T14:17:43+08:00"><meta property="article:modified_time" content="2023-03-29T14:17:43+08:00"><meta itemprop=name content="K8s 源码分析 Pod的创建和驱逐"><meta itemprop=description content="k8s source code analysis, controller create pod"><meta itemprop=datePublished content="2023-03-29T14:17:43+08:00"><meta itemprop=dateModified content="2023-03-29T14:17:43+08:00"><meta itemprop=wordCount content="3496"><meta itemprop=keywords content="kubernetes,k8s,"><meta name=twitter:card content="summary"><meta name=twitter:title content="K8s 源码分析 Pod的创建和驱逐"><meta name=twitter:description content="k8s source code analysis, controller create pod"><!--[if lte IE 9]><script src=https://cdnjs.cloudflare.com/ajax/libs/classlist/1.1.20170427/classList.min.js></script><![endif]--><!--[if lt IE 9]><script src=https://cdn.jsdelivr.net/npm/html5shiv@3.7.3/dist/html5shiv.min.js></script>
+<script src=https://cdn.jsdelivr.net/npm/respond.js@1.4.2/dest/respond.min.js></script><![endif]--></head><body><div id=mobile-navbar class=mobile-navbar><div class=mobile-header-logo><a href=/ class=logo>Friday</a></div><div class=mobile-navbar-icon><span></span>
+<span></span>
+<span></span></div></div><nav id=mobile-menu class="mobile-menu slideout-menu"><ul class=mobile-menu-list><a href=/><li class=mobile-menu-item>Home</li></a><a href=/post/><li class=mobile-menu-item>Archives</li></a><a href=/tags/><li class=mobile-menu-item>Tags</li></a><a href=/categories/><li class=mobile-menu-item>Categories</li></a><a href=/about/><li class=mobile-menu-item>About</li></a></ul></nav><div class=container id=mobile-panel><header id=header class=header><div class=logo-wrapper><a href=/ class=logo>Friday</a></div><nav class=site-navbar><ul id=menu class=menu><li class=menu-item><a class=menu-item-link href=/>Home</a></li><li class=menu-item><a class=menu-item-link href=/post/>Archives</a></li><li class=menu-item><a class=menu-item-link href=/tags/>Tags</a></li><li class=menu-item><a class=menu-item-link href=/categories/>Categories</a></li><li class=menu-item><a class=menu-item-link href=/about/>About</a></li></ul></nav></header><main id=main class=main><div class=content-wrapper><div id=content class=content><article class=post><header class=post-header><h1 class=post-title>K8s 源码分析 Pod的创建和驱逐</h1><div class=post-meta><span class=post-time>2023-03-29 14:17:43</span><div class=post-category><a href=/categories/kubernetes/>kubernetes</a>
+<a href=/categories/k8s/>k8s</a></div><span class=more-meta>3496 words</span>
+<span class=more-meta>7 mins read</span>
+<span id=busuanzi_container_page_pv class=more-meta><span id=busuanzi_value_page_pv><img src=/img/spinner.svg alt=spinner.svg></span> times read</span></div></header><div class=post-toc id=post-toc><h2 class=post-toc-title>Contents</h2><div class=post-toc-content><nav id=TableOfContents><ul><li><ul><li><a href=#创建流程>创建流程</a><ul><li><a href=#初始化>初始化</a></li><li><a href=#run-scheduler逻辑执行>Run Scheduler逻辑执行</a></li></ul></li><li><a href=#pod的容忍和驱逐>pod的容忍和驱逐</a><ul><li><a href=#初始化-1>初始化</a></li><li><a href=#run-执行taint逻辑>Run 执行taint逻辑</a></li><li><a href=#podupdatequeue-add在哪里>podUpdateQueue Add在哪里</a></li></ul></li></ul></li></ul></nav></div></div><div class=post-content><p>上篇 <a href=https://fridayhub.github.io/post/k8s-soucecode-controller-deployment-create/>K8s 源码分析 Deployment 和ReplicaSet 的创建流程</a> 最后replicaSet通过client-go调用pod 创建的api。</p><h3 id=创建流程>创建流程</h3><h4 id=初始化>初始化</h4><p>pod的调度主要有scheduler负责，创建scheduler源码路径：kubernetes/pkg/scheduler/scheduler.go
+上代码：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span><span class=lnt>22
+</span><span class=lnt>23
+</span><span class=lnt>24
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=c1>// New returns a Scheduler
+</span></span></span><span class=line><span class=cl><span class=c1></span><span class=kd>func</span> <span class=nf>New</span><span class=p>(</span><span class=nx>client</span> <span class=nx>clientset</span><span class=p>.</span><span class=nx>Interface</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>	<span class=nx>informerFactory</span> <span class=nx>informers</span><span class=p>.</span><span class=nx>SharedInformerFactory</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>	<span class=nx>podInformer</span> <span class=nx>coreinformers</span><span class=p>.</span><span class=nx>PodInformer</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>	<span class=nx>recorderFactory</span> <span class=nx>profile</span><span class=p>.</span><span class=nx>RecorderFactory</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>	<span class=nx>stopCh</span> <span class=o>&lt;-</span><span class=kd>chan</span> <span class=kd>struct</span><span class=p>{},</span>
+</span></span><span class=line><span class=cl>	<span class=nx>opts</span> <span class=o>...</span><span class=nx>Option</span><span class=p>)</span> <span class=p>(</span><span class=o>*</span><span class=nx>Scheduler</span><span class=p>,</span> <span class=kt>error</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>    
+</span></span><span class=line><span class=cl>    <span class=c1>// 初始化cache，30秒后过期，cache中的数据被清除
+</span></span></span><span class=line><span class=cl><span class=c1></span>    <span class=nx>schedulerCache</span> <span class=o>:=</span> <span class=nx>internalcache</span><span class=p>.</span><span class=nf>New</span><span class=p>(</span><span class=mi>30</span><span class=o>*</span><span class=nx>time</span><span class=p>.</span><span class=nx>Second</span><span class=p>,</span> <span class=nx>stopEverything</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>    <span class=kd>var</span> <span class=nx>sched</span> <span class=o>*</span><span class=nx>Scheduler</span>
+</span></span><span class=line><span class=cl>    <span class=nx>source</span> <span class=o>:=</span> <span class=nx>options</span><span class=p>.</span><span class=nx>schedulerAlgorithmSource</span> <span class=c1>// 根据调度算法不同，初始化scheduler
+</span></span></span><span class=line><span class=cl><span class=c1></span>    <span class=k>switch</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>	<span class=k>case</span> <span class=nx>source</span><span class=p>.</span><span class=nx>Provider</span> <span class=o>!=</span> <span class=kc>nil</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>		<span class=c1>// Create the config from a named algorithm provider.
+</span></span></span><span class=line><span class=cl><span class=c1></span>		<span class=nx>sc</span><span class=p>,</span> <span class=nx>err</span> <span class=o>:=</span> <span class=nx>configurator</span><span class=p>.</span><span class=nf>createFromProvider</span><span class=p>(</span><span class=o>*</span><span class=nx>source</span><span class=p>.</span><span class=nx>Provider</span><span class=p>)</span>  <span class=c1>// 一般都是默认调度算法
+</span></span></span><span class=line><span class=cl><span class=c1></span>
+</span></span><span class=line><span class=cl>    <span class=c1>// ...
+</span></span></span><span class=line><span class=cl><span class=c1></span>
+</span></span><span class=line><span class=cl>    <span class=c1>// 给scheduler添加 informer handler， controller 发出的pod变更请求，由这里的handler处理
+</span></span></span><span class=line><span class=cl><span class=c1></span>    <span class=nf>addAllEventHandlers</span><span class=p>(</span><span class=nx>sched</span><span class=p>,</span> <span class=nx>informerFactory</span><span class=p>,</span> <span class=nx>podInformer</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=k>return</span> <span class=nx>sched</span><span class=p>,</span> <span class=kc>nil</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span></code></pre></td></tr></table></div></div><p>createFromProvider 负责scheduler真正的初始化操作</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span><span class=lnt>22
+</span><span class=lnt>23
+</span><span class=lnt>24
+</span><span class=lnt>25
+</span><span class=lnt>26
+</span><span class=lnt>27
+</span><span class=lnt>28
+</span><span class=lnt>29
+</span><span class=lnt>30
+</span><span class=lnt>31
+</span><span class=lnt>32
+</span><span class=lnt>33
+</span><span class=lnt>34
+</span><span class=lnt>35
+</span><span class=lnt>36
+</span><span class=lnt>37
+</span><span class=lnt>38
+</span><span class=lnt>39
+</span><span class=lnt>40
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=kd>func</span> <span class=p>(</span><span class=nx>c</span> <span class=o>*</span><span class=nx>Configurator</span><span class=p>)</span> <span class=nf>create</span><span class=p>()</span> <span class=p>(</span><span class=o>*</span><span class=nx>Scheduler</span><span class=p>,</span> <span class=kt>error</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=c1>// ...
+</span></span></span><span class=line><span class=cl><span class=c1></span>    <span class=c1>// Profiles are required to have equivalent queue sort plugins.
+</span></span></span><span class=line><span class=cl><span class=c1></span>	<span class=nx>lessFn</span> <span class=o>:=</span> <span class=nx>profiles</span><span class=p>[</span><span class=nx>c</span><span class=p>.</span><span class=nx>profiles</span><span class=p>[</span><span class=mi>0</span><span class=p>].</span><span class=nx>SchedulerName</span><span class=p>].</span><span class=nx>Framework</span><span class=p>.</span><span class=nf>QueueSortFunc</span><span class=p>()</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>    <span class=c1>// informer的pod handler 将pod 入队 podQueue， 供scheduleOne(ctx context.Context)消费
+</span></span></span><span class=line><span class=cl><span class=c1></span>	<span class=nx>podQueue</span> <span class=o>:=</span> <span class=nx>internalqueue</span><span class=p>.</span><span class=nf>NewSchedulingQueue</span><span class=p>(</span>
+</span></span><span class=line><span class=cl>		<span class=nx>lessFn</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>		<span class=nx>internalqueue</span><span class=p>.</span><span class=nf>WithPodInitialBackoffDuration</span><span class=p>(</span><span class=nx>time</span><span class=p>.</span><span class=nf>Duration</span><span class=p>(</span><span class=nx>c</span><span class=p>.</span><span class=nx>podInitialBackoffSeconds</span><span class=p>)</span><span class=o>*</span><span class=nx>time</span><span class=p>.</span><span class=nx>Second</span><span class=p>),</span>
+</span></span><span class=line><span class=cl>		<span class=nx>internalqueue</span><span class=p>.</span><span class=nf>WithPodMaxBackoffDuration</span><span class=p>(</span><span class=nx>time</span><span class=p>.</span><span class=nf>Duration</span><span class=p>(</span><span class=nx>c</span><span class=p>.</span><span class=nx>podMaxBackoffSeconds</span><span class=p>)</span><span class=o>*</span><span class=nx>time</span><span class=p>.</span><span class=nx>Second</span><span class=p>),</span>
+</span></span><span class=line><span class=cl>	<span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>    <span class=c1>// ...
+</span></span></span><span class=line><span class=cl><span class=c1></span>    <span class=k>return</span> <span class=o>&amp;</span><span class=nx>Scheduler</span><span class=p>{</span>
+</span></span><span class=line><span class=cl>		<span class=nx>SchedulerCache</span><span class=p>:</span>  <span class=nx>c</span><span class=p>.</span><span class=nx>schedulerCache</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>		<span class=nx>Algorithm</span><span class=p>:</span>       <span class=nx>algo</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>		<span class=nx>Profiles</span><span class=p>:</span>        <span class=nx>profiles</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>		<span class=nx>NextPod</span><span class=p>:</span>         <span class=nx>internalqueue</span><span class=p>.</span><span class=nf>MakeNextPodFunc</span><span class=p>(</span><span class=nx>podQueue</span><span class=p>),</span>
+</span></span><span class=line><span class=cl>		<span class=nx>Error</span><span class=p>:</span>           <span class=nf>MakeDefaultErrorFunc</span><span class=p>(</span><span class=nx>c</span><span class=p>.</span><span class=nx>client</span><span class=p>,</span> <span class=nx>podQueue</span><span class=p>,</span> <span class=nx>c</span><span class=p>.</span><span class=nx>schedulerCache</span><span class=p>),</span>
+</span></span><span class=line><span class=cl>		<span class=nx>StopEverything</span><span class=p>:</span>  <span class=nx>c</span><span class=p>.</span><span class=nx>StopEverything</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>		<span class=nx>VolumeBinder</span><span class=p>:</span>    <span class=nx>c</span><span class=p>.</span><span class=nx>volumeBinder</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>		<span class=nx>SchedulingQueue</span><span class=p>:</span> <span class=nx>podQueue</span><span class=p>,</span> <span class=c1>// 将 podQueue 赋值给 SchedulingQueue
+</span></span></span><span class=line><span class=cl><span class=c1></span>	<span class=p>},</span> <span class=kc>nil</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1>// 负责总queue中获取一个pod
+</span></span></span><span class=line><span class=cl><span class=c1>// MakeNextPodFunc returns a function to retrieve the next pod from a given
+</span></span></span><span class=line><span class=cl><span class=c1>// scheduling queue
+</span></span></span><span class=line><span class=cl><span class=c1></span><span class=kd>func</span> <span class=nf>MakeNextPodFunc</span><span class=p>(</span><span class=nx>queue</span> <span class=nx>SchedulingQueue</span><span class=p>)</span> <span class=kd>func</span><span class=p>()</span> <span class=o>*</span><span class=nx>framework</span><span class=p>.</span><span class=nx>PodInfo</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>	<span class=k>return</span> <span class=kd>func</span><span class=p>()</span> <span class=o>*</span><span class=nx>framework</span><span class=p>.</span><span class=nx>PodInfo</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>		<span class=nx>podInfo</span><span class=p>,</span> <span class=nx>err</span> <span class=o>:=</span> <span class=nx>queue</span><span class=p>.</span><span class=nf>Pop</span><span class=p>()</span>
+</span></span><span class=line><span class=cl>		<span class=k>if</span> <span class=nx>err</span> <span class=o>==</span> <span class=kc>nil</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>			<span class=nx>klog</span><span class=p>.</span><span class=nf>V</span><span class=p>(</span><span class=mi>4</span><span class=p>).</span><span class=nf>Infof</span><span class=p>(</span><span class=s>&#34;About to try and schedule pod %v/%v&#34;</span><span class=p>,</span> <span class=nx>podInfo</span><span class=p>.</span><span class=nx>Pod</span><span class=p>.</span><span class=nx>Namespace</span><span class=p>,</span> <span class=nx>podInfo</span><span class=p>.</span><span class=nx>Pod</span><span class=p>.</span><span class=nx>Name</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>			<span class=k>return</span> <span class=nx>podInfo</span>
+</span></span><span class=line><span class=cl>		<span class=p>}</span>
+</span></span><span class=line><span class=cl>		<span class=nx>klog</span><span class=p>.</span><span class=nf>Errorf</span><span class=p>(</span><span class=s>&#34;Error while retrieving next pod from scheduling queue: %v&#34;</span><span class=p>,</span> <span class=nx>err</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>		<span class=k>return</span> <span class=kc>nil</span>
+</span></span><span class=line><span class=cl>	<span class=p>}</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span></code></pre></td></tr></table></div></div><p>addAllEventHandlers 初始化的handler比较多，主要包括：pod、node、PersistentVolumes、PersistentVolumeClaims、service、StorageClasses
+因本文只关心pod部分，所以以下代码只展示pod 相关handler。pod的handler分为scheduled和unscheduled.</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span><span class=lnt>22
+</span><span class=lnt>23
+</span><span class=lnt>24
+</span><span class=lnt>25
+</span><span class=lnt>26
+</span><span class=lnt>27
+</span><span class=lnt>28
+</span><span class=lnt>29
+</span><span class=lnt>30
+</span><span class=lnt>31
+</span><span class=lnt>32
+</span><span class=lnt>33
+</span><span class=lnt>34
+</span><span class=lnt>35
+</span><span class=lnt>36
+</span><span class=lnt>37
+</span><span class=lnt>38
+</span><span class=lnt>39
+</span><span class=lnt>40
+</span><span class=lnt>41
+</span><span class=lnt>42
+</span><span class=lnt>43
+</span><span class=lnt>44
+</span><span class=lnt>45
+</span><span class=lnt>46
+</span><span class=lnt>47
+</span><span class=lnt>48
+</span><span class=lnt>49
+</span><span class=lnt>50
+</span><span class=lnt>51
+</span><span class=lnt>52
+</span><span class=lnt>53
+</span><span class=lnt>54
+</span><span class=lnt>55
+</span><span class=lnt>56
+</span><span class=lnt>57
+</span><span class=lnt>58
+</span><span class=lnt>59
+</span><span class=lnt>60
+</span><span class=lnt>61
+</span><span class=lnt>62
+</span><span class=lnt>63
+</span><span class=lnt>64
+</span><span class=lnt>65
+</span><span class=lnt>66
+</span><span class=lnt>67
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=c1>// 要先贴出来这个确定pod命运的函数
+</span></span></span><span class=line><span class=cl><span class=c1></span><span class=kd>func</span> <span class=nf>assignedPod</span><span class=p>(</span><span class=nx>pod</span> <span class=o>*</span><span class=nx>v1</span><span class=p>.</span><span class=nx>Pod</span><span class=p>)</span> <span class=kt>bool</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>	<span class=k>return</span> <span class=nb>len</span><span class=p>(</span><span class=nx>pod</span><span class=p>.</span><span class=nx>Spec</span><span class=p>.</span><span class=nx>NodeName</span><span class=p>)</span> <span class=o>!=</span> <span class=mi>0</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1>// responsibleForPod returns true if the pod has asked to be scheduled by the given scheduler.
+</span></span></span><span class=line><span class=cl><span class=c1></span><span class=kd>func</span> <span class=nf>responsibleForPod</span><span class=p>(</span><span class=nx>pod</span> <span class=o>*</span><span class=nx>v1</span><span class=p>.</span><span class=nx>Pod</span><span class=p>,</span> <span class=nx>profiles</span> <span class=nx>profile</span><span class=p>.</span><span class=nx>Map</span><span class=p>)</span> <span class=kt>bool</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>	<span class=k>return</span> <span class=nx>profiles</span><span class=p>.</span><span class=nf>HandlesSchedulerName</span><span class=p>(</span><span class=nx>pod</span><span class=p>.</span><span class=nx>Spec</span><span class=p>.</span><span class=nx>SchedulerName</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=kd>func</span> <span class=nf>addAllEventHandlers</span><span class=p>(</span>
+</span></span><span class=line><span class=cl>    <span class=nx>sched</span> <span class=o>*</span><span class=nx>Scheduler</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>	<span class=nx>informerFactory</span> <span class=nx>informers</span><span class=p>.</span><span class=nx>SharedInformerFactory</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>	<span class=nx>podInformer</span> <span class=nx>coreinformers</span><span class=p>.</span><span class=nx>PodInformer</span><span class=p>,</span>
+</span></span><span class=line><span class=cl><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl><span class=c1>// scheduled pod cache
+</span></span></span><span class=line><span class=cl><span class=c1></span>	<span class=nx>podInformer</span><span class=p>.</span><span class=nf>Informer</span><span class=p>().</span><span class=nf>AddEventHandler</span><span class=p>(</span>
+</span></span><span class=line><span class=cl>		<span class=nx>cache</span><span class=p>.</span><span class=nx>FilteringResourceEventHandler</span><span class=p>{</span>
+</span></span><span class=line><span class=cl>			<span class=nx>FilterFunc</span><span class=p>:</span> <span class=kd>func</span><span class=p>(</span><span class=nx>obj</span> <span class=kd>interface</span><span class=p>{})</span> <span class=kt>bool</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>				<span class=k>switch</span> <span class=nx>t</span> <span class=o>:=</span> <span class=nx>obj</span><span class=p>.(</span><span class=kd>type</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>				<span class=k>case</span> <span class=o>*</span><span class=nx>v1</span><span class=p>.</span><span class=nx>Pod</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>					<span class=k>return</span> <span class=nf>assignedPod</span><span class=p>(</span><span class=nx>t</span><span class=p>)</span>  <span class=c1>// 如果pod已经分配了NodeName 那么这个pod就是scheduled
+</span></span></span><span class=line><span class=cl><span class=c1></span>				<span class=k>case</span> <span class=nx>cache</span><span class=p>.</span><span class=nx>DeletedFinalStateUnknown</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>					<span class=k>if</span> <span class=nx>pod</span><span class=p>,</span> <span class=nx>ok</span> <span class=o>:=</span> <span class=nx>t</span><span class=p>.</span><span class=nx>Obj</span><span class=p>.(</span><span class=o>*</span><span class=nx>v1</span><span class=p>.</span><span class=nx>Pod</span><span class=p>);</span> <span class=nx>ok</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>						<span class=k>return</span> <span class=nf>assignedPod</span><span class=p>(</span><span class=nx>pod</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>					<span class=p>}</span>
+</span></span><span class=line><span class=cl>					<span class=nx>utilruntime</span><span class=p>.</span><span class=nf>HandleError</span><span class=p>(</span><span class=nx>fmt</span><span class=p>.</span><span class=nf>Errorf</span><span class=p>(</span><span class=s>&#34;unable to convert object %T to *v1.Pod in %T&#34;</span><span class=p>,</span> <span class=nx>obj</span><span class=p>,</span> <span class=nx>sched</span><span class=p>))</span>
+</span></span><span class=line><span class=cl>					<span class=k>return</span> <span class=kc>false</span>
+</span></span><span class=line><span class=cl>				<span class=k>default</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>					<span class=nx>utilruntime</span><span class=p>.</span><span class=nf>HandleError</span><span class=p>(</span><span class=nx>fmt</span><span class=p>.</span><span class=nf>Errorf</span><span class=p>(</span><span class=s>&#34;unable to handle object in %T: %T&#34;</span><span class=p>,</span> <span class=nx>sched</span><span class=p>,</span> <span class=nx>obj</span><span class=p>))</span>
+</span></span><span class=line><span class=cl>					<span class=k>return</span> <span class=kc>false</span>
+</span></span><span class=line><span class=cl>				<span class=p>}</span>
+</span></span><span class=line><span class=cl>			<span class=p>},</span>
+</span></span><span class=line><span class=cl>			<span class=nx>Handler</span><span class=p>:</span> <span class=nx>cache</span><span class=p>.</span><span class=nx>ResourceEventHandlerFuncs</span><span class=p>{</span>
+</span></span><span class=line><span class=cl>				<span class=nx>AddFunc</span><span class=p>:</span>    <span class=nx>sched</span><span class=p>.</span><span class=nx>addPodToCache</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>				<span class=nx>UpdateFunc</span><span class=p>:</span> <span class=nx>sched</span><span class=p>.</span><span class=nx>updatePodInCache</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>				<span class=nx>DeleteFunc</span><span class=p>:</span> <span class=nx>sched</span><span class=p>.</span><span class=nx>deletePodFromCache</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>			<span class=p>},</span>
+</span></span><span class=line><span class=cl>		<span class=p>},</span>
+</span></span><span class=line><span class=cl>	<span class=p>)</span>
+</span></span><span class=line><span class=cl>	<span class=c1>// unscheduled pod queue
+</span></span></span><span class=line><span class=cl><span class=c1></span>	<span class=nx>podInformer</span><span class=p>.</span><span class=nf>Informer</span><span class=p>().</span><span class=nf>AddEventHandler</span><span class=p>(</span>
+</span></span><span class=line><span class=cl>		<span class=nx>cache</span><span class=p>.</span><span class=nx>FilteringResourceEventHandler</span><span class=p>{</span>
+</span></span><span class=line><span class=cl>			<span class=nx>FilterFunc</span><span class=p>:</span> <span class=kd>func</span><span class=p>(</span><span class=nx>obj</span> <span class=kd>interface</span><span class=p>{})</span> <span class=kt>bool</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>				<span class=k>switch</span> <span class=nx>t</span> <span class=o>:=</span> <span class=nx>obj</span><span class=p>.(</span><span class=kd>type</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>				<span class=k>case</span> <span class=o>*</span><span class=nx>v1</span><span class=p>.</span><span class=nx>Pod</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>                    <span class=c1>// 如果pod没有分配 NodeName,并且已经分配了shceduler算法 那么这个pod就是unscheduled
+</span></span></span><span class=line><span class=cl><span class=c1></span>					<span class=k>return</span> <span class=p>!</span><span class=nf>assignedPod</span><span class=p>(</span><span class=nx>t</span><span class=p>)</span> <span class=o>&amp;&amp;</span> <span class=nf>responsibleForPod</span><span class=p>(</span><span class=nx>t</span><span class=p>,</span> <span class=nx>sched</span><span class=p>.</span><span class=nx>Profiles</span><span class=p>)</span> 
+</span></span><span class=line><span class=cl>				<span class=k>case</span> <span class=nx>cache</span><span class=p>.</span><span class=nx>DeletedFinalStateUnknown</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>					<span class=k>if</span> <span class=nx>pod</span><span class=p>,</span> <span class=nx>ok</span> <span class=o>:=</span> <span class=nx>t</span><span class=p>.</span><span class=nx>Obj</span><span class=p>.(</span><span class=o>*</span><span class=nx>v1</span><span class=p>.</span><span class=nx>Pod</span><span class=p>);</span> <span class=nx>ok</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>						<span class=k>return</span> <span class=p>!</span><span class=nf>assignedPod</span><span class=p>(</span><span class=nx>pod</span><span class=p>)</span> <span class=o>&amp;&amp;</span> <span class=nf>responsibleForPod</span><span class=p>(</span><span class=nx>pod</span><span class=p>,</span> <span class=nx>sched</span><span class=p>.</span><span class=nx>Profiles</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>					<span class=p>}</span>
+</span></span><span class=line><span class=cl>					<span class=nx>utilruntime</span><span class=p>.</span><span class=nf>HandleError</span><span class=p>(</span><span class=nx>fmt</span><span class=p>.</span><span class=nf>Errorf</span><span class=p>(</span><span class=s>&#34;unable to convert object %T to *v1.Pod in %T&#34;</span><span class=p>,</span> <span class=nx>obj</span><span class=p>,</span> <span class=nx>sched</span><span class=p>))</span>
+</span></span><span class=line><span class=cl>					<span class=k>return</span> <span class=kc>false</span>
+</span></span><span class=line><span class=cl>				<span class=k>default</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>					<span class=nx>utilruntime</span><span class=p>.</span><span class=nf>HandleError</span><span class=p>(</span><span class=nx>fmt</span><span class=p>.</span><span class=nf>Errorf</span><span class=p>(</span><span class=s>&#34;unable to handle object in %T: %T&#34;</span><span class=p>,</span> <span class=nx>sched</span><span class=p>,</span> <span class=nx>obj</span><span class=p>))</span>
+</span></span><span class=line><span class=cl>					<span class=k>return</span> <span class=kc>false</span>
+</span></span><span class=line><span class=cl>				<span class=p>}</span>
+</span></span><span class=line><span class=cl>			<span class=p>},</span>
+</span></span><span class=line><span class=cl>			<span class=nx>Handler</span><span class=p>:</span> <span class=nx>cache</span><span class=p>.</span><span class=nx>ResourceEventHandlerFuncs</span><span class=p>{</span>
+</span></span><span class=line><span class=cl>				<span class=nx>AddFunc</span><span class=p>:</span>    <span class=nx>sched</span><span class=p>.</span><span class=nx>addPodToSchedulingQueue</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>				<span class=nx>UpdateFunc</span><span class=p>:</span> <span class=nx>sched</span><span class=p>.</span><span class=nx>updatePodInSchedulingQueue</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>				<span class=nx>DeleteFunc</span><span class=p>:</span> <span class=nx>sched</span><span class=p>.</span><span class=nx>deletePodFromSchedulingQueue</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>			<span class=p>},</span>
+</span></span><span class=line><span class=cl>		<span class=p>},</span>
+</span></span><span class=line><span class=cl>	<span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span></code></pre></td></tr></table></div></div><p>Pod Informer EventHandler的实现, 就是将pod加入到podQueue等待消费</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span><span class=lnt>5
+</span><span class=lnt>6
+</span><span class=lnt>7
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=kd>func</span> <span class=p>(</span><span class=nx>sched</span> <span class=o>*</span><span class=nx>Scheduler</span><span class=p>)</span> <span class=nf>addPodToSchedulingQueue</span><span class=p>(</span><span class=nx>obj</span> <span class=kd>interface</span><span class=p>{})</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>	<span class=nx>pod</span> <span class=o>:=</span> <span class=nx>obj</span><span class=p>.(</span><span class=o>*</span><span class=nx>v1</span><span class=p>.</span><span class=nx>Pod</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>	<span class=nx>klog</span><span class=p>.</span><span class=nf>V</span><span class=p>(</span><span class=mi>3</span><span class=p>).</span><span class=nf>Infof</span><span class=p>(</span><span class=s>&#34;add event for unscheduled pod %s/%s&#34;</span><span class=p>,</span> <span class=nx>pod</span><span class=p>.</span><span class=nx>Namespace</span><span class=p>,</span> <span class=nx>pod</span><span class=p>.</span><span class=nx>Name</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>	<span class=k>if</span> <span class=nx>err</span> <span class=o>:=</span> <span class=nx>sched</span><span class=p>.</span><span class=nx>SchedulingQueue</span><span class=p>.</span><span class=nf>Add</span><span class=p>(</span><span class=nx>pod</span><span class=p>);</span> <span class=nx>err</span> <span class=o>!=</span> <span class=kc>nil</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>		<span class=nx>utilruntime</span><span class=p>.</span><span class=nf>HandleError</span><span class=p>(</span><span class=nx>fmt</span><span class=p>.</span><span class=nf>Errorf</span><span class=p>(</span><span class=s>&#34;unable to queue %T: %v&#34;</span><span class=p>,</span> <span class=nx>obj</span><span class=p>,</span> <span class=nx>err</span><span class=p>))</span>
+</span></span><span class=line><span class=cl>	<span class=p>}</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span></code></pre></td></tr></table></div></div><h4 id=run-scheduler逻辑执行>Run Scheduler逻辑执行</h4><p>初始化完成，就开始了熟悉的Run方法，和deployment、replicaSet的流程一致。</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=kd>func</span> <span class=p>(</span><span class=nx>sched</span> <span class=o>*</span><span class=nx>Scheduler</span><span class=p>)</span> <span class=nf>Run</span><span class=p>(</span><span class=nx>ctx</span> <span class=nx>context</span><span class=p>.</span><span class=nx>Context</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=nx>wait</span><span class=p>.</span><span class=nf>UntilWithContext</span><span class=p>(</span><span class=nx>ctx</span><span class=p>,</span> <span class=nx>sched</span><span class=p>.</span><span class=nx>scheduleOne</span><span class=p>,</span> <span class=mi>0</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1>// 顺序的消费podQueue中的pod
+</span></span></span><span class=line><span class=cl><span class=c1></span><span class=kd>func</span> <span class=p>(</span><span class=nx>sched</span> <span class=o>*</span><span class=nx>Scheduler</span><span class=p>)</span> <span class=nf>scheduleOne</span><span class=p>(</span><span class=nx>ctx</span> <span class=nx>context</span><span class=p>.</span><span class=nx>Context</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=nx>podInfo</span> <span class=o>:=</span> <span class=nx>sched</span><span class=p>.</span><span class=nf>NextPod</span><span class=p>()</span>
+</span></span><span class=line><span class=cl>    <span class=c1>// ...
+</span></span></span><span class=line><span class=cl><span class=c1></span>
+</span></span><span class=line><span class=cl>    <span class=c1>// 调度算法的具体实现
+</span></span></span><span class=line><span class=cl><span class=c1></span>    <span class=c1>// scheduleResult 将返回建议调度的node SuggestedHost
+</span></span></span><span class=line><span class=cl><span class=c1></span>    <span class=nx>scheduleResult</span><span class=p>,</span> <span class=nx>err</span> <span class=o>:=</span> <span class=nx>sched</span><span class=p>.</span><span class=nx>Algorithm</span><span class=p>.</span><span class=nf>Schedule</span><span class=p>(</span><span class=nx>schedulingCycleCtx</span><span class=p>,</span> <span class=nx>prof</span><span class=p>,</span> <span class=nx>state</span><span class=p>,</span> <span class=nx>pod</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>    <span class=c1>//...
+</span></span></span><span class=line><span class=cl><span class=c1></span>
+</span></span><span class=line><span class=cl>    <span class=c1>// 将pod bind到具体的pod上 
+</span></span></span><span class=line><span class=cl><span class=c1></span>    <span class=nx>err</span> <span class=o>:=</span> <span class=nx>sched</span><span class=p>.</span><span class=nf>bind</span><span class=p>(</span><span class=nx>bindingCycleCtx</span><span class=p>,</span> <span class=nx>prof</span><span class=p>,</span> <span class=nx>assumedPod</span><span class=p>,</span> <span class=nx>scheduleResult</span><span class=p>.</span><span class=nx>SuggestedHost</span><span class=p>,</span> <span class=nx>state</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span></code></pre></td></tr></table></div></div><p>bind 的具体流程分析</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span><span class=lnt>22
+</span><span class=lnt>23
+</span><span class=lnt>24
+</span><span class=lnt>25
+</span><span class=lnt>26
+</span><span class=lnt>27
+</span><span class=lnt>28
+</span><span class=lnt>29
+</span><span class=lnt>30
+</span><span class=lnt>31
+</span><span class=lnt>32
+</span><span class=lnt>33
+</span><span class=lnt>34
+</span><span class=lnt>35
+</span><span class=lnt>36
+</span><span class=lnt>37
+</span><span class=lnt>38
+</span><span class=lnt>39
+</span><span class=lnt>40
+</span><span class=lnt>41
+</span><span class=lnt>42
+</span><span class=lnt>43
+</span><span class=lnt>44
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=kd>func</span> <span class=p>(</span><span class=nx>sched</span> <span class=o>*</span><span class=nx>Scheduler</span><span class=p>)</span> <span class=nf>bind</span><span class=p>(</span><span class=nx>ctx</span> <span class=nx>context</span><span class=p>.</span><span class=nx>Context</span><span class=p>,</span> <span class=nx>prof</span> <span class=o>*</span><span class=nx>profile</span><span class=p>.</span><span class=nx>Profile</span><span class=p>,</span> <span class=nx>assumed</span> <span class=o>*</span><span class=nx>v1</span><span class=p>.</span><span class=nx>Pod</span><span class=p>,</span> <span class=nx>targetNode</span> <span class=kt>string</span><span class=p>,</span> <span class=nx>state</span> <span class=o>*</span><span class=nx>framework</span><span class=p>.</span><span class=nx>CycleState</span><span class=p>)</span> <span class=p>(</span><span class=nx>err</span> <span class=kt>error</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=c1>// ... 
+</span></span></span><span class=line><span class=cl><span class=c1></span>    <span class=nx>bindStatus</span> <span class=o>:=</span> <span class=nx>prof</span><span class=p>.</span><span class=nf>RunBindPlugins</span><span class=p>(</span><span class=nx>ctx</span><span class=p>,</span> <span class=nx>state</span><span class=p>,</span> <span class=nx>assumed</span><span class=p>,</span> <span class=nx>targetNode</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>	<span class=k>if</span> <span class=nx>bindStatus</span><span class=p>.</span><span class=nf>IsSuccess</span><span class=p>()</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>		<span class=k>return</span> <span class=kc>nil</span>
+</span></span><span class=line><span class=cl>	<span class=p>}</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1>// 遍历并执行bind插件
+</span></span></span><span class=line><span class=cl><span class=c1></span><span class=kd>func</span> <span class=p>(</span><span class=nx>f</span> <span class=o>*</span><span class=nx>framework</span><span class=p>)</span> <span class=nf>RunBindPlugins</span><span class=p>(</span><span class=nx>ctx</span> <span class=nx>context</span><span class=p>.</span><span class=nx>Context</span><span class=p>,</span> <span class=nx>state</span> <span class=o>*</span><span class=nx>CycleState</span><span class=p>,</span> <span class=nx>pod</span> <span class=o>*</span><span class=nx>v1</span><span class=p>.</span><span class=nx>Pod</span><span class=p>,</span> <span class=nx>nodeName</span> <span class=kt>string</span><span class=p>)</span> <span class=p>(</span><span class=nx>status</span> <span class=o>*</span><span class=nx>Status</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=k>for</span> <span class=nx>_</span><span class=p>,</span> <span class=nx>bp</span> <span class=o>:=</span> <span class=k>range</span> <span class=nx>f</span><span class=p>.</span><span class=nx>bindPlugins</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>		<span class=nx>status</span> <span class=p>=</span> <span class=nx>f</span><span class=p>.</span><span class=nf>runBindPlugin</span><span class=p>(</span><span class=nx>ctx</span><span class=p>,</span> <span class=nx>bp</span><span class=p>,</span> <span class=nx>state</span><span class=p>,</span> <span class=nx>pod</span><span class=p>,</span> <span class=nx>nodeName</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>		<span class=k>if</span> <span class=nx>status</span> <span class=o>!=</span> <span class=kc>nil</span> <span class=o>&amp;&amp;</span> <span class=nx>status</span><span class=p>.</span><span class=nf>Code</span><span class=p>()</span> <span class=o>==</span> <span class=nx>Skip</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>			<span class=k>continue</span>
+</span></span><span class=line><span class=cl>		<span class=p>}</span>
+</span></span><span class=line><span class=cl>		<span class=k>if</span> <span class=p>!</span><span class=nx>status</span><span class=p>.</span><span class=nf>IsSuccess</span><span class=p>()</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>			<span class=nx>msg</span> <span class=o>:=</span> <span class=nx>fmt</span><span class=p>.</span><span class=nf>Sprintf</span><span class=p>(</span><span class=s>&#34;plugin %q failed to bind pod \&#34;%v/%v\&#34;: %v&#34;</span><span class=p>,</span> <span class=nx>bp</span><span class=p>.</span><span class=nf>Name</span><span class=p>(),</span> <span class=nx>pod</span><span class=p>.</span><span class=nx>Namespace</span><span class=p>,</span> <span class=nx>pod</span><span class=p>.</span><span class=nx>Name</span><span class=p>,</span> <span class=nx>status</span><span class=p>.</span><span class=nf>Message</span><span class=p>())</span>
+</span></span><span class=line><span class=cl>			<span class=nx>klog</span><span class=p>.</span><span class=nf>Error</span><span class=p>(</span><span class=nx>msg</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>			<span class=k>return</span> <span class=nf>NewStatus</span><span class=p>(</span><span class=nx>Error</span><span class=p>,</span> <span class=nx>msg</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>		<span class=p>}</span>
+</span></span><span class=line><span class=cl>		<span class=k>return</span> <span class=nx>status</span>
+</span></span><span class=line><span class=cl>	<span class=p>}</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=kd>func</span> <span class=p>(</span><span class=nx>f</span> <span class=o>*</span><span class=nx>framework</span><span class=p>)</span> <span class=nf>runBindPlugin</span><span class=p>(</span><span class=nx>ctx</span> <span class=nx>context</span><span class=p>.</span><span class=nx>Context</span><span class=p>,</span> <span class=nx>bp</span> <span class=nx>BindPlugin</span><span class=p>,</span> <span class=nx>state</span> <span class=o>*</span><span class=nx>CycleState</span><span class=p>,</span> <span class=nx>pod</span> <span class=o>*</span><span class=nx>v1</span><span class=p>.</span><span class=nx>Pod</span><span class=p>,</span> <span class=nx>nodeName</span> <span class=kt>string</span><span class=p>)</span> <span class=o>*</span><span class=nx>Status</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=c1>// 调用bind plugin interface中的Bind方法
+</span></span></span><span class=line><span class=cl><span class=c1></span>    <span class=nx>status</span> <span class=o>:=</span> <span class=nx>bp</span><span class=p>.</span><span class=nf>Bind</span><span class=p>(</span><span class=nx>ctx</span><span class=p>,</span> <span class=nx>state</span><span class=p>,</span> <span class=nx>pod</span><span class=p>,</span> <span class=nx>nodeName</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1>// 最终在DefaultBinder实现的方法中，找到了创建pod的具体实现
+</span></span></span><span class=line><span class=cl><span class=c1>// Bind binds pods to nodes using the k8s client.
+</span></span></span><span class=line><span class=cl><span class=c1></span><span class=kd>func</span> <span class=p>(</span><span class=nx>b</span> <span class=nx>DefaultBinder</span><span class=p>)</span> <span class=nf>Bind</span><span class=p>(</span><span class=nx>ctx</span> <span class=nx>context</span><span class=p>.</span><span class=nx>Context</span><span class=p>,</span> <span class=nx>state</span> <span class=o>*</span><span class=nx>framework</span><span class=p>.</span><span class=nx>CycleState</span><span class=p>,</span> <span class=nx>p</span> <span class=o>*</span><span class=nx>v1</span><span class=p>.</span><span class=nx>Pod</span><span class=p>,</span> <span class=nx>nodeName</span> <span class=kt>string</span><span class=p>)</span> <span class=o>*</span><span class=nx>framework</span><span class=p>.</span><span class=nx>Status</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>	<span class=nx>klog</span><span class=p>.</span><span class=nf>V</span><span class=p>(</span><span class=mi>3</span><span class=p>).</span><span class=nf>Infof</span><span class=p>(</span><span class=s>&#34;Attempting to bind %v/%v to %v&#34;</span><span class=p>,</span> <span class=nx>p</span><span class=p>.</span><span class=nx>Namespace</span><span class=p>,</span> <span class=nx>p</span><span class=p>.</span><span class=nx>Name</span><span class=p>,</span> <span class=nx>nodeName</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>	<span class=nx>binding</span> <span class=o>:=</span> <span class=o>&amp;</span><span class=nx>v1</span><span class=p>.</span><span class=nx>Binding</span><span class=p>{</span>
+</span></span><span class=line><span class=cl>		<span class=nx>ObjectMeta</span><span class=p>:</span> <span class=nx>metav1</span><span class=p>.</span><span class=nx>ObjectMeta</span><span class=p>{</span><span class=nx>Namespace</span><span class=p>:</span> <span class=nx>p</span><span class=p>.</span><span class=nx>Namespace</span><span class=p>,</span> <span class=nx>Name</span><span class=p>:</span> <span class=nx>p</span><span class=p>.</span><span class=nx>Name</span><span class=p>,</span> <span class=nx>UID</span><span class=p>:</span> <span class=nx>p</span><span class=p>.</span><span class=nx>UID</span><span class=p>},</span>
+</span></span><span class=line><span class=cl>		<span class=nx>Target</span><span class=p>:</span>     <span class=nx>v1</span><span class=p>.</span><span class=nx>ObjectReference</span><span class=p>{</span><span class=nx>Kind</span><span class=p>:</span> <span class=s>&#34;Node&#34;</span><span class=p>,</span> <span class=nx>Name</span><span class=p>:</span> <span class=nx>nodeName</span><span class=p>},</span>
+</span></span><span class=line><span class=cl>	<span class=p>}</span>
+</span></span><span class=line><span class=cl>	<span class=nx>err</span> <span class=o>:=</span> <span class=nx>b</span><span class=p>.</span><span class=nx>handle</span><span class=p>.</span><span class=nf>ClientSet</span><span class=p>().</span><span class=nf>CoreV1</span><span class=p>().</span><span class=nf>Pods</span><span class=p>(</span><span class=nx>binding</span><span class=p>.</span><span class=nx>Namespace</span><span class=p>).</span><span class=nf>Bind</span><span class=p>(</span><span class=nx>context</span><span class=p>.</span><span class=nf>TODO</span><span class=p>(),</span> <span class=nx>binding</span><span class=p>,</span> <span class=nx>metav1</span><span class=p>.</span><span class=nx>CreateOptions</span><span class=p>{})</span>
+</span></span><span class=line><span class=cl>	<span class=k>if</span> <span class=nx>err</span> <span class=o>!=</span> <span class=kc>nil</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>		<span class=k>return</span> <span class=nx>framework</span><span class=p>.</span><span class=nf>NewStatus</span><span class=p>(</span><span class=nx>framework</span><span class=p>.</span><span class=nx>Error</span><span class=p>,</span> <span class=nx>err</span><span class=p>.</span><span class=nf>Error</span><span class=p>())</span>
+</span></span><span class=line><span class=cl>	<span class=p>}</span>
+</span></span><span class=line><span class=cl>	<span class=k>return</span> <span class=kc>nil</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span></code></pre></td></tr></table></div></div><p>以上通过bind 调用k8s的client将请求发送给api-server，api-server收到请求后，先落库etcd，然后发送给kubelet。</p><h3 id=pod的容忍和驱逐>pod的容忍和驱逐</h3><p>那么为什么有的pod会被返回创建销毁，什么情况下被销毁?<br>销毁的原因之一就是pod的toleration策略。<br>k8s中具体实现此功能的struct为：NoExecuteTaintManager<br>负责监听Taint/Toleration 的改变，并删除Pods<br>源码路径：kubernetes/pkg/controller/nodelifecycle/scheduler/taint_manager.go</p><h4 id=初始化-1>初始化</h4><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span><span class=lnt>22
+</span><span class=lnt>23
+</span><span class=lnt>24
+</span><span class=lnt>25
+</span><span class=lnt>26
+</span><span class=lnt>27
+</span><span class=lnt>28
+</span><span class=lnt>29
+</span><span class=lnt>30
+</span><span class=lnt>31
+</span><span class=lnt>32
+</span><span class=lnt>33
+</span><span class=lnt>34
+</span><span class=lnt>35
+</span><span class=lnt>36
+</span><span class=lnt>37
+</span><span class=lnt>38
+</span><span class=lnt>39
+</span><span class=lnt>40
+</span><span class=lnt>41
+</span><span class=lnt>42
+</span><span class=lnt>43
+</span><span class=lnt>44
+</span><span class=lnt>45
+</span><span class=lnt>46
+</span><span class=lnt>47
+</span><span class=lnt>48
+</span><span class=lnt>49
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=kd>func</span> <span class=nf>NewNoExecuteTaintManager</span><span class=p>(</span><span class=nx>c</span> <span class=nx>clientset</span><span class=p>.</span><span class=nx>Interface</span><span class=p>,</span> <span class=nx>getPod</span> <span class=nx>GetPodFunc</span><span class=p>,</span> <span class=nx>getNode</span> <span class=nx>GetNodeFunc</span><span class=p>,</span> <span class=nx>getPodsAssignedToNode</span> <span class=nx>GetPodsByNodeNameFunc</span><span class=p>)</span> <span class=o>*</span><span class=nx>NoExecuteTaintManager</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=c1>// 事件源
+</span></span></span><span class=line><span class=cl><span class=c1></span>    <span class=nx>recorder</span> <span class=o>:=</span> <span class=nx>eventBroadcaster</span><span class=p>.</span><span class=nf>NewRecorder</span><span class=p>(</span><span class=nx>scheme</span><span class=p>.</span><span class=nx>Scheme</span><span class=p>,</span> <span class=nx>v1</span><span class=p>.</span><span class=nx>EventSource</span><span class=p>{</span><span class=nx>Component</span><span class=p>:</span> <span class=s>&#34;taint-controller&#34;</span><span class=p>})</span>
+</span></span><span class=line><span class=cl>    <span class=c1>// ...
+</span></span></span><span class=line><span class=cl><span class=c1></span>
+</span></span><span class=line><span class=cl>    <span class=nx>tm</span> <span class=o>:=</span> <span class=o>&amp;</span><span class=nx>NoExecuteTaintManager</span><span class=p>{</span>
+</span></span><span class=line><span class=cl>		<span class=nx>client</span><span class=p>:</span>                <span class=nx>c</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>		<span class=nx>recorder</span><span class=p>:</span>              <span class=nx>recorder</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>		<span class=nx>getPod</span><span class=p>:</span>                <span class=nx>getPod</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>		<span class=nx>getNode</span><span class=p>:</span>               <span class=nx>getNode</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>		<span class=nx>getPodsAssignedToNode</span><span class=p>:</span> <span class=nx>getPodsAssignedToNode</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>		<span class=nx>taintedNodes</span><span class=p>:</span>          <span class=nb>make</span><span class=p>(</span><span class=kd>map</span><span class=p>[</span><span class=kt>string</span><span class=p>][]</span><span class=nx>v1</span><span class=p>.</span><span class=nx>Taint</span><span class=p>),</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>		<span class=nx>nodeUpdateQueue</span><span class=p>:</span> <span class=nx>workqueue</span><span class=p>.</span><span class=nf>NewNamed</span><span class=p>(</span><span class=s>&#34;noexec_taint_node&#34;</span><span class=p>),</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>        <span class=c1>// 定义podUpdateQueue,用于接受pod informer发来的pod事件
+</span></span></span><span class=line><span class=cl><span class=c1></span>		<span class=nx>podUpdateQueue</span><span class=p>:</span>  <span class=nx>workqueue</span><span class=p>.</span><span class=nf>NewNamed</span><span class=p>(</span><span class=s>&#34;noexec_taint_pod&#34;</span><span class=p>),</span>
+</span></span><span class=line><span class=cl>	<span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>    <span class=c1>// 这个是TaintManager的核心，deletePodHandler 实际执行pod的删除操作，所以放在taintEvictionQueue表示，这个pod真正的要被干掉了
+</span></span></span><span class=line><span class=cl><span class=c1></span>	<span class=nx>tm</span><span class=p>.</span><span class=nx>taintEvictionQueue</span> <span class=p>=</span> <span class=nf>CreateWorkerQueue</span><span class=p>(</span><span class=nf>deletePodHandler</span><span class=p>(</span><span class=nx>c</span><span class=p>,</span> <span class=nx>tm</span><span class=p>.</span><span class=nx>emitPodDeletionEvent</span><span class=p>))</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=kd>const</span> <span class=p>(</span>
+</span></span><span class=line><span class=cl>    <span class=nx>retries</span>              <span class=p>=</span> <span class=mi>5</span>  <span class=c1>// 最大重试5次
+</span></span></span><span class=line><span class=cl><span class=c1></span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=c1>// 真正执行删除pod的函数
+</span></span></span><span class=line><span class=cl><span class=c1></span><span class=kd>func</span> <span class=nf>deletePodHandler</span><span class=p>(</span><span class=nx>c</span> <span class=nx>clientset</span><span class=p>.</span><span class=nx>Interface</span><span class=p>,</span> <span class=nx>emitEventFunc</span> <span class=kd>func</span><span class=p>(</span><span class=nx>types</span><span class=p>.</span><span class=nx>NamespacedName</span><span class=p>))</span> <span class=kd>func</span><span class=p>(</span><span class=nx>args</span> <span class=o>*</span><span class=nx>WorkArgs</span><span class=p>)</span> <span class=kt>error</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>	<span class=k>return</span> <span class=kd>func</span><span class=p>(</span><span class=nx>args</span> <span class=o>*</span><span class=nx>WorkArgs</span><span class=p>)</span> <span class=kt>error</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>		<span class=nx>ns</span> <span class=o>:=</span> <span class=nx>args</span><span class=p>.</span><span class=nx>NamespacedName</span><span class=p>.</span><span class=nx>Namespace</span>
+</span></span><span class=line><span class=cl>		<span class=nx>name</span> <span class=o>:=</span> <span class=nx>args</span><span class=p>.</span><span class=nx>NamespacedName</span><span class=p>.</span><span class=nx>Name</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>        <span class=c1>// 这个日志就是我们在看scheduler服务日志时，能看到的信息
+</span></span></span><span class=line><span class=cl><span class=c1></span>        <span class=c1>// {&#34;log&#34;:&#34;I0313 09:34:32.143424       1 taint_manager.go:106] NoExecuteTaintManager is deleting Pod: gvs/fengniaohezi-1673511852282-deployment-nginx-5d9cbfddd9-r84l8\n&#34;,&#34;stream&#34;:&#34;stderr&#34;,&#34;time&#34;:&#34;2023-03-13T09:34:32.143580888Z&#34;}
+</span></span></span><span class=line><span class=cl><span class=c1></span>		<span class=nx>klog</span><span class=p>.</span><span class=nf>V</span><span class=p>(</span><span class=mi>0</span><span class=p>).</span><span class=nf>Infof</span><span class=p>(</span><span class=s>&#34;NoExecuteTaintManager is deleting Pod: %v&#34;</span><span class=p>,</span> <span class=nx>args</span><span class=p>.</span><span class=nx>NamespacedName</span><span class=p>.</span><span class=nf>String</span><span class=p>())</span>
+</span></span><span class=line><span class=cl>		<span class=k>if</span> <span class=nx>emitEventFunc</span> <span class=o>!=</span> <span class=kc>nil</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>			<span class=nf>emitEventFunc</span><span class=p>(</span><span class=nx>args</span><span class=p>.</span><span class=nx>NamespacedName</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>		<span class=p>}</span>
+</span></span><span class=line><span class=cl>		<span class=kd>var</span> <span class=nx>err</span> <span class=kt>error</span>
+</span></span><span class=line><span class=cl>		<span class=k>for</span> <span class=nx>i</span> <span class=o>:=</span> <span class=mi>0</span><span class=p>;</span> <span class=nx>i</span> <span class=p>&lt;</span> <span class=nx>retries</span><span class=p>;</span> <span class=nx>i</span><span class=o>++</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>			<span class=nx>err</span> <span class=p>=</span> <span class=nx>c</span><span class=p>.</span><span class=nf>CoreV1</span><span class=p>().</span><span class=nf>Pods</span><span class=p>(</span><span class=nx>ns</span><span class=p>).</span><span class=nf>Delete</span><span class=p>(</span><span class=nx>context</span><span class=p>.</span><span class=nf>TODO</span><span class=p>(),</span> <span class=nx>name</span><span class=p>,</span> <span class=nx>metav1</span><span class=p>.</span><span class=nx>DeleteOptions</span><span class=p>{})</span>
+</span></span><span class=line><span class=cl>			<span class=k>if</span> <span class=nx>err</span> <span class=o>==</span> <span class=kc>nil</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>				<span class=k>break</span>
+</span></span><span class=line><span class=cl>			<span class=p>}</span>
+</span></span><span class=line><span class=cl>			<span class=nx>time</span><span class=p>.</span><span class=nf>Sleep</span><span class=p>(</span><span class=mi>10</span> <span class=o>*</span> <span class=nx>time</span><span class=p>.</span><span class=nx>Millisecond</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>		<span class=p>}</span>
+</span></span><span class=line><span class=cl>		<span class=k>return</span> <span class=nx>err</span>
+</span></span><span class=line><span class=cl>	<span class=p>}</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span></code></pre></td></tr></table></div></div><h4 id=run-执行taint逻辑>Run 执行taint逻辑</h4><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span><span class=lnt>22
+</span><span class=lnt>23
+</span><span class=lnt>24
+</span><span class=lnt>25
+</span><span class=lnt>26
+</span><span class=lnt>27
+</span><span class=lnt>28
+</span><span class=lnt>29
+</span><span class=lnt>30
+</span><span class=lnt>31
+</span><span class=lnt>32
+</span><span class=lnt>33
+</span><span class=lnt>34
+</span><span class=lnt>35
+</span><span class=lnt>36
+</span><span class=lnt>37
+</span><span class=lnt>38
+</span><span class=lnt>39
+</span><span class=lnt>40
+</span><span class=lnt>41
+</span><span class=lnt>42
+</span><span class=lnt>43
+</span><span class=lnt>44
+</span><span class=lnt>45
+</span><span class=lnt>46
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=kd>func</span> <span class=p>(</span><span class=nx>tc</span> <span class=o>*</span><span class=nx>NoExecuteTaintManager</span><span class=p>)</span> <span class=nf>Run</span><span class=p>(</span><span class=nx>stopCh</span> <span class=o>&lt;-</span><span class=kd>chan</span> <span class=kd>struct</span><span class=p>{}){</span>
+</span></span><span class=line><span class=cl>    <span class=c1>// 更新node的状态，处理node相关逻辑 按下不表
+</span></span></span><span class=line><span class=cl><span class=c1></span>	<span class=k>go</span> <span class=kd>func</span><span class=p>(</span><span class=nx>stopCh</span> <span class=o>&lt;-</span><span class=kd>chan</span> <span class=kd>struct</span><span class=p>{})</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>		<span class=k>for</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>			<span class=nx>item</span><span class=p>,</span> <span class=nx>shutdown</span> <span class=o>:=</span> <span class=nx>tc</span><span class=p>.</span><span class=nx>nodeUpdateQueue</span><span class=p>.</span><span class=nf>Get</span><span class=p>()</span>
+</span></span><span class=line><span class=cl>			<span class=k>if</span> <span class=nx>shutdown</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>				<span class=k>break</span>
+</span></span><span class=line><span class=cl>			<span class=p>}</span>
+</span></span><span class=line><span class=cl>			<span class=nx>nodeUpdate</span> <span class=o>:=</span> <span class=nx>item</span><span class=p>.(</span><span class=nx>nodeUpdateItem</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>			<span class=nx>hash</span> <span class=o>:=</span> <span class=nf>hash</span><span class=p>(</span><span class=nx>nodeUpdate</span><span class=p>.</span><span class=nx>nodeName</span><span class=p>,</span> <span class=nx>UpdateWorkerSize</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>			<span class=k>select</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>			<span class=k>case</span> <span class=o>&lt;-</span><span class=nx>stopCh</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>				<span class=nx>tc</span><span class=p>.</span><span class=nx>nodeUpdateQueue</span><span class=p>.</span><span class=nf>Done</span><span class=p>(</span><span class=nx>item</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>				<span class=k>return</span>
+</span></span><span class=line><span class=cl>			<span class=k>case</span> <span class=nx>tc</span><span class=p>.</span><span class=nx>nodeUpdateChannels</span><span class=p>[</span><span class=nx>hash</span><span class=p>]</span> <span class=o>&lt;-</span> <span class=nx>nodeUpdate</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>				<span class=c1>// tc.nodeUpdateQueue.Done is called by the nodeUpdateChannels worker
+</span></span></span><span class=line><span class=cl><span class=c1></span>			<span class=p>}</span>
+</span></span><span class=line><span class=cl>		<span class=p>}</span>
+</span></span><span class=line><span class=cl>	<span class=p>}(</span><span class=nx>stopCh</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>    <span class=c1>// 处理pod逻辑, podUpdateQueue中的数据从哪里来，之后分析，这里暂且认为podUpdateQueue中已经有数据
+</span></span></span><span class=line><span class=cl><span class=c1></span>    <span class=k>go</span> <span class=kd>func</span><span class=p>(</span><span class=nx>stopCh</span> <span class=o>&lt;-</span><span class=kd>chan</span> <span class=kd>struct</span><span class=p>{})</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>		<span class=k>for</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>			<span class=nx>item</span><span class=p>,</span> <span class=nx>shutdown</span> <span class=o>:=</span> <span class=nx>tc</span><span class=p>.</span><span class=nx>podUpdateQueue</span><span class=p>.</span><span class=nf>Get</span><span class=p>()</span>
+</span></span><span class=line><span class=cl>			<span class=k>if</span> <span class=nx>shutdown</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>				<span class=k>break</span>
+</span></span><span class=line><span class=cl>			<span class=p>}</span>
+</span></span><span class=line><span class=cl>			<span class=nx>podUpdate</span> <span class=o>:=</span> <span class=nx>item</span><span class=p>.(</span><span class=nx>podUpdateItem</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>			<span class=nx>hash</span> <span class=o>:=</span> <span class=nf>hash</span><span class=p>(</span><span class=nx>podUpdate</span><span class=p>.</span><span class=nx>nodeName</span><span class=p>,</span> <span class=nx>UpdateWorkerSize</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>			<span class=k>select</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>			<span class=k>case</span> <span class=o>&lt;-</span><span class=nx>stopCh</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>				<span class=nx>tc</span><span class=p>.</span><span class=nx>podUpdateQueue</span><span class=p>.</span><span class=nf>Done</span><span class=p>(</span><span class=nx>item</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>				<span class=k>return</span>
+</span></span><span class=line><span class=cl>			<span class=k>case</span> <span class=nx>tc</span><span class=p>.</span><span class=nx>podUpdateChannels</span><span class=p>[</span><span class=nx>hash</span><span class=p>]</span> <span class=o>&lt;-</span> <span class=nx>podUpdate</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>				<span class=c1>// tc.podUpdateQueue.Done is called by the podUpdateChannels worker
+</span></span></span><span class=line><span class=cl><span class=c1></span>			<span class=p>}</span>
+</span></span><span class=line><span class=cl>		<span class=p>}</span>
+</span></span><span class=line><span class=cl>	<span class=p>}(</span><span class=nx>stopCh</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>    <span class=c1>// 根据配置的worker数量，启动多个worker
+</span></span></span><span class=line><span class=cl><span class=c1></span>    <span class=k>for</span> <span class=nx>i</span> <span class=o>:=</span> <span class=mi>0</span><span class=p>;</span> <span class=nx>i</span> <span class=p>&lt;</span> <span class=nx>UpdateWorkerSize</span><span class=p>;</span> <span class=nx>i</span><span class=o>++</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>		<span class=k>go</span> <span class=nx>tc</span><span class=p>.</span><span class=nf>worker</span><span class=p>(</span><span class=nx>i</span><span class=p>,</span> <span class=nx>wg</span><span class=p>.</span><span class=nx>Done</span><span class=p>,</span> <span class=nx>stopCh</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>	<span class=p>}</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span></code></pre></td></tr></table></div></div><p>woker负责同时消费 nodeUpdateChannels 和 podUpdateChannels ，因为node变更，会影响pod的分布：驱逐、分配、新建等等
+所以需要先将 nodeUpdateChannels 中的数据消费完成后，才会处理 podUpdateChannels 的数据。</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span><span class=lnt>22
+</span><span class=lnt>23
+</span><span class=lnt>24
+</span><span class=lnt>25
+</span><span class=lnt>26
+</span><span class=lnt>27
+</span><span class=lnt>28
+</span><span class=lnt>29
+</span><span class=lnt>30
+</span><span class=lnt>31
+</span><span class=lnt>32
+</span><span class=lnt>33
+</span><span class=lnt>34
+</span><span class=lnt>35
+</span><span class=lnt>36
+</span><span class=lnt>37
+</span><span class=lnt>38
+</span><span class=lnt>39
+</span><span class=lnt>40
+</span><span class=lnt>41
+</span><span class=lnt>42
+</span><span class=lnt>43
+</span><span class=lnt>44
+</span><span class=lnt>45
+</span><span class=lnt>46
+</span><span class=lnt>47
+</span><span class=lnt>48
+</span><span class=lnt>49
+</span><span class=lnt>50
+</span><span class=lnt>51
+</span><span class=lnt>52
+</span><span class=lnt>53
+</span><span class=lnt>54
+</span><span class=lnt>55
+</span><span class=lnt>56
+</span><span class=lnt>57
+</span><span class=lnt>58
+</span><span class=lnt>59
+</span><span class=lnt>60
+</span><span class=lnt>61
+</span><span class=lnt>62
+</span><span class=lnt>63
+</span><span class=lnt>64
+</span><span class=lnt>65
+</span><span class=lnt>66
+</span><span class=lnt>67
+</span><span class=lnt>68
+</span><span class=lnt>69
+</span><span class=lnt>70
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=kd>func</span> <span class=p>(</span><span class=nx>tc</span> <span class=o>*</span><span class=nx>NoExecuteTaintManager</span><span class=p>)</span> <span class=nf>worker</span><span class=p>(</span><span class=nx>worker</span> <span class=kt>int</span><span class=p>,</span> <span class=nx>done</span> <span class=kd>func</span><span class=p>(),</span> <span class=nx>stopCh</span> <span class=o>&lt;-</span><span class=kd>chan</span> <span class=kd>struct</span><span class=p>{})</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>	<span class=k>defer</span> <span class=nf>done</span><span class=p>()</span>
+</span></span><span class=line><span class=cl>	<span class=k>for</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>		<span class=k>select</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>		<span class=k>case</span> <span class=o>&lt;-</span><span class=nx>stopCh</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>			<span class=k>return</span>
+</span></span><span class=line><span class=cl>		<span class=k>case</span> <span class=nx>nodeUpdate</span> <span class=o>:=</span> <span class=o>&lt;-</span><span class=nx>tc</span><span class=p>.</span><span class=nx>nodeUpdateChannels</span><span class=p>[</span><span class=nx>worker</span><span class=p>]:</span>
+</span></span><span class=line><span class=cl>			<span class=nx>tc</span><span class=p>.</span><span class=nf>handleNodeUpdate</span><span class=p>(</span><span class=nx>nodeUpdate</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>			<span class=nx>tc</span><span class=p>.</span><span class=nx>nodeUpdateQueue</span><span class=p>.</span><span class=nf>Done</span><span class=p>(</span><span class=nx>nodeUpdate</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>		<span class=k>case</span> <span class=nx>podUpdate</span> <span class=o>:=</span> <span class=o>&lt;-</span><span class=nx>tc</span><span class=p>.</span><span class=nx>podUpdateChannels</span><span class=p>[</span><span class=nx>worker</span><span class=p>]:</span>
+</span></span><span class=line><span class=cl>		<span class=nx>priority</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>			<span class=k>for</span> <span class=p>{</span> <span class=c1>// 直到 nodeUpdateChannels 处理完成
+</span></span></span><span class=line><span class=cl><span class=c1></span>				<span class=k>select</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>				<span class=k>case</span> <span class=nx>nodeUpdate</span> <span class=o>:=</span> <span class=o>&lt;-</span><span class=nx>tc</span><span class=p>.</span><span class=nx>nodeUpdateChannels</span><span class=p>[</span><span class=nx>worker</span><span class=p>]:</span>
+</span></span><span class=line><span class=cl>					<span class=nx>tc</span><span class=p>.</span><span class=nf>handleNodeUpdate</span><span class=p>(</span><span class=nx>nodeUpdate</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>					<span class=nx>tc</span><span class=p>.</span><span class=nx>nodeUpdateQueue</span><span class=p>.</span><span class=nf>Done</span><span class=p>(</span><span class=nx>nodeUpdate</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>				<span class=k>default</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>					<span class=k>break</span> <span class=nx>priority</span>
+</span></span><span class=line><span class=cl>				<span class=p>}</span>
+</span></span><span class=line><span class=cl>			<span class=p>}</span>
+</span></span><span class=line><span class=cl>			<span class=nx>tc</span><span class=p>.</span><span class=nf>handlePodUpdate</span><span class=p>(</span><span class=nx>podUpdate</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>			<span class=nx>tc</span><span class=p>.</span><span class=nx>podUpdateQueue</span><span class=p>.</span><span class=nf>Done</span><span class=p>(</span><span class=nx>podUpdate</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>		<span class=p>}</span>
+</span></span><span class=line><span class=cl>	<span class=p>}</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1>// 处理pod逻辑
+</span></span></span><span class=line><span class=cl><span class=c1>// getPod 实现：
+</span></span></span><span class=line><span class=cl><span class=c1></span><span class=nx>podGetter</span> <span class=o>:=</span> <span class=kd>func</span><span class=p>(</span><span class=nx>name</span><span class=p>,</span> <span class=nx>namespace</span> <span class=kt>string</span><span class=p>)</span> <span class=p>(</span><span class=o>*</span><span class=nx>v1</span><span class=p>.</span><span class=nx>Pod</span><span class=p>,</span> <span class=kt>error</span><span class=p>)</span> <span class=p>{</span> <span class=k>return</span> <span class=nx>nc</span><span class=p>.</span><span class=nx>podLister</span><span class=p>.</span><span class=nf>Pods</span><span class=p>(</span><span class=nx>namespace</span><span class=p>).</span><span class=nf>Get</span><span class=p>(</span><span class=nx>name</span><span class=p>)</span> <span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=kd>func</span> <span class=p>(</span><span class=nx>tc</span> <span class=o>*</span><span class=nx>NoExecuteTaintManager</span><span class=p>)</span> <span class=nf>handlePodUpdate</span><span class=p>(</span><span class=nx>podUpdate</span> <span class=nx>podUpdateItem</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=nx>pod</span><span class=p>,</span> <span class=nx>err</span> <span class=o>:=</span> <span class=nx>tc</span><span class=p>.</span><span class=nf>getPod</span><span class=p>(</span><span class=nx>podUpdate</span><span class=p>.</span><span class=nx>podName</span><span class=p>,</span> <span class=nx>podUpdate</span><span class=p>.</span><span class=nx>podNamespace</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>    <span class=nx>taints</span><span class=p>,</span> <span class=nx>ok</span> <span class=o>:=</span> <span class=kd>func</span><span class=p>()</span> <span class=p>([]</span><span class=nx>v1</span><span class=p>.</span><span class=nx>Taint</span><span class=p>,</span> <span class=kt>bool</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>		<span class=nx>tc</span><span class=p>.</span><span class=nx>taintedNodesLock</span><span class=p>.</span><span class=nf>Lock</span><span class=p>()</span>
+</span></span><span class=line><span class=cl>		<span class=k>defer</span> <span class=nx>tc</span><span class=p>.</span><span class=nx>taintedNodesLock</span><span class=p>.</span><span class=nf>Unlock</span><span class=p>()</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>        <span class=c1>// pod中的nodeName是否在taintedNodes中，如果在开始干掉pod
+</span></span></span><span class=line><span class=cl><span class=c1></span>        <span class=c1>// node状态变更，会维护 taintedNodes
+</span></span></span><span class=line><span class=cl><span class=c1></span>		<span class=nx>taints</span><span class=p>,</span> <span class=nx>ok</span> <span class=o>:=</span> <span class=nx>tc</span><span class=p>.</span><span class=nx>taintedNodes</span><span class=p>[</span><span class=nx>nodeName</span><span class=p>]</span>  
+</span></span><span class=line><span class=cl>		<span class=k>return</span> <span class=nx>taints</span><span class=p>,</span> <span class=nx>ok</span>
+</span></span><span class=line><span class=cl>	<span class=p>}()</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>    <span class=nx>tc</span><span class=p>.</span><span class=nf>processPodOnNode</span><span class=p>(</span><span class=nx>podNamespacedName</span><span class=p>,</span> <span class=nx>nodeName</span><span class=p>,</span> <span class=nx>pod</span><span class=p>.</span><span class=nx>Spec</span><span class=p>.</span><span class=nx>Tolerations</span><span class=p>,</span> <span class=nx>taints</span><span class=p>,</span> <span class=nx>time</span><span class=p>.</span><span class=nf>Now</span><span class=p>())</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=kd>func</span> <span class=p>(</span><span class=nx>tc</span> <span class=o>*</span><span class=nx>NoExecuteTaintManager</span><span class=p>)</span> <span class=nf>processPodOnNode</span><span class=p>(</span>
+</span></span><span class=line><span class=cl>	<span class=nx>podNamespacedName</span> <span class=nx>types</span><span class=p>.</span><span class=nx>NamespacedName</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>	<span class=nx>nodeName</span> <span class=kt>string</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>	<span class=nx>tolerations</span> <span class=p>[]</span><span class=nx>v1</span><span class=p>.</span><span class=nx>Toleration</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>	<span class=nx>taints</span> <span class=p>[]</span><span class=nx>v1</span><span class=p>.</span><span class=nx>Taint</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>	<span class=nx>now</span> <span class=nx>time</span><span class=p>.</span><span class=nx>Time</span><span class=p>,</span>
+</span></span><span class=line><span class=cl><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=k>if</span> <span class=nb>len</span><span class=p>(</span><span class=nx>taints</span><span class=p>)</span> <span class=o>==</span> <span class=mi>0</span> <span class=p>{</span>  <span class=c1>//所以如果node不在污点里，这里直接返回了
+</span></span></span><span class=line><span class=cl><span class=c1></span>		<span class=nx>tc</span><span class=p>.</span><span class=nf>cancelWorkWithEvent</span><span class=p>(</span><span class=nx>podNamespacedName</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>	<span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>    <span class=c1>// ... 
+</span></span></span><span class=line><span class=cl><span class=c1></span>    <span class=c1>// 判断驱逐时间
+</span></span></span><span class=line><span class=cl><span class=c1></span>    <span class=c1>// 参考上篇中的 defaultUnreachableTolerationSeconds = 300 秒
+</span></span></span><span class=line><span class=cl><span class=c1></span>    <span class=nx>minTolerationTime</span> <span class=o>:=</span> <span class=nf>getMinTolerationTime</span><span class=p>(</span><span class=nx>usedTolerations</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=nx>startTime</span> <span class=p>=</span> <span class=nx>scheduledEviction</span><span class=p>.</span><span class=nx>CreatedAt</span>
+</span></span><span class=line><span class=cl>	<span class=k>if</span> <span class=nx>startTime</span><span class=p>.</span><span class=nf>Add</span><span class=p>(</span><span class=nx>minTolerationTime</span><span class=p>).</span><span class=nf>Before</span><span class=p>(</span><span class=nx>triggerTime</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>			<span class=k>return</span>
+</span></span><span class=line><span class=cl>	<span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>    <span class=c1>// 需要驱逐，加入队列
+</span></span></span><span class=line><span class=cl><span class=c1></span>    <span class=nx>tc</span><span class=p>.</span><span class=nx>taintEvictionQueue</span><span class=p>.</span><span class=nf>AddWork</span><span class=p>(</span><span class=nf>NewWorkArgs</span><span class=p>(</span><span class=nx>podNamespacedName</span><span class=p>.</span><span class=nx>Name</span><span class=p>,</span> <span class=nx>podNamespacedName</span><span class=p>.</span><span class=nx>Namespace</span><span class=p>),</span> <span class=nx>startTime</span><span class=p>,</span> <span class=nx>triggerTime</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span></code></pre></td></tr></table></div></div><p>AddWork</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=c1>// AddWork adds a work to the WorkerQueue which will be executed not earlier than `fireAt`.
+</span></span></span><span class=line><span class=cl><span class=c1></span><span class=kd>func</span> <span class=p>(</span><span class=nx>q</span> <span class=o>*</span><span class=nx>TimedWorkerQueue</span><span class=p>)</span> <span class=nf>AddWork</span><span class=p>(</span><span class=nx>args</span> <span class=o>*</span><span class=nx>WorkArgs</span><span class=p>,</span> <span class=nx>createdAt</span> <span class=nx>time</span><span class=p>.</span><span class=nx>Time</span><span class=p>,</span> <span class=nx>fireAt</span> <span class=nx>time</span><span class=p>.</span><span class=nx>Time</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>	<span class=nx>key</span> <span class=o>:=</span> <span class=nx>args</span><span class=p>.</span><span class=nf>KeyFromWorkArgs</span><span class=p>()</span>
+</span></span><span class=line><span class=cl>	<span class=nx>klog</span><span class=p>.</span><span class=nf>V</span><span class=p>(</span><span class=mi>4</span><span class=p>).</span><span class=nf>Infof</span><span class=p>(</span><span class=s>&#34;Adding TimedWorkerQueue item %v at %v to be fired at %v&#34;</span><span class=p>,</span> <span class=nx>key</span><span class=p>,</span> <span class=nx>createdAt</span><span class=p>,</span> <span class=nx>fireAt</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>	<span class=nx>q</span><span class=p>.</span><span class=nf>Lock</span><span class=p>()</span>
+</span></span><span class=line><span class=cl>	<span class=k>defer</span> <span class=nx>q</span><span class=p>.</span><span class=nf>Unlock</span><span class=p>()</span>
+</span></span><span class=line><span class=cl>	<span class=k>if</span> <span class=nx>_</span><span class=p>,</span> <span class=nx>exists</span> <span class=o>:=</span> <span class=nx>q</span><span class=p>.</span><span class=nx>workers</span><span class=p>[</span><span class=nx>key</span><span class=p>];</span> <span class=nx>exists</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>		<span class=nx>klog</span><span class=p>.</span><span class=nf>Warningf</span><span class=p>(</span><span class=s>&#34;Trying to add already existing work for %+v. Skipping.&#34;</span><span class=p>,</span> <span class=nx>args</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>		<span class=k>return</span>
+</span></span><span class=line><span class=cl>	<span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>    <span class=c1>// CreateWorker直接调用了 q.getWrappedWorkerFunc(key)
+</span></span></span><span class=line><span class=cl><span class=c1></span>    <span class=c1>// 其中的 workFunc 就是在初始化时，赋值的函数：deletePodHandler()
+</span></span></span><span class=line><span class=cl><span class=c1></span>	<span class=nx>worker</span> <span class=o>:=</span> <span class=nf>CreateWorker</span><span class=p>(</span><span class=nx>args</span><span class=p>,</span> <span class=nx>createdAt</span><span class=p>,</span> <span class=nx>fireAt</span><span class=p>,</span> <span class=nx>q</span><span class=p>.</span><span class=nf>getWrappedWorkerFunc</span><span class=p>(</span><span class=nx>key</span><span class=p>))</span>
+</span></span><span class=line><span class=cl>	<span class=nx>q</span><span class=p>.</span><span class=nx>workers</span><span class=p>[</span><span class=nx>key</span><span class=p>]</span> <span class=p>=</span> <span class=nx>worker</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span></code></pre></td></tr></table></div></div><h4 id=podupdatequeue-add在哪里>podUpdateQueue Add在哪里</h4><p>到这里还要明确一个问题，podUpdateQueue中的数据是谁set进去的？<br>controller在初始化时，会初始化一个NodeLifecycleController，new NodeLifecycleController 之后，也会调用NodeLifecycleController的Run方法。</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span><span class=lnt>22
+</span><span class=lnt>23
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=kd>func</span> <span class=nf>NewNodeLifecycleController</span><span class=p>(){</span>
+</span></span><span class=line><span class=cl>    <span class=nx>podInformer</span><span class=p>.</span><span class=nf>Informer</span><span class=p>().</span><span class=nf>AddEventHandler</span><span class=p>(</span><span class=nx>cache</span><span class=p>.</span><span class=nx>ResourceEventHandlerFuncs</span><span class=p>{</span>
+</span></span><span class=line><span class=cl>		<span class=nx>AddFunc</span><span class=p>:</span> <span class=kd>func</span><span class=p>(</span><span class=nx>obj</span> <span class=kd>interface</span><span class=p>{})</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>			<span class=nx>pod</span> <span class=o>:=</span> <span class=nx>obj</span><span class=p>.(</span><span class=o>*</span><span class=nx>v1</span><span class=p>.</span><span class=nx>Pod</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>			<span class=nx>nc</span><span class=p>.</span><span class=nf>podUpdated</span><span class=p>(</span><span class=kc>nil</span><span class=p>,</span> <span class=nx>pod</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>			<span class=k>if</span> <span class=nx>nc</span><span class=p>.</span><span class=nx>taintManager</span> <span class=o>!=</span> <span class=kc>nil</span> <span class=p>{</span> 
+</span></span><span class=line><span class=cl>				<span class=nx>nc</span><span class=p>.</span><span class=nx>taintManager</span><span class=p>.</span><span class=nf>PodUpdated</span><span class=p>(</span><span class=kc>nil</span><span class=p>,</span> <span class=nx>pod</span><span class=p>)</span> <span class=c1>// 调用NoExecuteTaintManager 中的 PodUpdated
+</span></span></span><span class=line><span class=cl><span class=c1></span>			<span class=p>}</span>
+</span></span><span class=line><span class=cl>		<span class=p>},</span>
+</span></span><span class=line><span class=cl>		<span class=nx>UpdateFunc</span><span class=p>:</span> <span class=kd>func</span><span class=p>(</span><span class=nx>prev</span><span class=p>,</span> <span class=nx>obj</span> <span class=kd>interface</span><span class=p>{})</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>			<span class=nx>prevPod</span> <span class=o>:=</span> <span class=nx>prev</span><span class=p>.(</span><span class=o>*</span><span class=nx>v1</span><span class=p>.</span><span class=nx>Pod</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>			<span class=nx>newPod</span> <span class=o>:=</span> <span class=nx>obj</span><span class=p>.(</span><span class=o>*</span><span class=nx>v1</span><span class=p>.</span><span class=nx>Pod</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>			<span class=nx>nc</span><span class=p>.</span><span class=nf>podUpdated</span><span class=p>(</span><span class=nx>prevPod</span><span class=p>,</span> <span class=nx>newPod</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>			<span class=k>if</span> <span class=nx>nc</span><span class=p>.</span><span class=nx>taintManager</span> <span class=o>!=</span> <span class=kc>nil</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>				<span class=nx>nc</span><span class=p>.</span><span class=nx>taintManager</span><span class=p>.</span><span class=nf>PodUpdated</span><span class=p>(</span><span class=nx>prevPod</span><span class=p>,</span> <span class=nx>newPod</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>			<span class=p>}</span>
+</span></span><span class=line><span class=cl>		<span class=p>}</span>
+</span></span><span class=line><span class=cl>        <span class=c1>// ...
+</span></span></span><span class=line><span class=cl><span class=c1></span>    <span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>    <span class=c1>// 初始化 NoExecuteTaintManager
+</span></span></span><span class=line><span class=cl><span class=c1></span>    <span class=nx>nc</span><span class=p>.</span><span class=nx>taintManager</span> <span class=p>=</span> <span class=nx>scheduler</span><span class=p>.</span><span class=nf>NewNoExecuteTaintManager</span><span class=p>(</span><span class=nx>kubeClient</span><span class=p>,</span> <span class=nx>podGetter</span><span class=p>,</span> <span class=nx>nodeGetter</span><span class=p>,</span> <span class=nx>nc</span><span class=p>.</span><span class=nx>getPodsAssignedToNode</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span></code></pre></td></tr></table></div></div><p>PodUpdated 负责将pod 加入到 podUpdateQueue 中</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span><span class=lnt>5
+</span><span class=lnt>6
+</span><span class=lnt>7
+</span><span class=lnt>8
+</span><span class=lnt>9
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=kd>func</span> <span class=p>(</span><span class=nx>tc</span> <span class=o>*</span><span class=nx>NoExecuteTaintManager</span><span class=p>)</span> <span class=nf>PodUpdated</span><span class=p>(</span><span class=nx>oldPod</span> <span class=o>*</span><span class=nx>v1</span><span class=p>.</span><span class=nx>Pod</span><span class=p>,</span> <span class=nx>newPod</span> <span class=o>*</span><span class=nx>v1</span><span class=p>.</span><span class=nx>Pod</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>    <span class=c1>// 如果podtoleration没有变化，则忽略这个pod，不会被驱逐
+</span></span></span><span class=line><span class=cl><span class=c1></span>    <span class=k>if</span> <span class=nx>oldPod</span> <span class=o>!=</span> <span class=kc>nil</span> <span class=o>&amp;&amp;</span> <span class=nx>newPod</span> <span class=o>!=</span> <span class=kc>nil</span> <span class=o>&amp;&amp;</span> <span class=nx>helper</span><span class=p>.</span><span class=nx>Semantic</span><span class=p>.</span><span class=nf>DeepEqual</span><span class=p>(</span><span class=nx>oldTolerations</span><span class=p>,</span> <span class=nx>newTolerations</span><span class=p>)</span> <span class=o>&amp;&amp;</span> <span class=nx>oldPod</span><span class=p>.</span><span class=nx>Spec</span><span class=p>.</span><span class=nx>NodeName</span> <span class=o>==</span> <span class=nx>newPod</span><span class=p>.</span><span class=nx>Spec</span><span class=p>.</span><span class=nx>NodeName</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>		<span class=k>return</span>
+</span></span><span class=line><span class=cl>	<span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>    <span class=nx>tc</span><span class=p>.</span><span class=nx>podUpdateQueue</span><span class=p>.</span><span class=nf>Add</span><span class=p>(</span><span class=nx>updateItem</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span></code></pre></td></tr></table></div></div></div><footer class=post-footer><div class=post-tags><a href=/tags/kubernetes/>kubernetes</a>
+<a href=/tags/k8s/>k8s</a></div><nav class=post-nav><a class=next href=/post/k8s-soucecode-controller-deployment-create/><span class="next-text nav-default">K8s 源码分析 Deployment 和ReplicaSet 的创建流程</span>
+<span class="next-text nav-mobile">Next</span>
+<i class="iconfont icon-right"></i></a></nav></footer></article></div><div id=vcomments></div><script src=//cdn1.lncld.net/static/js/3.0.4/av-min.js></script>
+<script src=//unpkg.com/valine/dist/Valine.min.js></script>
+<script type=text/javascript>new Valine({el:"#vcomments",appId:"fb6qCfVYGmIrC87K3STOS3V8-gzGzoHsz",appKey:"FilghKK7HHC4hMQHxhR90dDE",notify:!1,verify:!1,avatar:"mm",placeholder:"说点什么吧...",visitor:!1})</script></div></main><footer id=footer class=footer><div class=social-links><a href=mailto:hanglinux@163.com class="iconfont icon-email" title=email></a>
+<a href=https://github.com/fridayhub class="iconfont icon-github" title=github></a>
+<a href=https://fridayhub.github.io/index.xml type=application/rss+xml class="iconfont icon-rss" title=rss></a></div><div class=copyright><span class=power-by>Powered by <a class=hexo-link href=https://gohugo.io>Hugo</a></span>
+<span class=division>|</span>
+<span class=theme-info>Theme -
+<a class=theme-link href=https://github.com/olOwOlo/hugo-theme-even>Even</a></span><div class=busuanzi-footer><span id=busuanzi_container_site_pv>site pv: <span id=busuanzi_value_site_pv><img src=/img/spinner.svg alt=spinner.svg></span></span>
+<span class=division>|</span>
+<span id=busuanzi_container_site_uv>site uv: <span id=busuanzi_value_site_uv><img src=/img/spinner.svg alt=spinner.svg></span></span></div><span class=copyright-year>&copy;
+2017 -
+2023
+<span class=heart><i class="iconfont icon-heart"></i></span>
+<span class=author>friday</span></span></div></footer><div class=back-to-top id=back-to-top><i class="iconfont icon-up"></i></div></div><script src=https://cdn.jsdelivr.net/npm/jquery@3.2.1/dist/jquery.min.js integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin=anonymous></script>
+<script src=https://cdn.jsdelivr.net/npm/slideout@1.0.1/dist/slideout.min.js integrity="sha256-t+zJ/g8/KXIJMjSVQdnibt4dlaDxc9zXr/9oNPeWqdg=" crossorigin=anonymous></script>
+<script src=https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.js integrity="sha256-XVLffZaxoWfGUEbdzuLi7pwaUJv1cecsQJQqGLe7axY=" crossorigin=anonymous></script>
+<script type=text/javascript src=/js/main.min.1c70606d1b733282f06230615f5561b5894924b6f9930ba2ab99cf1254f75a1a.js></script></body></html>
