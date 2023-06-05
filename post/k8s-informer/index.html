@@ -909,7 +909,10 @@ Nodes()是初始化了一个默认的NodeInformer<br>Lister() 则紧接着调用
 </span></span></span><span class=line><span class=cl><span class=c1></span><span class=kd>func</span> <span class=p>(</span><span class=nx>sw</span> <span class=o>*</span><span class=nx>StreamWatcher</span><span class=p>)</span> <span class=nf>ResultChan</span><span class=p>()</span> <span class=o>&lt;-</span><span class=kd>chan</span> <span class=nx>Event</span> <span class=p>{</span>
 </span></span><span class=line><span class=cl>	<span class=k>return</span> <span class=nx>sw</span><span class=p>.</span><span class=nx>result</span>
 </span></span><span class=line><span class=cl><span class=p>}</span>
-</span></span></code></pre></td></tr></table></div></div><p><strong>ResultChan() 对应的就是 Reflector.watchHandler中的&lt;-w.ResultChan()。</strong></p></div><footer class=post-footer><div class=post-tags><a href=/tags/k8s/>k8s</a></div><nav class=post-nav><a class=next href=/post/k8s-soucecode-pod-create-gc/><span class="next-text nav-default">K8s 源码分析 Pod的创建和驱逐</span>
+</span></span></code></pre></td></tr></table></div></div><p><strong>ResultChan() 对应的就是 Reflector.watchHandler中的&lt;-w.ResultChan()。</strong></p></div><footer class=post-footer><div class=post-tags><a href=/tags/k8s/>k8s</a></div><nav class=post-nav><a class=prev href=/post/blockchain-general-knowledge/><i class="iconfont icon-left"></i>
+<span class="prev-text nav-default">Blockchain General Knowledge</span>
+<span class="prev-text nav-mobile">Prev</span></a>
+<a class=next href=/post/k8s-soucecode-pod-create-gc/><span class="next-text nav-default">K8s 源码分析 Pod的创建和驱逐</span>
 <span class="next-text nav-mobile">Next</span>
 <i class="iconfont icon-right"></i></a></nav></footer></article></div><div id=vcomments></div><script src=//cdn1.lncld.net/static/js/3.0.4/av-min.js></script>
 <script src=//unpkg.com/valine/dist/Valine.min.js></script>
