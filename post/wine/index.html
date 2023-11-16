@@ -1,0 +1,261 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta http-equiv=x-ua-compatible content="IE=edge,chrome=1"><title>Wine 安装使用小结 - Friday - Here I record my experience</title><meta name=renderer content="webkit"><meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1"><meta http-equiv=cache-control content="no-transform"><meta http-equiv=cache-control content="no-siteapp"><meta name=theme-color content="#f8f5ec"><meta name=msapplication-navbutton-color content="#f8f5ec"><meta name=apple-mobile-web-app-capable content="yes"><meta name=apple-mobile-web-app-status-bar-style content="#f8f5ec"><meta name=author content="friday"><meta name=description content="wine"><meta name=keywords content="linux wine"><meta name=generator content="Hugo 0.110.0 with theme even"><link rel=canonical href=https://fridayhub.github.io/post/wine/><link rel=apple-touch-icon sizes=180x180 href=/apple-touch-icon.png><link rel=icon type=image/png sizes=32x32 href=/favicon-32x32.png><link rel=icon type=image/png sizes=16x16 href=/favicon-16x16.png><link rel=manifest href=/manifest.json><link rel=mask-icon href=/safari-pinned-tab.svg color=#5bbad5><script async src=//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js></script><meta name=referrer content="no-referrer-when-downgrade"><link href=/sass/main.min.c2803d17ea439bb194b104ce262b40c9118b45b7b108e27dadf43e96dd6664a3.css rel=stylesheet><link rel=stylesheet href=https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.css integrity="sha256-7TyXnr2YU040zfSP+rEcz29ggW4j56/ujTPwjMzyqFY=" crossorigin=anonymous><meta property="og:title" content="Wine 安装使用小结"><meta property="og:description" content="wine"><meta property="og:type" content="article"><meta property="og:url" content="https://fridayhub.github.io/post/wine/"><meta property="article:section" content="post"><meta property="article:published_time" content="2023-11-16T10:49:49+08:00"><meta property="article:modified_time" content="2023-11-16T10:49:49+08:00"><meta itemprop=name content="Wine 安装使用小结"><meta itemprop=description content="wine"><meta itemprop=datePublished content="2023-11-16T10:49:49+08:00"><meta itemprop=dateModified content="2023-11-16T10:49:49+08:00"><meta itemprop=wordCount content="1052"><meta itemprop=keywords content="wine,"><meta name=twitter:card content="summary"><meta name=twitter:title content="Wine 安装使用小结"><meta name=twitter:description content="wine"><!--[if lte IE 9]><script src=https://cdnjs.cloudflare.com/ajax/libs/classlist/1.1.20170427/classList.min.js></script><![endif]--><!--[if lt IE 9]><script src=https://cdn.jsdelivr.net/npm/html5shiv@3.7.3/dist/html5shiv.min.js></script>
+<script src=https://cdn.jsdelivr.net/npm/respond.js@1.4.2/dest/respond.min.js></script><![endif]--></head><body><div id=mobile-navbar class=mobile-navbar><div class=mobile-header-logo><a href=/ class=logo>Friday</a></div><div class=mobile-navbar-icon><span></span>
+<span></span>
+<span></span></div></div><nav id=mobile-menu class="mobile-menu slideout-menu"><ul class=mobile-menu-list><a href=/><li class=mobile-menu-item>Home</li></a><a href=/post/><li class=mobile-menu-item>Archives</li></a><a href=/tags/><li class=mobile-menu-item>Tags</li></a><a href=/categories/><li class=mobile-menu-item>Categories</li></a><a href=/about/><li class=mobile-menu-item>About</li></a></ul></nav><div class=container id=mobile-panel><header id=header class=header><div class=logo-wrapper><a href=/ class=logo>Friday</a></div><nav class=site-navbar><ul id=menu class=menu><li class=menu-item><a class=menu-item-link href=/>Home</a></li><li class=menu-item><a class=menu-item-link href=/post/>Archives</a></li><li class=menu-item><a class=menu-item-link href=/tags/>Tags</a></li><li class=menu-item><a class=menu-item-link href=/categories/>Categories</a></li><li class=menu-item><a class=menu-item-link href=/about/>About</a></li></ul></nav></header><main id=main class=main><div class=content-wrapper><div id=content class=content><article class=post><header class=post-header><h1 class=post-title>Wine 安装使用小结</h1><div class=post-meta><span class=post-time>2023-11-16 10:49:49</span><div class=post-category><a href=/categories/wine/>wine</a></div><span class=more-meta>1052 words</span>
+<span class=more-meta>3 mins read</span>
+<span id=busuanzi_container_page_pv class=more-meta><span id=busuanzi_value_page_pv><img src=/img/spinner.svg alt=spinner.svg></span> times read</span></div></header><div class=post-toc id=post-toc><h2 class=post-toc-title>Contents</h2><div class=post-toc-content><nav id=TableOfContents><ul><li><a href=#版本>版本</a></li><li><a href=#运行>运行</a></li><li><a href=#配置>配置</a><ul><li><a href=#开启字体抗锯齿化>开启字体抗锯齿化:</a></li><li><a href=#winecfg>winecfg</a></li><li><a href=#安装python>安装Python</a></li><li><a href=#字体>字体</a></li></ul></li></ul></nav></div></div><div class=post-content><p>要承认windows的生态的强大。所以必要时做一些妥协，可以让事情更加顺利。比如使用wine运行一些软件，如果软件在wine上能运行的良好，既能避免vm的高资源消耗，又能免去不少多系统维护的精力。</p><h2 id=版本>版本</h2><p>玩过才知道，wine不同的版本，功能差别非常大。一个软件在不同版本的wine上可能稳定运行，可能崩溃，可能闪退。
+1、最容易想到的就是使用操作系统官方源和安装命令安装：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl><span class=c1># ubuntu</span>
+</span></span><span class=line><span class=cl>apt-get install wine
+</span></span></code></pre></td></tr></table></div></div><p>这种方式的优点就是安装快速，适合功能试水。缺点就是不能选择安装版本，且版本较老。</p><p>2、通过wine官方源安装
+官方安装文档连接：<code>https://wiki.winehq.org/Download</code>
+比如Ubuntu，添加安装源，按照指定命令安装即可。这种方式一般安装的是最新版，或者较新版。</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span><span class=lnt>5
+</span><span class=lnt>6
+</span><span class=lnt>7
+</span><span class=lnt>8
+</span><span class=lnt>9
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>sudo dpkg --add-architecture i386 
+</span></span><span class=line><span class=cl>sudo mkdir -pm755 /etc/apt/keyrings
+</span></span><span class=line><span class=cl>sudo wget -O /etc/apt/keyrings/winehq-archive.key https://dl.winehq.org/wine-builds/winehq.key
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1>#20.04</span>
+</span></span><span class=line><span class=cl>sudo wget -NP /etc/apt/sources.list.d/ https://dl.winehq.org/wine-builds/ubuntu/dists/focal/winehq-focal.sources
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1>#22.04</span>
+</span></span><span class=line><span class=cl>sudo wget -NP /etc/apt/sources.list.d/ https://dl.winehq.org/wine-builds/ubuntu/dists/jammy/winehq-jammy.sources
+</span></span></code></pre></td></tr></table></div></div><p>3、源码自编译安装
+选择对应源码：<code>https://www.winehq.org/news/</code>
+下载后编译安装，这种方式灵活性较大，可以根据要运行的windows软件，尝试不同的版本，直到能够稳定运行。但是有个缺点就是如果尝试多个版本，则编译时间长，编译占用大量磁盘和时间。</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl><span class=c1># 安装依赖</span>
+</span></span><span class=line><span class=cl>apt-get install libx11-dev:i386
+</span></span><span class=line><span class=cl>apt-get install libfreetype6-dev:i386 libfreetype6-dev
+</span></span><span class=line><span class=cl>apt-get install libxrender-dev:i386 libgnults-dev:i386 
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1>#编译64位</span>
+</span></span><span class=line><span class=cl>./configure --enable-win64              
+</span></span><span class=line><span class=cl>make
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1>#编译32位，配置时指定64位编译目录</span>
+</span></span><span class=line><span class=cl>./configure --with-wine64<span class=o>=</span>../wine-8.9_64
+</span></span><span class=line><span class=cl>make
+</span></span></code></pre></td></tr></table></div></div><p>4、一种更快速的方式
+已经有人构建了多个版本，可以按需下载运行：
+<code>https://github.com/Kron4ek/Wine-Builds</code></p><h2 id=运行>运行</h2><p>指定 .wine生成的目录，实现多版本运行：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span><span class=lnt>5
+</span><span class=lnt>6
+</span><span class=lnt>7
+</span><span class=lnt>8
+</span><span class=lnt>9
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl><span class=cp>#!/bin/bash
+</span></span></span><span class=line><span class=cl><span class=cp></span>
+</span></span><span class=line><span class=cl><span class=c1># 取得此bash脚本所在路径</span>
+</span></span><span class=line><span class=cl><span class=nv>script</span><span class=o>=</span><span class=k>$(</span>readlink -f <span class=s2>&#34;</span><span class=nv>$0</span><span class=s2>&#34;</span><span class=k>)</span>
+</span></span><span class=line><span class=cl><span class=nv>scriptpath</span><span class=o>=</span><span class=k>$(</span>dirname <span class=s2>&#34;</span><span class=nv>$script</span><span class=s2>&#34;</span><span class=k>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># 这里设置好WINEPREFIX</span>
+</span></span><span class=line><span class=cl><span class=nb>export</span> <span class=nv>WINEPREFIX</span><span class=o>=</span><span class=s2>&#34;</span><span class=nv>$scriptpath</span><span class=s2>&#34;</span>
+</span></span><span class=line><span class=cl>./bin/wine x.exe
+</span></span></code></pre></td></tr></table></div></div><h2 id=配置>配置</h2><h3 id=开启字体抗锯齿化>开启字体抗锯齿化:</h3><p>保存后执行，选择第三项。</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span><span class=lnt>22
+</span><span class=lnt>23
+</span><span class=lnt>24
+</span><span class=lnt>25
+</span><span class=lnt>26
+</span><span class=lnt>27
+</span><span class=lnt>28
+</span><span class=lnt>29
+</span><span class=lnt>30
+</span><span class=lnt>31
+</span><span class=lnt>32
+</span><span class=lnt>33
+</span><span class=lnt>34
+</span><span class=lnt>35
+</span><span class=lnt>36
+</span><span class=lnt>37
+</span><span class=lnt>38
+</span><span class=lnt>39
+</span><span class=lnt>40
+</span><span class=lnt>41
+</span><span class=lnt>42
+</span><span class=lnt>43
+</span><span class=lnt>44
+</span><span class=lnt>45
+</span><span class=lnt>46
+</span><span class=lnt>47
+</span><span class=lnt>48
+</span><span class=lnt>49
+</span><span class=lnt>50
+</span><span class=lnt>51
+</span><span class=lnt>52
+</span><span class=lnt>53
+</span><span class=lnt>54
+</span><span class=lnt>55
+</span><span class=lnt>56
+</span><span class=lnt>57
+</span><span class=lnt>58
+</span><span class=lnt>59
+</span><span class=lnt>60
+</span><span class=lnt>61
+</span><span class=lnt>62
+</span><span class=lnt>63
+</span><span class=lnt>64
+</span><span class=lnt>65
+</span><span class=lnt>66
+</span><span class=lnt>67
+</span><span class=lnt>68
+</span><span class=lnt>69
+</span><span class=lnt>70
+</span><span class=lnt>71
+</span><span class=lnt>72
+</span><span class=lnt>73
+</span><span class=lnt>74
+</span><span class=lnt>75
+</span><span class=lnt>76
+</span><span class=lnt>77
+</span><span class=lnt>78
+</span><span class=lnt>79
+</span><span class=lnt>80
+</span><span class=lnt>81
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl><span class=cp>#!/bin/sh
+</span></span></span><span class=line><span class=cl><span class=cp></span><span class=c1># Quick and dirty script for configuring wine font smoothing</span>
+</span></span><span class=line><span class=cl><span class=c1>#</span>
+</span></span><span class=line><span class=cl><span class=c1># Author: Igor Tarasov &lt;tarasov.igor@gmail.com&gt;</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=nv>WINE</span><span class=o>=</span><span class=si>${</span><span class=nv>WINE</span><span class=k>:-</span><span class=nv>wine</span><span class=si>}</span>
+</span></span><span class=line><span class=cl><span class=nv>WINEPREFIX</span><span class=o>=</span><span class=si>${</span><span class=nv>WINEPREFIX</span><span class=k>:-</span><span class=nv>$HOME</span><span class=p>/.wine</span><span class=si>}</span>
+</span></span><span class=line><span class=cl><span class=nv>DIALOG</span><span class=o>=</span>whiptail
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=k>if</span> <span class=o>[</span> ! -x <span class=s2>&#34;`which &#34;</span><span class=nv>$WINE</span><span class=s2>&#34;`&#34;</span> <span class=o>]</span>
+</span></span><span class=line><span class=cl><span class=k>then</span>
+</span></span><span class=line><span class=cl>    <span class=nb>echo</span> <span class=s2>&#34;Wine was not found. Is it really installed? (</span><span class=nv>$WINE</span><span class=s2>)&#34;</span>
+</span></span><span class=line><span class=cl>    <span class=nb>exit</span> <span class=m>1</span>
+</span></span><span class=line><span class=cl><span class=k>fi</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=k>if</span> <span class=o>[</span> ! -x <span class=s2>&#34;`which &#34;</span><span class=nv>$DIALOG</span><span class=s2>&#34;`&#34;</span> <span class=o>]</span>
+</span></span><span class=line><span class=cl><span class=k>then</span>
+</span></span><span class=line><span class=cl>    <span class=nv>DIALOG</span><span class=o>=</span>dialog
+</span></span><span class=line><span class=cl><span class=k>fi</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=nv>TMPFILE</span><span class=o>=</span><span class=sb>`</span>mktemp<span class=sb>`</span> <span class=o>||</span> <span class=nb>exit</span> <span class=m>1</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=nv>$DIALOG</span> --menu <span class=se>\
+</span></span></span><span class=line><span class=cl><span class=se></span>    <span class=s2>&#34;Please select font smoothing mode for wine programs:&#34;</span> <span class=m>13</span> 51<span class=se>\
+</span></span></span><span class=line><span class=cl><span class=se></span>    4<span class=se>\
+</span></span></span><span class=line><span class=cl><span class=se></span>        <span class=m>1</span> <span class=s2>&#34;Smoothing disabled&#34;</span><span class=se>\
+</span></span></span><span class=line><span class=cl><span class=se></span>        <span class=m>2</span> <span class=s2>&#34;Grayscale smoothing&#34;</span><span class=se>\
+</span></span></span><span class=line><span class=cl><span class=se></span>        <span class=m>3</span> <span class=s2>&#34;Subpixel smoothing (ClearType) RGB&#34;</span><span class=se>\
+</span></span></span><span class=line><span class=cl><span class=se></span>        <span class=m>4</span> <span class=s2>&#34;Subpixel smoothing (ClearType) BGR&#34;</span> 2&gt; <span class=nv>$TMPFILE</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=nv>STATUS</span><span class=o>=</span><span class=nv>$?</span>
+</span></span><span class=line><span class=cl><span class=nv>ANSWER</span><span class=o>=</span><span class=sb>`</span>cat <span class=nv>$TMPFILE</span><span class=sb>`</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=k>if</span> <span class=o>[</span> <span class=nv>$STATUS</span> !<span class=o>=</span> <span class=m>0</span> <span class=o>]</span>
+</span></span><span class=line><span class=cl><span class=k>then</span> 
+</span></span><span class=line><span class=cl>    rm -f <span class=nv>$TMPFILE</span>
+</span></span><span class=line><span class=cl>    <span class=nb>exit</span> <span class=m>1</span>
+</span></span><span class=line><span class=cl><span class=k>fi</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=nv>MODE</span><span class=o>=</span><span class=m>0</span> <span class=c1># 0 = disabled; 2 = enabled</span>
+</span></span><span class=line><span class=cl><span class=nv>TYPE</span><span class=o>=</span><span class=m>0</span> <span class=c1># 1 = regular;  2 = subpixel</span>
+</span></span><span class=line><span class=cl><span class=nv>ORIENTATION</span><span class=o>=</span><span class=m>1</span> <span class=c1># 0 = BGR; 1 = RGB</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=k>case</span> <span class=nv>$ANSWER</span> in
+</span></span><span class=line><span class=cl>    1<span class=o>)</span> <span class=c1># disable</span>
+</span></span><span class=line><span class=cl>        <span class=p>;;</span>
+</span></span><span class=line><span class=cl>    2<span class=o>)</span> <span class=c1># enable</span>
+</span></span><span class=line><span class=cl>        <span class=nv>MODE</span><span class=o>=</span><span class=m>2</span>
+</span></span><span class=line><span class=cl>        <span class=nv>TYPE</span><span class=o>=</span><span class=m>1</span>
+</span></span><span class=line><span class=cl>        <span class=p>;;</span>
+</span></span><span class=line><span class=cl>    3<span class=o>)</span> <span class=c1># enable cleartype rgb</span>
+</span></span><span class=line><span class=cl>        <span class=nv>MODE</span><span class=o>=</span><span class=m>2</span>
+</span></span><span class=line><span class=cl>        <span class=nv>TYPE</span><span class=o>=</span><span class=m>2</span>
+</span></span><span class=line><span class=cl>        <span class=p>;;</span>
+</span></span><span class=line><span class=cl>    4<span class=o>)</span> <span class=c1># enable cleartype bgr</span>
+</span></span><span class=line><span class=cl>        <span class=nv>MODE</span><span class=o>=</span><span class=m>2</span>
+</span></span><span class=line><span class=cl>        <span class=nv>TYPE</span><span class=o>=</span><span class=m>2</span>
+</span></span><span class=line><span class=cl>        <span class=nv>ORIENTATION</span><span class=o>=</span><span class=m>0</span>
+</span></span><span class=line><span class=cl>        <span class=p>;;</span>
+</span></span><span class=line><span class=cl>    *<span class=o>)</span>
+</span></span><span class=line><span class=cl>        rm -f <span class=nv>$TMPFILE</span>
+</span></span><span class=line><span class=cl>        <span class=nb>echo</span> Unexpected option: <span class=nv>$ANSWER</span>
+</span></span><span class=line><span class=cl>        <span class=nb>exit</span> <span class=m>1</span>
+</span></span><span class=line><span class=cl>        <span class=p>;;</span>
+</span></span><span class=line><span class=cl><span class=k>esac</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=nb>echo</span> <span class=s2>&#34;REGEDIT4
+</span></span></span><span class=line><span class=cl><span class=s2>
+</span></span></span><span class=line><span class=cl><span class=s2>[HKEY_CURRENT_USER\Control Panel\Desktop]
+</span></span></span><span class=line><span class=cl><span class=s2>\&#34;FontSmoothing\&#34;=\&#34;</span><span class=nv>$MODE</span><span class=s2>\&#34;
+</span></span></span><span class=line><span class=cl><span class=s2>\&#34;FontSmoothingOrientation\&#34;=dword:0000000</span><span class=nv>$ORIENTATION</span><span class=s2>
+</span></span></span><span class=line><span class=cl><span class=s2>\&#34;FontSmoothingType\&#34;=dword:0000000</span><span class=nv>$TYPE</span><span class=s2>
+</span></span></span><span class=line><span class=cl><span class=s2>\&#34;FontSmoothingGamma\&#34;=dword:00000578&#34;</span> &gt; <span class=nv>$TMPFILE</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=nb>echo</span> -n <span class=s2>&#34;Updating configuration... &#34;</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=nv>$WINE</span> regedit <span class=nv>$TMPFILE</span> 2&gt; /dev/null
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>rm -f <span class=nv>$TMPFILE</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=nb>echo</span> ok
+</span></span></code></pre></td></tr></table></div></div><h3 id=winecfg>winecfg</h3><p>配置挂载目录等一些功能</p><h3 id=安装python>安装Python</h3><p><code>wineconsole</code> 然后定位Python程序目录，执行：<code>python-3.10.0-amd64.exe</code></p><h3 id=字体>字体</h3><p>可以到windows系统拷贝字体到 <code>~/.wine/drive_c/windows/Fonts</code></p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>ls ~/.wine/drive_c/windows/Fonts
+</span></span><span class=line><span class=cl>consolab.ttf  consolai.ttf  consola.ttf  consolaz.ttf  lucon.ttf  msyhbd.ttc  msyhl.ttc  msyh.ttc
+</span></span></code></pre></td></tr></table></div></div></div><footer class=post-footer><div class=post-tags><a href=/tags/wine/>wine</a></div><nav class=post-nav><a class=next href=/post/blockchain-general-knowledge/><span class="next-text nav-default">Blockchain General Knowledge</span>
+<span class="next-text nav-mobile">Next</span>
+<i class="iconfont icon-right"></i></a></nav></footer></article></div><div id=vcomments></div><script src=//cdn1.lncld.net/static/js/3.0.4/av-min.js></script>
+<script src=//unpkg.com/valine/dist/Valine.min.js></script>
+<script type=text/javascript>new Valine({el:"#vcomments",appId:"fb6qCfVYGmIrC87K3STOS3V8-gzGzoHsz",appKey:"FilghKK7HHC4hMQHxhR90dDE",notify:!1,verify:!1,avatar:"mm",placeholder:"说点什么吧...",visitor:!1})</script></div></main><footer id=footer class=footer><div class=social-links><a href=mailto:hanglinux@163.com class="iconfont icon-email" title=email></a>
+<a href=https://github.com/fridayhub class="iconfont icon-github" title=github></a>
+<a href=https://fridayhub.github.io/index.xml type=application/rss+xml class="iconfont icon-rss" title=rss></a></div><div class=copyright><span class=power-by>Powered by <a class=hexo-link href=https://gohugo.io>Hugo</a></span>
+<span class=division>|</span>
+<span class=theme-info>Theme -
+<a class=theme-link href=https://github.com/olOwOlo/hugo-theme-even>Even</a></span><div class=busuanzi-footer><span id=busuanzi_container_site_pv>site pv: <span id=busuanzi_value_site_pv><img src=/img/spinner.svg alt=spinner.svg></span></span>
+<span class=division>|</span>
+<span id=busuanzi_container_site_uv>site uv: <span id=busuanzi_value_site_uv><img src=/img/spinner.svg alt=spinner.svg></span></span></div><span class=copyright-year>&copy;
+2017 -
+2023
+<span class=heart><i class="iconfont icon-heart"></i></span>
+<span class=author>friday</span></span></div></footer><div class=back-to-top id=back-to-top><i class="iconfont icon-up"></i></div></div><script src=https://cdn.jsdelivr.net/npm/jquery@3.2.1/dist/jquery.min.js integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin=anonymous></script>
+<script src=https://cdn.jsdelivr.net/npm/slideout@1.0.1/dist/slideout.min.js integrity="sha256-t+zJ/g8/KXIJMjSVQdnibt4dlaDxc9zXr/9oNPeWqdg=" crossorigin=anonymous></script>
+<script src=https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.js integrity="sha256-XVLffZaxoWfGUEbdzuLi7pwaUJv1cecsQJQqGLe7axY=" crossorigin=anonymous></script>
+<script type=text/javascript src=/js/main.min.1c70606d1b733282f06230615f5561b5894924b6f9930ba2ab99cf1254f75a1a.js></script></body></html>
