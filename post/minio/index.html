@@ -1,0 +1,235 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta http-equiv=x-ua-compatible content="IE=edge,chrome=1"><title>Minio Install And Config - Friday - Here I record my experience</title><meta name=renderer content="webkit"><meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1"><meta http-equiv=cache-control content="no-transform"><meta http-equiv=cache-control content="no-siteapp"><meta name=theme-color content="#f8f5ec"><meta name=msapplication-navbutton-color content="#f8f5ec"><meta name=apple-mobile-web-app-capable content="yes"><meta name=apple-mobile-web-app-status-bar-style content="#f8f5ec"><meta name=author content="friday"><meta name=description content><meta name=keywords content="minio,stroage"><meta name=generator content="Hugo 0.110.0 with theme even"><link rel=canonical href=https://fridayhub.github.io/post/minio/><link rel=apple-touch-icon sizes=180x180 href=/apple-touch-icon.png><link rel=icon type=image/png sizes=32x32 href=/favicon-32x32.png><link rel=icon type=image/png sizes=16x16 href=/favicon-16x16.png><link rel=manifest href=/manifest.json><link rel=mask-icon href=/safari-pinned-tab.svg color=#5bbad5><script async src=//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js></script><meta name=referrer content="no-referrer-when-downgrade"><link href=/sass/main.min.c2803d17ea439bb194b104ce262b40c9118b45b7b108e27dadf43e96dd6664a3.css rel=stylesheet><link rel=stylesheet href=https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.css integrity="sha256-7TyXnr2YU040zfSP+rEcz29ggW4j56/ujTPwjMzyqFY=" crossorigin=anonymous><meta property="og:title" content="Minio Install And Config"><meta property="og:description" content><meta property="og:type" content="article"><meta property="og:url" content="https://fridayhub.github.io/post/minio/"><meta property="article:section" content="post"><meta property="article:published_time" content="2024-04-11T15:38:27+08:00"><meta property="article:modified_time" content="2024-04-11T15:38:27+08:00"><meta itemprop=name content="Minio Install And Config"><meta itemprop=description content><meta itemprop=datePublished content="2024-04-11T15:38:27+08:00"><meta itemprop=dateModified content="2024-04-11T15:38:27+08:00"><meta itemprop=wordCount content="568"><meta itemprop=keywords content="minio,stroage,"><meta name=twitter:card content="summary"><meta name=twitter:title content="Minio Install And Config"><meta name=twitter:description content><!--[if lte IE 9]><script src=https://cdnjs.cloudflare.com/ajax/libs/classlist/1.1.20170427/classList.min.js></script><![endif]--><!--[if lt IE 9]><script src=https://cdn.jsdelivr.net/npm/html5shiv@3.7.3/dist/html5shiv.min.js></script>
+<script src=https://cdn.jsdelivr.net/npm/respond.js@1.4.2/dest/respond.min.js></script><![endif]--></head><body><div id=mobile-navbar class=mobile-navbar><div class=mobile-header-logo><a href=/ class=logo>Friday</a></div><div class=mobile-navbar-icon><span></span>
+<span></span>
+<span></span></div></div><nav id=mobile-menu class="mobile-menu slideout-menu"><ul class=mobile-menu-list><a href=/><li class=mobile-menu-item>Home</li></a><a href=/post/><li class=mobile-menu-item>Archives</li></a><a href=/tags/><li class=mobile-menu-item>Tags</li></a><a href=/categories/><li class=mobile-menu-item>Categories</li></a><a href=/about/><li class=mobile-menu-item>About</li></a></ul></nav><div class=container id=mobile-panel><header id=header class=header><div class=logo-wrapper><a href=/ class=logo>Friday</a></div><nav class=site-navbar><ul id=menu class=menu><li class=menu-item><a class=menu-item-link href=/>Home</a></li><li class=menu-item><a class=menu-item-link href=/post/>Archives</a></li><li class=menu-item><a class=menu-item-link href=/tags/>Tags</a></li><li class=menu-item><a class=menu-item-link href=/categories/>Categories</a></li><li class=menu-item><a class=menu-item-link href=/about/>About</a></li></ul></nav></header><main id=main class=main><div class=content-wrapper><div id=content class=content><article class=post><header class=post-header><h1 class=post-title>Minio Install And Config</h1><div class=post-meta><span class=post-time>2024-04-11 15:38:27</span><div class=post-category><a href=/categories/minio/>minio</a>
+<a href=/categories/stroage/>stroage</a></div><span class=more-meta>568 words</span>
+<span class=more-meta>2 mins read</span>
+<span id=busuanzi_container_page_pv class=more-meta><span id=busuanzi_value_page_pv><img src=/img/spinner.svg alt=spinner.svg></span> times read</span></div></header><div class=post-toc id=post-toc><h2 class=post-toc-title>Contents</h2><div class=post-toc-content><nav id=TableOfContents></nav></div></div><div class=post-content><p>下载：<br><code>wget https://dl.min.io/server/minio/release/linux-amd64/minio</code></p><p>service 文件：<br>/usr/lib/systemd/system/minio.service</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span><span class=lnt>22
+</span><span class=lnt>23
+</span><span class=lnt>24
+</span><span class=lnt>25
+</span><span class=lnt>26
+</span><span class=lnt>27
+</span><span class=lnt>28
+</span><span class=lnt>29
+</span><span class=lnt>30
+</span><span class=lnt>31
+</span><span class=lnt>32
+</span><span class=lnt>33
+</span><span class=lnt>34
+</span><span class=lnt>35
+</span><span class=lnt>36
+</span><span class=lnt>37
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-fallback data-lang=fallback><span class=line><span class=cl>[Unit]
+</span></span><span class=line><span class=cl>Description=MinIO
+</span></span><span class=line><span class=cl>Wants=network-online.target
+</span></span><span class=line><span class=cl>After=network-online.target
+</span></span><span class=line><span class=cl>AssertFileIsExecutable=/usr/local/bin/minio
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>[Service]
+</span></span><span class=line><span class=cl>WorkingDirectory=/usr/local
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>User=minio-user
+</span></span><span class=line><span class=cl>Group=minio-user
+</span></span><span class=line><span class=cl>ProtectProc=invisible
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>EnvironmentFile=-/etc/default/minio
+</span></span><span class=line><span class=cl>ExecStartPre=/bin/bash -c &#34;if [ -z \&#34;${MINIO_VOLUMES}\&#34; ]; then echo \&#34;Variable MINIO_VOLUMES not set in /etc/default/minio\&#34;; exit 1; fi&#34;
+</span></span><span class=line><span class=cl>ExecStart=/usr/local/bin/minio server $MINIO_OPTS $MINIO_VOLUMES
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl># MinIO RELEASE.2023-05-04T21-44-30Z adds support for Type=notify (https://www.freedesktop.org/software/systemd/man/systemd.service.html#Type=)
+</span></span><span class=line><span class=cl># This may improve systemctl setups where other services use `After=minio.server`
+</span></span><span class=line><span class=cl># Uncomment the line to enable the functionality
+</span></span><span class=line><span class=cl># Type=notify
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl># Let systemd restart this service always
+</span></span><span class=line><span class=cl>Restart=always
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl># Specifies the maximum file descriptor number that can be opened by this process
+</span></span><span class=line><span class=cl>LimitNOFILE=65536
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl># Specifies the maximum number of threads this process can create
+</span></span><span class=line><span class=cl>TasksMax=infinity
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl># Disable timeout logic and wait until process is stopped
+</span></span><span class=line><span class=cl>TimeoutStopSec=infinity
+</span></span><span class=line><span class=cl>SendSIGKILL=no
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>[Install]
+</span></span><span class=line><span class=cl>WantedBy=multi-user.target
+</span></span></code></pre></td></tr></table></div></div><p>默认配置：<br>vim /etc/default/minio</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span><span class=lnt>22
+</span><span class=lnt>23
+</span><span class=lnt>24
+</span><span class=lnt>25
+</span><span class=lnt>26
+</span><span class=lnt>27
+</span><span class=lnt>28
+</span><span class=lnt>29
+</span><span class=lnt>30
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl><span class=c1># MINIO_ROOT_USER and MINIO_ROOT_PASSWORD sets the root account for the MinIO server.</span>
+</span></span><span class=line><span class=cl><span class=c1># This user has unrestricted permissions to perform S3 and administrative API operations on any resource in the deployment.</span>
+</span></span><span class=line><span class=cl><span class=c1># Omit to use the default values &#39;minioadmin:minioadmin&#39;.</span>
+</span></span><span class=line><span class=cl><span class=c1># MinIO recommends setting non-default values as a best practice, regardless of environment</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=nv>MINIO_ROOT_USER</span><span class=o>=</span>xxx
+</span></span><span class=line><span class=cl><span class=nv>MINIO_ROOT_PASSWORD</span><span class=o>=</span>xxxx
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># MINIO_VOLUMES sets the storage volume or path to use for the MinIO server.</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=nv>MINIO_VOLUMES</span><span class=o>=</span><span class=s2>&#34;/data&#34;</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># MINIO_OPTS sets any additional commandline options to pass to the MinIO server.</span>
+</span></span><span class=line><span class=cl><span class=c1># For example, `--console-address :9001` sets the MinIO Console listen port</span>
+</span></span><span class=line><span class=cl><span class=c1># MINIO_OPTS=&#34;--console-address :9001&#34;</span>
+</span></span><span class=line><span class=cl><span class=nv>MINIO_OPTS</span><span class=o>=</span><span class=s2>&#34;--certs-dir /etc/minio&#34;</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># MINIO_SERVER_URL sets the hostname of the local machine for use with the MinIO Server</span>
+</span></span><span class=line><span class=cl><span class=c1># MinIO assumes your network control plane can correctly resolve this hostname to the local machine</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># Uncomment the following line and replace the value with the correct hostname for the local machine and port for the MinIO server (9000 by default).</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># MINIO_SERVER_URL=&#34;http://127.0.0.0:9000&#34;</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=nv>MINIO_ADDRESS</span><span class=o>=</span>:xxxx
+</span></span><span class=line><span class=cl><span class=nv>MINIO_COMPRESSION_ENABLE</span><span class=o>=</span>on
+</span></span><span class=line><span class=cl><span class=nv>MINIO_COMPRESSION_ALLOW_ENCRYPTION</span><span class=o>=</span>on
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=nv>MINIO_BROWSER</span><span class=o>=</span>off
+</span></span></code></pre></td></tr></table></div></div><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>groupadd -r minio-user
+</span></span><span class=line><span class=cl>useradd -M -r -g minio-user minio-user
+</span></span><span class=line><span class=cl>mkdir /data
+</span></span><span class=line><span class=cl>chown minio-user:minio-user /data/
+</span></span></code></pre></td></tr></table></div></div><p>下载 certgen：<br><code>wget https://github.com/minio/certgen/releases/latest/download/certgen-linux-amd64</code></p><p>生成自签证书：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>chmod +x certgen-linux-amd64
+</span></span><span class=line><span class=cl>mv certgen-linux-amd64 certgen
+</span></span><span class=line><span class=cl>./certgen -host x.x.x.x
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>mkdir /etc/minio
+</span></span><span class=line><span class=cl>cp private.key public.crt /etc/minio/
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>chown minio-user:minio-user /etc/minio/ -R
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>chmod <span class=m>600</span> /etc/minio/private.key
+</span></span></code></pre></td></tr></table></div></div><p>客户端配置：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>mc <span class=nb>alias</span> <span class=nb>set</span> myminio https://minioserver.example.net ACCESS_KEY SECRET_KEY
+</span></span><span class=line><span class=cl><span class=c1>#测试</span>
+</span></span><span class=line><span class=cl>mc admin info myminio
+</span></span></code></pre></td></tr></table></div></div><p>命令：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl><span class=c1># 创建桶</span>
+</span></span><span class=line><span class=cl>mc mb host/xxx
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># 查看桶</span>
+</span></span><span class=line><span class=cl>mc ls host/xxx
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># 获取桶策略</span>
+</span></span><span class=line><span class=cl>mc anonymous get host/xxx
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># 列出host</span>
+</span></span><span class=line><span class=cl>mc config host
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># 删除host</span>
+</span></span><span class=line><span class=cl>mc config host remove gcs
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># 上传文件</span>
+</span></span><span class=line><span class=cl>mc cp core host/xxx/
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># 删除文件</span>
+</span></span><span class=line><span class=cl>mc rm host/xxx/file
+</span></span></code></pre></td></tr></table></div></div><p>SSE-C 加密<br>Generate the Encryption Key：
+<code>cat /dev/urandom | head -c 32 | base64 -</code></p><p>加密上传<br><code>mc cp ~/data/mydata.json host/xxx/mydata.json \ --encrypt-key "host/xxx/=c2VjcmV0ZW5jcnlwdGlvbmtleWNoYW5nZW1lMTIzNAo="</code></p><p>mc encrypt set ENCRYPTION</p></div><footer class=post-footer><div class=post-tags><a href=/tags/minio/>minio</a>
+<a href=/tags/stroage/>stroage</a></div><nav class=post-nav><a class=next href=/post/wine/><span class="next-text nav-default">Wine 安装使用小结</span>
+<span class="next-text nav-mobile">Next</span>
+<i class="iconfont icon-right"></i></a></nav></footer></article></div><div id=vcomments></div><script src=//cdn1.lncld.net/static/js/3.0.4/av-min.js></script>
+<script src=//unpkg.com/valine/dist/Valine.min.js></script>
+<script type=text/javascript>new Valine({el:"#vcomments",appId:"fb6qCfVYGmIrC87K3STOS3V8-gzGzoHsz",appKey:"FilghKK7HHC4hMQHxhR90dDE",notify:!1,verify:!1,avatar:"mm",placeholder:"说点什么吧...",visitor:!1})</script></div></main><footer id=footer class=footer><div class=social-links><a href=mailto:hanglinux@163.com class="iconfont icon-email" title=email></a>
+<a href=https://github.com/fridayhub class="iconfont icon-github" title=github></a>
+<a href=https://fridayhub.github.io/index.xml type=application/rss+xml class="iconfont icon-rss" title=rss></a></div><div class=copyright><span class=power-by>Powered by <a class=hexo-link href=https://gohugo.io>Hugo</a></span>
+<span class=division>|</span>
+<span class=theme-info>Theme -
+<a class=theme-link href=https://github.com/olOwOlo/hugo-theme-even>Even</a></span><div class=busuanzi-footer><span id=busuanzi_container_site_pv>site pv: <span id=busuanzi_value_site_pv><img src=/img/spinner.svg alt=spinner.svg></span></span>
+<span class=division>|</span>
+<span id=busuanzi_container_site_uv>site uv: <span id=busuanzi_value_site_uv><img src=/img/spinner.svg alt=spinner.svg></span></span></div><span class=copyright-year>&copy;
+2017 -
+2024
+<span class=heart><i class="iconfont icon-heart"></i></span>
+<span class=author>friday</span></span></div></footer><div class=back-to-top id=back-to-top><i class="iconfont icon-up"></i></div></div><script src=https://cdn.jsdelivr.net/npm/jquery@3.2.1/dist/jquery.min.js integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin=anonymous></script>
+<script src=https://cdn.jsdelivr.net/npm/slideout@1.0.1/dist/slideout.min.js integrity="sha256-t+zJ/g8/KXIJMjSVQdnibt4dlaDxc9zXr/9oNPeWqdg=" crossorigin=anonymous></script>
+<script src=https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.js integrity="sha256-XVLffZaxoWfGUEbdzuLi7pwaUJv1cecsQJQqGLe7axY=" crossorigin=anonymous></script>
+<script type=text/javascript src=/js/main.min.1c70606d1b733282f06230615f5561b5894924b6f9930ba2ab99cf1254f75a1a.js></script></body></html>
