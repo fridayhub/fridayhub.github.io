@@ -1,0 +1,542 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta http-equiv=x-ua-compatible content="IE=edge,chrome=1"><title>- Friday - Here I record my experience</title><meta name=renderer content="webkit"><meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1"><meta http-equiv=cache-control content="no-transform"><meta http-equiv=cache-control content="no-siteapp"><meta name=theme-color content="#f8f5ec"><meta name=msapplication-navbutton-color content="#f8f5ec"><meta name=apple-mobile-web-app-capable content="yes"><meta name=apple-mobile-web-app-status-bar-style content="#f8f5ec"><meta name=author content="friday"><meta name=description content="2023年4月28日 初稿 liujh-h [toc] 基础知识 信通院2019区块链白皮书: 区块链（Blockchain）是一种由多方共同维护，使用密码学保证 传输和访问"><meta name=keywords content="Friday,Hugo,theme,even"><meta name=generator content="Hugo 0.110.0 with theme even"><link rel=canonical href=https://fridayhub.github.io/post/blockchain-general-knowledge-public/><link rel=apple-touch-icon sizes=180x180 href=/apple-touch-icon.png><link rel=icon type=image/png sizes=32x32 href=/favicon-32x32.png><link rel=icon type=image/png sizes=16x16 href=/favicon-16x16.png><link rel=manifest href=/manifest.json><link rel=mask-icon href=/safari-pinned-tab.svg color=#5bbad5><script async src=//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js></script><meta name=referrer content="no-referrer-when-downgrade"><link href=/sass/main.min.c2803d17ea439bb194b104ce262b40c9118b45b7b108e27dadf43e96dd6664a3.css rel=stylesheet><link rel=stylesheet href=https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.css integrity="sha256-7TyXnr2YU040zfSP+rEcz29ggW4j56/ujTPwjMzyqFY=" crossorigin=anonymous><meta property="og:title" content><meta property="og:description" content="2023年4月28日 初稿 liujh-h [toc] 基础知识 信通院2019区块链白皮书: 区块链（Blockchain）是一种由多方共同维护，使用密码学保证 传输和访问"><meta property="og:type" content="article"><meta property="og:url" content="https://fridayhub.github.io/post/blockchain-general-knowledge-public/"><meta property="article:section" content="post"><meta itemprop=name content><meta itemprop=description content="2023年4月28日 初稿 liujh-h [toc] 基础知识 信通院2019区块链白皮书: 区块链（Blockchain）是一种由多方共同维护，使用密码学保证 传输和访问"><meta itemprop=wordCount content="4649"><meta itemprop=keywords content><meta name=twitter:card content="summary"><meta name=twitter:title content><meta name=twitter:description content="2023年4月28日 初稿 liujh-h [toc] 基础知识 信通院2019区块链白皮书: 区块链（Blockchain）是一种由多方共同维护，使用密码学保证 传输和访问"><!--[if lte IE 9]><script src=https://cdnjs.cloudflare.com/ajax/libs/classlist/1.1.20170427/classList.min.js></script><![endif]--><!--[if lt IE 9]><script src=https://cdn.jsdelivr.net/npm/html5shiv@3.7.3/dist/html5shiv.min.js></script>
+<script src=https://cdn.jsdelivr.net/npm/respond.js@1.4.2/dest/respond.min.js></script><![endif]--></head><body><div id=mobile-navbar class=mobile-navbar><div class=mobile-header-logo><a href=/ class=logo>Friday</a></div><div class=mobile-navbar-icon><span></span>
+<span></span>
+<span></span></div></div><nav id=mobile-menu class="mobile-menu slideout-menu"><ul class=mobile-menu-list><a href=/><li class=mobile-menu-item>Home</li></a><a href=/post/><li class=mobile-menu-item>Archives</li></a><a href=/tags/><li class=mobile-menu-item>Tags</li></a><a href=/categories/><li class=mobile-menu-item>Categories</li></a><a href=/about/><li class=mobile-menu-item>About</li></a></ul></nav><div class=container id=mobile-panel><header id=header class=header><div class=logo-wrapper><a href=/ class=logo>Friday</a></div><nav class=site-navbar><ul id=menu class=menu><li class=menu-item><a class=menu-item-link href=/>Home</a></li><li class=menu-item><a class=menu-item-link href=/post/>Archives</a></li><li class=menu-item><a class=menu-item-link href=/tags/>Tags</a></li><li class=menu-item><a class=menu-item-link href=/categories/>Categories</a></li><li class=menu-item><a class=menu-item-link href=/about/>About</a></li></ul></nav></header><main id=main class=main><div class=content-wrapper><div id=content class=content><article class=post><header class=post-header><h1 class=post-title></h1><div class=post-meta><span class=post-time>0001-01-01 00:00:00</span>
+<span class=more-meta>4649 words</span>
+<span class=more-meta>10 mins read</span>
+<span id=busuanzi_container_page_pv class=more-meta><span id=busuanzi_value_page_pv><img src=/img/spinner.svg alt=spinner.svg></span> times read</span></div></header><div class=post-toc id=post-toc><h2 class=post-toc-title>Contents</h2><div class="post-toc-content always-active"><nav id=TableOfContents><ul><li><a href=#基础知识>基础知识</a><ul><li><a href=#数字签名过程>数字签名过程</a></li><li><a href=#交易>交易</a></li><li><a href=#区块>区块</a></li><li><a href=#区块链网路>区块链网路</a></li><li><a href=#交易-1>交易</a></li><li><a href=#智能合约>智能合约</a></li><li><a href=#p2p-网络>p2p 网络</a></li><li><a href=#区块链的几个特点>区块链的几个特点：</a></li><li><a href=#应用场景>应用场景</a></li></ul></li><li><a href=#节点搭建>节点搭建</a><ul><li><a href=#部署管理台>部署管理台</a></li><li><a href=#启动节点>启动节点</a></li><li><a href=#控制台管理节点>控制台管理节点</a></li><li><a href=#区块链浏览器>区块链浏览器</a></li></ul></li><li><a href=#智能合约-1>智能合约</a><ul><li><a href=#编写>编写</a><ul><li><a href=#编写合约>编写合约：</a></li><li><a href=#合约编译>合约编译：</a></li><li><a href=#部署合约>部署合约：</a></li><li><a href=#合约调用>合约调用</a></li></ul></li></ul></li></ul></nav></div></div><div class=post-content><p>2023年4月28日 初稿 liujh-h</p><p>[toc]</p><h2 id=基础知识>基础知识</h2><p>信通院2019区块链白皮书: 区块链（Blockchain）是一种由多方共同维护，使用密码学保证
+传输和访问安全，能够实现数据一致存储、难以篡改、防止抵赖的记
+账技术，也称为分布式账本技术（Distributed Ledger Technology）。</p><ul><li>哈希算法：正向快速、你想困难、输入任意长度、输出固定长度、输入敏感、冲突避免。</li><li>数字签名：非对称加密。私钥加密，公钥解密。私钥签名，公钥验签。</li></ul><h3 id=数字签名过程>数字签名过程</h3><ol><li>Bob有两把钥匙，一把叫公钥(public key)，一把叫私钥(private key)。</li><li>Bob的公钥可以公开供其他人使用，他只保留自己的私钥。公钥和私钥用来加解密数据，如果使用任意一把来加密数据，那么只有使用另外一把才能解密数据。</li><li>现在Bob决定给Pat写一份信，信件的内容不用加密，但是要保证Pat收到信件后，能够确认信件的确是Bob发出的，而不是别人冒充Bob发给Pat的。</li><li>Bob将信件通过hash软件计算一下，得到一串消息摘要(有的文章也称之为“hash值”)。这一过程能够保证2点：①过程不可逆。即不能通过消息摘计算出信件的内容。②消息摘要不会重复。即如果信件有任何改动，再次hash计算出的消息摘要一定不会和改动前的消息摘要一致。</li><li>然后，Bob使用自己的私钥，将消息摘要加密。加密后的结果，我们称之为“数字签名”。现在，Bob就可以将信件连同数字签名一起发给Pat。</li><li>Pat收到信件以后，会做2件事：①使用Bob的公钥将数字签名解密，如果顺利解密，说明的确是Bob签发的数字签名，不是别人签发的，因为Bob的私钥没有公开。②Pat使用hash软件对信件再次进行hash计算，和解密数字签名得到的消息摘要对比，如果一致，说明信件没有篡改，确实是Bob发出的。这就是数字签名的过程。它能够确保签名人发出的消息不被篡改，也能证明的确是签名人发出的消息。</li></ol><h3 id=交易>交易</h3><p>数据写入：
+三要素： 发起人（id、公钥、地址）、行为（转账、合约调用、存正）、发起人签名
+没有签名的交易无法在区块链p2p网络上传播、更无法被打包.</p><h3 id=区块>区块</h3><p>区块的组成：
+上一个区块的hash、交易根哈希、交易dag、读写集根hash</p><p><img src=../../static/blockchain/DataStructure-BlockStructure.png alt=区块></p><p>为什么难以篡改？ 参考上图的Merkle交易树。</p><h3 id=区块链网路>区块链网路</h3><p><img src=../../static/blockchain/Architecture-Logical.png alt=区块链架构></p><ul><li><p>共识节点（consensus node）：参与区块链网络中共识投票、交易执行、区块验证和记账的节点。</p></li><li><p>同步节点 (sync node)：或称见证节点，参与区块和交易同步、区块验证，交易执行，并记录完整账本数据，但不参与共识投票。</p></li><li><p>轻节点 (light node)：参与同步和校验区块头信息、验证交易存在性的节点。</p></li><li><p>SDK：帮助用户通过RPC和区块链网络进行连接，完成合约创建、调用、链管理等功能。</p></li><li><p>区块链浏览器 (ChainMaker broswer)：通过可视化界面为用户展示区块信息、交易信息、节点信息等区块链信息。</p></li><li><p>管理平台 (management platform)：通过可视化界面方便用户对链进行管理、信息浏览和资源监控等。</p></li><li><p>合约IDE (contract IDE)：智能合约在线开发环境，长安链所有合约支持语言均可在该IDE上开发和编译。</p></li><li><p>命令行工具集 (ChainMaker CLI, cmc)：使用户可以用命令行的方式对链进行部署和管理操作，例如证书生成、链配置、交易发送等。</p></li></ul><h3 id=交易-1>交易</h3><p><img src=../../static/blockchain/transaction.png alt=transaction></p><ol><li>用户接入区块链rpc，发起交易</li><li>节点验证交易，广播交易</li><li>记账节点（共识节点）打包交易到新区块(此处需要共识算法多个节点共识一致)</li><li>广播区块，其他节点同步区块到本地数据库存储。</li></ol><p>共识流程：<br><img src=../../static/blockchain/CoreProcesses-block-generation.png alt=共识></p><ol><li>提议候选区块。区块提议节点从交易池选取一批交易，并行调度执行得到结果，生成DAG，并将区块和DAG广播。</li><li>共识候选区块。基于链上的共识机制，对候选区块进行共识投票。</li><li>验证候选区块。在共识过程中，网络中其他节点针对提议的候选区块进行正确性验证。</li><li>执行候选区块。将完成共识投票的区块提交记录至账本，并从交易缓存中移除。</li></ol><p>TBFT 是一种拜占庭容错的共识算法，可以在拜占庭节点数小于总数1/3的情况下，保证系统的安全运行。</p><p><img src=../../static/blockchain/Consensus-tbft-stage.png alt=TBFT></p><p>TBFT 的每轮共识可以分为5个步骤：</p><ol><li>NewRound: 共识投票的准备阶段，会初始化共识相关状态；</li><li>Proposal: 提案阶段，leader节点会打包区块，并广播给follwer节点；</li><li>Prevote: 预投票阶段，follower节点在收到proposal并验证proposal合法后，广播自己的prevote投票到其他节点；</li><li>Precommit: 预提交阶段，节点收到 >2/3 针对proposal的prevote投票后，广播自己的precommit投票到其他节点；</li><li>Commit: 提交阶段，节点收到 >2/3 针对proposal的precommit投票后，提交proposal中的区块到账本。</li></ol><h3 id=智能合约>智能合约</h3><p>一种以 “计算机语言编写”，由计算机 “自动验证和执行”
+的代码化合同，是纸质合同的数字化形式
+在区块链里，智能合约在所有节点的执行结果，保证相同。所以常用于对账户操作。</p><h3 id=p2p-网络>p2p 网络</h3><p>网络模块主要负责如下功能实现：</p><ul><li>节点组网</li><li>具有安全保障的节点间数据通讯</li><li>节点网络身份认证</li><li>消息广播及订阅（Pubsub）</li><li>扩展支持节点自动发现、自动组网</li><li>多链间网络消息数据隔离</li><li>复杂网络环境场景解决方案的支持</li></ul><p>长安链2.0版本的网络模块是基于libp2p的v0.6.4版本实现并改进的.
+P2P网络相关特性，可用下图一图汇总，包括：</p><ul><li>大规模节点组网；</li><li>动态节点和连接管理；</li><li>专有网络穿透连接；</li><li>多链网络隔离。
+<img src=../../static/blockchain/P2P-schematic.png alt=p2p></li></ul><p>网络节点自动发现、自动连接的组网方式，默认在线的每个节点都可以作为种子节点为其他节点提供网络发现服务，每个种子节点都会记录网内节点地址信息。当有新节点连接到某个种子节点时，新节点会向该种子节点查询网内其他可连接节点的地址，拿到其他节点地址后，新节点会主动尝试与这些节点建立连接；另外，种子节点在接受了新节点链接后，会通过网络发现服务将该新节点的地址通知给其他在线的种子节点，其他节点在获得该新节点地址后，也会主动尝试与该新节点建立连接。<br>更详细的组网方式，可以参考边缘计算的edgemesh网络原理分析的文档。</p><h3 id=区块链的几个特点>区块链的几个特点：</h3><p>区块链是一个非实时响应的网络（不适合毫秒级响应的场景）<br>区块链是一个容量有限的网络（不适合大文件存储）<br>区块链是一个多方博弈的网络（一旦网络运行，升级协议、合约需要多方共识后统一操作）<br>区块链是一个透明网络（数据上链后会同步到全节点）<br>区块链是一个不可（难以）篡改的网络（信息上链不可删除、误操作不可回退）<br>区块链是一个信任算法的网络（密码学，智能合约）</p><h3 id=应用场景>应用场景</h3><p><img src=../../static/blockchain/blockchain-scene.png alt=场景></p><h2 id=节点搭建>节点搭建</h2><h3 id=部署管理台>部署管理台</h3><p>管理平台主要由前端、后端及数据库三部分组成。通过docker的方式部署。<br>克隆代码之前需要先注册账号。<br><code>$ git clone -b v2.3.1 --depth=1 https://git.chainmaker.org.cn/chainmaker/management-backend.git</code>
+<code>$ docker-compose up</code></p><p>服务启动后，默认监听的是80端口，可以在浏览器直接打开，数据用户名密码：admin/a123456
+查看服务启动情况：
+<img src=../../static/blockchain/management-service.png alt=server></p><p>通过快速引导，生成四个节点，共识算法选择为：TBFT
+配置完成后，会生成一个安装包，下载解压后，得到四个节点的配置，以下只展示一个节点的配置：
+<img src=../../static/blockchain/node-config.png alt=config></p><p>查看链账户管理，可以看到四个节点。
+<img src=../../static/blockchain/node-list.png alt=node-list><br>每个节点有三种证书类型：</p><ul><li>组织证书：组织证书将作为准入该区块链的凭证，被添加到链配置文件中，并作为节点证书和用户证书的上级CA，为节点和用户颁发证书。</li><li>节点证书：节点证书由所属组织ca颁发，作为节点的身份凭证，在区块链网络通讯中验证节点身份有效性。</li><li>用户证书：用户证书由所属组织ca颁发，对上链交易进行签名，并根据签名信息验证交易的有效性。 <strong>后续对节点的操作，主要用到用户证书。</strong></li></ul><h3 id=启动节点>启动节点</h3><p>启动四个节点：
+<code>bash start.sh</code>
+查看节点运行状态：
+<img src=../../static/blockchain/node-run-list.png alt=run></p><h3 id=控制台管理节点>控制台管理节点</h3><p>在区块链管理，订阅区块链，填入链id：edge(部署管理台-生成配置的时候填入),rpc端口，保存。
+<img src=../../static/blockchain/dingyue2.png alt=dingyue2>
+<img src=../../static/blockchain/dingyue.png alt=dingyue></p><h3 id=区块链浏览器>区块链浏览器</h3><p><code>$ git clone --depth=1 https://git.chainmaker.org.cn/chainmaker/chainmaker-explorer.git</code>
+启动：<code>cd docker && docker-compose up -d</code>
+查看：
+<img src=../../static/blockchain/explorer-list.png alt=explorer></p><p>将区块链连接到浏览器：
+<img src=../../static/blockchain/link-explor.png alt=link></p><p>访问：<code>http://localhost:9996</code>
+<img src=../../static/blockchain/explorer-page.png alt="home page"></p><h2 id=智能合约-1>智能合约</h2><p>智能合约的部署，可以通过管理台部署，也可以通过sdk，连接到node，调用rpc方法部署。
+<img src=../../static/blockchain/deploy-sc.png alt=deploy>
+通过一个完整的例子，体验合约的编写、部署、调用。</p><h3 id=编写>编写</h3><p><strong>故事背景：</strong> 假设小明(xiaoming)最近在和他的2个兄弟(小米(xiaomi)和小刚(xiaogang))一起玩石头剪刀布的游戏， 赢的人可以继承老爷子上亿资产。 三个人现在都怕对方使诈。 在出招的最后一刻变卦赢得了比赛。 那如果这个时候我们用智能合约代码来决定胜负似乎就没有问题了。</p><h4 id=编写合约>编写合约：</h4><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>  1
+</span><span class=lnt>  2
+</span><span class=lnt>  3
+</span><span class=lnt>  4
+</span><span class=lnt>  5
+</span><span class=lnt>  6
+</span><span class=lnt>  7
+</span><span class=lnt>  8
+</span><span class=lnt>  9
+</span><span class=lnt> 10
+</span><span class=lnt> 11
+</span><span class=lnt> 12
+</span><span class=lnt> 13
+</span><span class=lnt> 14
+</span><span class=lnt> 15
+</span><span class=lnt> 16
+</span><span class=lnt> 17
+</span><span class=lnt> 18
+</span><span class=lnt> 19
+</span><span class=lnt> 20
+</span><span class=lnt> 21
+</span><span class=lnt> 22
+</span><span class=lnt> 23
+</span><span class=lnt> 24
+</span><span class=lnt> 25
+</span><span class=lnt> 26
+</span><span class=lnt> 27
+</span><span class=lnt> 28
+</span><span class=lnt> 29
+</span><span class=lnt> 30
+</span><span class=lnt> 31
+</span><span class=lnt> 32
+</span><span class=lnt> 33
+</span><span class=lnt> 34
+</span><span class=lnt> 35
+</span><span class=lnt> 36
+</span><span class=lnt> 37
+</span><span class=lnt> 38
+</span><span class=lnt> 39
+</span><span class=lnt> 40
+</span><span class=lnt> 41
+</span><span class=lnt> 42
+</span><span class=lnt> 43
+</span><span class=lnt> 44
+</span><span class=lnt> 45
+</span><span class=lnt> 46
+</span><span class=lnt> 47
+</span><span class=lnt> 48
+</span><span class=lnt> 49
+</span><span class=lnt> 50
+</span><span class=lnt> 51
+</span><span class=lnt> 52
+</span><span class=lnt> 53
+</span><span class=lnt> 54
+</span><span class=lnt> 55
+</span><span class=lnt> 56
+</span><span class=lnt> 57
+</span><span class=lnt> 58
+</span><span class=lnt> 59
+</span><span class=lnt> 60
+</span><span class=lnt> 61
+</span><span class=lnt> 62
+</span><span class=lnt> 63
+</span><span class=lnt> 64
+</span><span class=lnt> 65
+</span><span class=lnt> 66
+</span><span class=lnt> 67
+</span><span class=lnt> 68
+</span><span class=lnt> 69
+</span><span class=lnt> 70
+</span><span class=lnt> 71
+</span><span class=lnt> 72
+</span><span class=lnt> 73
+</span><span class=lnt> 74
+</span><span class=lnt> 75
+</span><span class=lnt> 76
+</span><span class=lnt> 77
+</span><span class=lnt> 78
+</span><span class=lnt> 79
+</span><span class=lnt> 80
+</span><span class=lnt> 81
+</span><span class=lnt> 82
+</span><span class=lnt> 83
+</span><span class=lnt> 84
+</span><span class=lnt> 85
+</span><span class=lnt> 86
+</span><span class=lnt> 87
+</span><span class=lnt> 88
+</span><span class=lnt> 89
+</span><span class=lnt> 90
+</span><span class=lnt> 91
+</span><span class=lnt> 92
+</span><span class=lnt> 93
+</span><span class=lnt> 94
+</span><span class=lnt> 95
+</span><span class=lnt> 96
+</span><span class=lnt> 97
+</span><span class=lnt> 98
+</span><span class=lnt> 99
+</span><span class=lnt>100
+</span><span class=lnt>101
+</span><span class=lnt>102
+</span><span class=lnt>103
+</span><span class=lnt>104
+</span><span class=lnt>105
+</span><span class=lnt>106
+</span><span class=lnt>107
+</span><span class=lnt>108
+</span><span class=lnt>109
+</span><span class=lnt>110
+</span><span class=lnt>111
+</span><span class=lnt>112
+</span><span class=lnt>113
+</span><span class=lnt>114
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-js data-lang=js><span class=line><span class=cl><span class=c1>// SPDX-License-Identifier: GPL-3.0
+</span></span></span><span class=line><span class=cl><span class=c1></span><span class=nx>pragma</span> <span class=nx>solidity</span> <span class=o>^</span><span class=mf>0.8</span><span class=p>.</span><span class=mi>4</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=nx>contract</span> <span class=nx>Winner</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=nx>mapping</span><span class=p>(</span><span class=nx>string</span><span class=p>=&gt;</span><span class=nx>uint8</span><span class=p>)</span> <span class=nx>_mapActions</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>    <span class=nx>mapping</span><span class=p>(</span><span class=nx>address</span><span class=p>=&gt;</span><span class=nx>bool</span><span class=p>)</span> <span class=nx>_AllAccounts</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>    <span class=nx>mapping</span><span class=p>(</span><span class=nx>address</span><span class=p>=&gt;</span><span class=nx>uint8</span><span class=p>)</span> <span class=nx>_AccountsActions</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>    <span class=nx>bool</span> <span class=nx>start</span><span class=p>;</span> 
+</span></span><span class=line><span class=cl>    <span class=c1>// 对应 部署管理台-&gt;用户证书 中的cmtestuser3
+</span></span></span><span class=line><span class=cl><span class=c1></span>    <span class=nx>address</span> <span class=nx>constant</span> <span class=nx>xiaomiAddr</span> <span class=o>=</span> <span class=mh>0x8ab4Ecd553ed5c841248ad49A033eAe80172E0Af</span><span class=p>;</span> 
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>    <span class=c1>// 对应 部署管理台-&gt;用户证书 中的cmtestuser2
+</span></span></span><span class=line><span class=cl><span class=c1></span>    <span class=nx>address</span> <span class=nx>constant</span> <span class=nx>xiaomingAddr</span> <span class=o>=</span> <span class=mh>0x8C46B617AeF8dDb1b81fD090Ff77f3B20B27Ca57</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>    <span class=c1>// 对应 部署管理台-&gt;用户证书 中的cmtestuser1
+</span></span></span><span class=line><span class=cl><span class=c1></span>    <span class=nx>address</span> <span class=nx>constant</span> <span class=nx>xiaogangAddr</span> <span class=o>=</span> <span class=mh>0x7970bBCfB211CD71862DA1d0601e7Ffb3Ab62Bfd</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>    
+</span></span><span class=line><span class=cl>    <span class=nx>event</span> <span class=nx>log</span><span class=p>(</span><span class=nx>address</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>    <span class=c1>// 这个是构造函数 在合约第一次创建时执行
+</span></span></span><span class=line><span class=cl><span class=c1></span>    <span class=nx>constructor</span><span class=p>()</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>        <span class=nx>_mapActions</span><span class=p>[</span><span class=s2>&#34;scissors&#34;</span><span class=p>]</span> <span class=o>=</span> <span class=mi>1</span><span class=p>;</span> <span class=c1>// 剪刀
+</span></span></span><span class=line><span class=cl><span class=c1></span>        <span class=nx>_mapActions</span><span class=p>[</span><span class=s2>&#34;hammer&#34;</span><span class=p>]</span> <span class=o>=</span> <span class=mi>2</span><span class=p>;</span> <span class=c1>// 锤子
+</span></span></span><span class=line><span class=cl><span class=c1></span>        <span class=nx>_mapActions</span><span class=p>[</span><span class=s2>&#34;cloth&#34;</span><span class=p>]</span> <span class=o>=</span> <span class=mi>3</span><span class=p>;</span> <span class=c1>// 布 
+</span></span></span><span class=line><span class=cl><span class=c1></span>        
+</span></span><span class=line><span class=cl>        <span class=nx>_AllAccounts</span><span class=p>[</span><span class=nx>xiaomiAddr</span><span class=p>]</span> <span class=o>=</span> <span class=kc>true</span><span class=p>;</span>  <span class=c1>// xiaomi
+</span></span></span><span class=line><span class=cl><span class=c1></span>        <span class=nx>_AllAccounts</span><span class=p>[</span><span class=nx>xiaomingAddr</span><span class=p>]</span> <span class=o>=</span> <span class=kc>true</span><span class=p>;</span> <span class=c1>// xiaoming
+</span></span></span><span class=line><span class=cl><span class=c1></span>        <span class=nx>_AllAccounts</span><span class=p>[</span><span class=nx>xiaogangAddr</span><span class=p>]</span> <span class=o>=</span> <span class=kc>true</span><span class=p>;</span> <span class=c1>// xiaogang
+</span></span></span><span class=line><span class=cl><span class=c1></span>        
+</span></span><span class=line><span class=cl>        <span class=nx>_AccountsActions</span><span class=p>[</span><span class=nx>xiaomiAddr</span><span class=p>]</span> <span class=o>=</span> <span class=mi>0</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>        <span class=nx>_AccountsActions</span><span class=p>[</span><span class=nx>xiaomingAddr</span><span class=p>]</span> <span class=o>=</span> <span class=mi>0</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>        <span class=nx>_AccountsActions</span><span class=p>[</span><span class=nx>xiaogangAddr</span><span class=p>]</span> <span class=o>=</span> <span class=mi>0</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>    <span class=p>}</span>
+</span></span><span class=line><span class=cl>    
+</span></span><span class=line><span class=cl>    <span class=c1>// 设置执行动作  要求只能是scissors hammer cloth 
+</span></span></span><span class=line><span class=cl><span class=c1></span>    <span class=c1>// 并且要求只能是上述要求的三个地址
+</span></span></span><span class=line><span class=cl><span class=c1></span>    <span class=kd>function</span> <span class=nx>setAction</span><span class=p>(</span> <span class=nx>string</span> <span class=nx>memory</span> <span class=nx>action</span><span class=p>)</span> <span class=kr>public</span>  <span class=nx>returns</span> <span class=p>(</span><span class=nx>bool</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>        <span class=nx>emit</span> <span class=nx>log</span><span class=p>(</span><span class=nx>msg</span><span class=p>.</span><span class=nx>sender</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>        <span class=nx>emit</span> <span class=nx>log</span><span class=p>(</span><span class=nx>address</span><span class=p>(</span><span class=nx>msg</span><span class=p>.</span><span class=nx>sender</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>        <span class=k>if</span> <span class=p>(</span><span class=nx>_mapActions</span><span class=p>[</span><span class=nx>action</span><span class=p>]</span> <span class=o>==</span> <span class=mi>0</span> <span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>            <span class=k>return</span> <span class=kc>false</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>        <span class=p>}</span>
+</span></span><span class=line><span class=cl>    
+</span></span><span class=line><span class=cl>        <span class=k>if</span> <span class=p>(</span><span class=o>!</span><span class=nx>_AllAccounts</span><span class=p>[</span><span class=nx>address</span><span class=p>(</span><span class=nx>msg</span><span class=p>.</span><span class=nx>sender</span><span class=p>)])</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>            <span class=k>return</span> <span class=kc>false</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>        <span class=p>}</span>
+</span></span><span class=line><span class=cl>        <span class=nx>_AccountsActions</span><span class=p>[</span><span class=nx>address</span><span class=p>(</span><span class=nx>msg</span><span class=p>.</span><span class=nx>sender</span><span class=p>)]</span> <span class=o>=</span> <span class=nx>_mapActions</span><span class=p>[</span><span class=nx>action</span><span class=p>];</span>
+</span></span><span class=line><span class=cl>        <span class=k>return</span> <span class=kc>true</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>    <span class=p>}</span>
+</span></span><span class=line><span class=cl>    
+</span></span><span class=line><span class=cl>    <span class=c1>// 重置状态
+</span></span></span><span class=line><span class=cl><span class=c1></span>    <span class=kd>function</span> <span class=nx>reset</span><span class=p>()</span> <span class=kr>private</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>        <span class=nx>_AccountsActions</span><span class=p>[</span><span class=nx>xiaomiAddr</span><span class=p>]</span> <span class=o>=</span> <span class=mi>0</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>        <span class=nx>_AccountsActions</span><span class=p>[</span><span class=nx>xiaomingAddr</span><span class=p>]</span> <span class=o>=</span> <span class=mi>0</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>        <span class=nx>_AccountsActions</span><span class=p>[</span><span class=nx>xiaogangAddr</span><span class=p>]</span> <span class=o>=</span> <span class=mi>0</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>    <span class=p>}</span>
+</span></span><span class=line><span class=cl>    
+</span></span><span class=line><span class=cl>    <span class=c1>// 查看谁赢得3亿资产
+</span></span></span><span class=line><span class=cl><span class=c1></span>    <span class=kd>function</span> <span class=nx>whoIsWinner</span><span class=p>()</span> <span class=kr>public</span> <span class=nx>returns</span> <span class=p>(</span><span class=nx>string</span> <span class=nx>memory</span><span class=p>,</span> <span class=nx>bool</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>        <span class=k>if</span> <span class=p>(</span>
+</span></span><span class=line><span class=cl>            <span class=nx>_AccountsActions</span><span class=p>[</span><span class=nx>xiaomiAddr</span><span class=p>]</span> <span class=o>==</span> <span class=mi>0</span> <span class=o>||</span>
+</span></span><span class=line><span class=cl>            <span class=nx>_AccountsActions</span><span class=p>[</span><span class=nx>xiaomingAddr</span><span class=p>]</span> <span class=o>==</span> <span class=mi>0</span> <span class=o>||</span>
+</span></span><span class=line><span class=cl>            <span class=nx>_AccountsActions</span><span class=p>[</span><span class=nx>xiaogangAddr</span><span class=p>]</span> <span class=o>==</span> <span class=mi>0</span>
+</span></span><span class=line><span class=cl>            <span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>                <span class=nx>reset</span><span class=p>();</span>
+</span></span><span class=line><span class=cl>                <span class=k>return</span> <span class=p>(</span><span class=s2>&#34;&#34;</span><span class=p>,</span> <span class=kc>false</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>            <span class=p>}</span>
+</span></span><span class=line><span class=cl>        <span class=nx>uint8</span>  <span class=nx>xiaomi</span> <span class=o>=</span> <span class=nx>_AccountsActions</span><span class=p>[</span><span class=nx>xiaomiAddr</span><span class=p>];</span>
+</span></span><span class=line><span class=cl>        <span class=nx>uint8</span>  <span class=nx>xiaoming</span> <span class=o>=</span> <span class=nx>_AccountsActions</span><span class=p>[</span><span class=nx>xiaomingAddr</span><span class=p>];</span>
+</span></span><span class=line><span class=cl>        <span class=nx>uint8</span>  <span class=nx>xiaogang</span> <span class=o>=</span> <span class=nx>_AccountsActions</span><span class=p>[</span><span class=nx>xiaogangAddr</span><span class=p>];</span>
+</span></span><span class=line><span class=cl>        <span class=k>if</span> <span class=p>(</span><span class=nx>xiaomi</span> <span class=o>!=</span> <span class=nx>xiaoming</span> <span class=o>&amp;&amp;</span> <span class=nx>xiaomi</span> <span class=o>!=</span> <span class=nx>xiaogang</span> <span class=o>&amp;&amp;</span> <span class=nx>xiaoming</span> <span class=o>!=</span> <span class=nx>xiaogang</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>            <span class=nx>reset</span><span class=p>();</span>
+</span></span><span class=line><span class=cl>            <span class=k>return</span> <span class=p>(</span><span class=s2>&#34;&#34;</span><span class=p>,</span> <span class=kc>false</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>        <span class=p>}</span>
+</span></span><span class=line><span class=cl>        
+</span></span><span class=line><span class=cl>        <span class=k>if</span> <span class=p>(</span><span class=nx>xiaomi</span> <span class=o>==</span> <span class=nx>xiaoming</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>            <span class=k>if</span> <span class=p>(</span><span class=nx>winCheck</span><span class=p>(</span><span class=nx>xiaomi</span><span class=p>,</span> <span class=nx>xiaogang</span><span class=p>))</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>                <span class=k>return</span> <span class=p>(</span><span class=s2>&#34;xiaogang&#34;</span><span class=p>,</span> <span class=kc>true</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>            <span class=p>}</span><span class=k>else</span><span class=p>{</span>
+</span></span><span class=line><span class=cl>                <span class=nx>reset</span><span class=p>();</span>
+</span></span><span class=line><span class=cl>                <span class=k>return</span> <span class=p>(</span><span class=s2>&#34;&#34;</span><span class=p>,</span> <span class=kc>false</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>            <span class=p>}</span>
+</span></span><span class=line><span class=cl>        <span class=p>}</span>
+</span></span><span class=line><span class=cl>        <span class=k>if</span> <span class=p>(</span><span class=nx>xiaomi</span> <span class=o>==</span> <span class=nx>xiaogang</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>            <span class=k>if</span> <span class=p>(</span><span class=nx>winCheck</span><span class=p>(</span><span class=nx>xiaomi</span><span class=p>,</span> <span class=nx>xiaoming</span><span class=p>))</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>                <span class=k>return</span> <span class=p>(</span><span class=s2>&#34;xiaoming&#34;</span><span class=p>,</span> <span class=kc>true</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>            <span class=p>}</span><span class=k>else</span><span class=p>{</span>
+</span></span><span class=line><span class=cl>                <span class=nx>reset</span><span class=p>();</span>
+</span></span><span class=line><span class=cl>                <span class=k>return</span> <span class=p>(</span><span class=s2>&#34;&#34;</span><span class=p>,</span> <span class=kc>false</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>            <span class=p>}</span>
+</span></span><span class=line><span class=cl>        <span class=p>}</span> 
+</span></span><span class=line><span class=cl>        <span class=k>if</span> <span class=p>(</span><span class=nx>xiaoming</span> <span class=o>==</span> <span class=nx>xiaogang</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>            <span class=k>if</span> <span class=p>(</span><span class=nx>winCheck</span><span class=p>(</span><span class=nx>xiaoming</span><span class=p>,</span> <span class=nx>xiaomi</span><span class=p>))</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>                <span class=k>return</span> <span class=p>(</span><span class=s2>&#34;xiaomi&#34;</span><span class=p>,</span> <span class=kc>true</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>            <span class=p>}</span><span class=k>else</span><span class=p>{</span>
+</span></span><span class=line><span class=cl>                <span class=nx>reset</span><span class=p>();</span>
+</span></span><span class=line><span class=cl>                <span class=k>return</span> <span class=p>(</span><span class=s2>&#34;&#34;</span><span class=p>,</span> <span class=kc>false</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>            <span class=p>}</span>
+</span></span><span class=line><span class=cl>        <span class=p>}</span>
+</span></span><span class=line><span class=cl>        <span class=nx>reset</span><span class=p>();</span>
+</span></span><span class=line><span class=cl>        <span class=k>return</span> <span class=p>(</span><span class=s2>&#34;&#34;</span><span class=p>,</span> <span class=kc>false</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>    <span class=p>}</span>
+</span></span><span class=line><span class=cl>    
+</span></span><span class=line><span class=cl>    <span class=kd>function</span> <span class=nx>winCheck</span><span class=p>(</span><span class=nx>uint8</span> <span class=nx>a</span><span class=p>,</span> <span class=nx>uint8</span> <span class=nx>b</span> <span class=p>)</span> <span class=kr>private</span> <span class=nx>pure</span> <span class=nx>returns</span><span class=p>(</span> <span class=nx>bool</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>        <span class=k>if</span><span class=p>(</span><span class=nx>a</span> <span class=o>==</span> <span class=mi>1</span> <span class=o>&amp;&amp;</span> <span class=nx>b</span><span class=o>==</span><span class=mi>3</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>            <span class=k>return</span> <span class=kc>true</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>        <span class=p>}</span><span class=k>else</span> <span class=k>if</span> <span class=p>(</span><span class=nx>a</span><span class=o>==</span><span class=mi>2</span> <span class=o>&amp;&amp;</span> <span class=nx>b</span><span class=o>==</span><span class=mi>1</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>            <span class=k>return</span> <span class=kc>true</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>        <span class=p>}</span><span class=k>else</span> <span class=k>if</span> <span class=p>(</span><span class=nx>a</span><span class=o>==</span><span class=mi>3</span> <span class=o>&amp;&amp;</span> <span class=nx>b</span><span class=o>==</span><span class=mi>2</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>            <span class=k>return</span> <span class=kc>true</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>        <span class=p>}</span>
+</span></span><span class=line><span class=cl>        <span class=k>return</span> <span class=kc>false</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>    <span class=p>}</span>
+</span></span><span class=line><span class=cl>    
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span></code></pre></td></tr></table></div></div><h4 id=合约编译>合约编译：</h4><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>liujh-h@Z370 ~ $  solc --abi --bin --hashes --overwrite -o . winner.sol
+</span></span><span class=line><span class=cl>liujh-h@Z370 ~ $ ls
+</span></span><span class=line><span class=cl>Winner.abi  Winner.bin  Winner.signatures winner.sol
+</span></span></code></pre></td></tr></table></div></div><h4 id=部署合约>部署合约：</h4><p>部署合约选用go sdk调用rpc的方式，部署。
+代码：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>  1
+</span><span class=lnt>  2
+</span><span class=lnt>  3
+</span><span class=lnt>  4
+</span><span class=lnt>  5
+</span><span class=lnt>  6
+</span><span class=lnt>  7
+</span><span class=lnt>  8
+</span><span class=lnt>  9
+</span><span class=lnt> 10
+</span><span class=lnt> 11
+</span><span class=lnt> 12
+</span><span class=lnt> 13
+</span><span class=lnt> 14
+</span><span class=lnt> 15
+</span><span class=lnt> 16
+</span><span class=lnt> 17
+</span><span class=lnt> 18
+</span><span class=lnt> 19
+</span><span class=lnt> 20
+</span><span class=lnt> 21
+</span><span class=lnt> 22
+</span><span class=lnt> 23
+</span><span class=lnt> 24
+</span><span class=lnt> 25
+</span><span class=lnt> 26
+</span><span class=lnt> 27
+</span><span class=lnt> 28
+</span><span class=lnt> 29
+</span><span class=lnt> 30
+</span><span class=lnt> 31
+</span><span class=lnt> 32
+</span><span class=lnt> 33
+</span><span class=lnt> 34
+</span><span class=lnt> 35
+</span><span class=lnt> 36
+</span><span class=lnt> 37
+</span><span class=lnt> 38
+</span><span class=lnt> 39
+</span><span class=lnt> 40
+</span><span class=lnt> 41
+</span><span class=lnt> 42
+</span><span class=lnt> 43
+</span><span class=lnt> 44
+</span><span class=lnt> 45
+</span><span class=lnt> 46
+</span><span class=lnt> 47
+</span><span class=lnt> 48
+</span><span class=lnt> 49
+</span><span class=lnt> 50
+</span><span class=lnt> 51
+</span><span class=lnt> 52
+</span><span class=lnt> 53
+</span><span class=lnt> 54
+</span><span class=lnt> 55
+</span><span class=lnt> 56
+</span><span class=lnt> 57
+</span><span class=lnt> 58
+</span><span class=lnt> 59
+</span><span class=lnt> 60
+</span><span class=lnt> 61
+</span><span class=lnt> 62
+</span><span class=lnt> 63
+</span><span class=lnt> 64
+</span><span class=lnt> 65
+</span><span class=lnt> 66
+</span><span class=lnt> 67
+</span><span class=lnt> 68
+</span><span class=lnt> 69
+</span><span class=lnt> 70
+</span><span class=lnt> 71
+</span><span class=lnt> 72
+</span><span class=lnt> 73
+</span><span class=lnt> 74
+</span><span class=lnt> 75
+</span><span class=lnt> 76
+</span><span class=lnt> 77
+</span><span class=lnt> 78
+</span><span class=lnt> 79
+</span><span class=lnt> 80
+</span><span class=lnt> 81
+</span><span class=lnt> 82
+</span><span class=lnt> 83
+</span><span class=lnt> 84
+</span><span class=lnt> 85
+</span><span class=lnt> 86
+</span><span class=lnt> 87
+</span><span class=lnt> 88
+</span><span class=lnt> 89
+</span><span class=lnt> 90
+</span><span class=lnt> 91
+</span><span class=lnt> 92
+</span><span class=lnt> 93
+</span><span class=lnt> 94
+</span><span class=lnt> 95
+</span><span class=lnt> 96
+</span><span class=lnt> 97
+</span><span class=lnt> 98
+</span><span class=lnt> 99
+</span><span class=lnt>100
+</span><span class=lnt>101
+</span><span class=lnt>102
+</span><span class=lnt>103
+</span><span class=lnt>104
+</span><span class=lnt>105
+</span><span class=lnt>106
+</span><span class=lnt>107
+</span><span class=lnt>108
+</span><span class=lnt>109
+</span><span class=lnt>110
+</span><span class=lnt>111
+</span><span class=lnt>112
+</span><span class=lnt>113
+</span><span class=lnt>114
+</span><span class=lnt>115
+</span><span class=lnt>116
+</span><span class=lnt>117
+</span><span class=lnt>118
+</span><span class=lnt>119
+</span><span class=lnt>120
+</span><span class=lnt>121
+</span><span class=lnt>122
+</span><span class=lnt>123
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=c1>// 常量初始化
+</span></span></span><span class=line><span class=cl><span class=c1></span><span class=kd>const</span> <span class=p>(</span>
+</span></span><span class=line><span class=cl>	<span class=nx>createContractTimeout</span> <span class=p>=</span> <span class=mi>5</span>
+</span></span><span class=line><span class=cl>	<span class=nx>WinnerContractName</span>    <span class=p>=</span> <span class=s>&#34;winnerrr&#34;</span>
+</span></span><span class=line><span class=cl>	<span class=nx>WinnerVersion</span>         <span class=p>=</span> <span class=s>&#34;1.0.0&#34;</span>
+</span></span><span class=line><span class=cl>	<span class=nx>WinnerByteCodePath</span>    <span class=p>=</span> <span class=s>&#34;/home/liujh-h/mywork/code/solidity/Winner.bin&#34;</span>
+</span></span><span class=line><span class=cl>	<span class=nx>WinnerABIPath</span>         <span class=p>=</span> <span class=s>&#34;/home/liujh-h/mywork/code/solidity/Winner.abi&#34;</span>
+</span></span><span class=line><span class=cl><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1>// 定义使用方式:
+</span></span></span><span class=line><span class=cl><span class=c1>// 第一个参数为用户，整形对应关系为： 1-cmtestuser1 2-cmtestuser2 3-cmtestuser3
+</span></span></span><span class=line><span class=cl><span class=c1>// 第二个参数为行为，create-创建， winner-查询谁赢了3个亿资产， scissors/hammer/cloth 对应三个动作
+</span></span></span><span class=line><span class=cl><span class=c1></span><span class=kd>func</span> <span class=nf>main</span><span class=p>()</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>	<span class=nx>index</span><span class=p>,</span> <span class=nx>_</span> <span class=o>:=</span> <span class=nx>strconv</span><span class=p>.</span><span class=nf>Atoi</span><span class=p>(</span><span class=nx>os</span><span class=p>.</span><span class=nx>Args</span><span class=p>[</span><span class=mi>1</span><span class=p>])</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>	<span class=nx>fmt</span><span class=p>.</span><span class=nf>Println</span><span class=p>(</span><span class=s>&#34;====================== create client ======================&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>	<span class=nx>client</span><span class=p>,</span> <span class=nx>err</span> <span class=o>:=</span> <span class=nx>examples</span><span class=p>.</span><span class=nf>CreateChainClientWithSDKConf</span><span class=p>(</span><span class=nx>sdkConfigOrgClientPaths</span><span class=p>[</span><span class=nx>index</span><span class=p>])</span>
+</span></span><span class=line><span class=cl>	<span class=k>if</span> <span class=nx>err</span> <span class=o>!=</span> <span class=kc>nil</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>		<span class=nx>log</span><span class=p>.</span><span class=nf>Fatalln</span><span class=p>(</span><span class=nx>err</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>	<span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>	<span class=k>if</span> <span class=nb>len</span><span class=p>(</span><span class=nx>os</span><span class=p>.</span><span class=nx>Args</span><span class=p>)</span> <span class=o>!=</span> <span class=mi>3</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>		<span class=nx>log</span><span class=p>.</span><span class=nf>Fatal</span><span class=p>(</span><span class=s>&#34;arg1: user, arg2: create/winner/scissors/hammer/cloth&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>	<span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>	<span class=k>if</span> <span class=nx>os</span><span class=p>.</span><span class=nx>Args</span><span class=p>[</span><span class=mi>2</span><span class=p>]</span> <span class=o>==</span> <span class=s>&#34;create&#34;</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>		<span class=nx>fmt</span><span class=p>.</span><span class=nf>Println</span><span class=p>(</span><span class=s>&#34;====================== 创建Winner合约 ======================&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>		<span class=nx>usernames</span> <span class=o>:=</span> <span class=p>[]</span><span class=kt>string</span><span class=p>{</span><span class=nx>examples</span><span class=p>.</span><span class=nx>UserNameOrg1Admin1</span><span class=p>,</span> <span class=nx>examples</span><span class=p>.</span><span class=nx>UserNameOrg2Admin1</span><span class=p>,</span> <span class=nx>examples</span><span class=p>.</span><span class=nx>UserNameOrg3Admin1</span><span class=p>,</span> <span class=nx>examples</span><span class=p>.</span><span class=nx>UserNameOrg4Admin1</span><span class=p>}</span>
+</span></span><span class=line><span class=cl>		<span class=nf>testUserContractWinnerEVMCreate</span><span class=p>(</span><span class=nx>client</span><span class=p>,</span> <span class=kc>true</span><span class=p>,</span> <span class=kc>true</span><span class=p>,</span> <span class=nx>usernames</span><span class=o>...</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>	<span class=p>}</span> <span class=k>else</span> <span class=k>if</span> <span class=nx>os</span><span class=p>.</span><span class=nx>Args</span><span class=p>[</span><span class=mi>2</span><span class=p>]</span> <span class=o>==</span> <span class=s>&#34;winner&#34;</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>		<span class=nx>fmt</span><span class=p>.</span><span class=nf>Println</span><span class=p>(</span><span class=s>&#34;====================== 获取Winner ======================&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>		<span class=nf>testUserContractWinnerEVMGetWinner</span><span class=p>(</span><span class=nx>client</span><span class=p>,</span> <span class=kc>true</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>	<span class=p>}</span> <span class=k>else</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>		<span class=nx>fmt</span><span class=p>.</span><span class=nf>Println</span><span class=p>(</span><span class=s>&#34;====================== 剪刀石头布 ======================&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>		<span class=nf>testUserContractWinnerEVMSetAction</span><span class=p>(</span><span class=nx>client</span><span class=p>,</span> <span class=nx>os</span><span class=p>.</span><span class=nx>Args</span><span class=p>[</span><span class=mi>2</span><span class=p>],</span> <span class=kc>true</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>	<span class=p>}</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1>// 创建合约
+</span></span></span><span class=line><span class=cl><span class=c1></span><span class=kd>func</span> <span class=nf>testUserContractWinnerEVMCreate</span><span class=p>(</span><span class=nx>client</span> <span class=o>*</span><span class=nx>sdk</span><span class=p>.</span><span class=nx>ChainClient</span><span class=p>,</span> <span class=nx>withSyncResult</span> <span class=kt>bool</span><span class=p>,</span> <span class=nx>isIgnoreSameContract</span> <span class=kt>bool</span><span class=p>,</span> <span class=nx>usernames</span> <span class=o>...</span><span class=kt>string</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>	<span class=nx>resp</span><span class=p>,</span> <span class=nx>err</span> <span class=o>:=</span> <span class=nf>createUserContract</span><span class=p>(</span><span class=nx>client</span><span class=p>,</span> <span class=nx>WinnerContractName</span><span class=p>,</span> <span class=nx>WinnerVersion</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>		<span class=nx>WinnerByteCodePath</span><span class=p>,</span> <span class=nx>common</span><span class=p>.</span><span class=nx>RuntimeType_EVM</span><span class=p>,</span> <span class=kc>nil</span><span class=p>,</span> <span class=nx>withSyncResult</span><span class=p>,</span> <span class=nx>usernames</span><span class=o>...</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>	<span class=k>if</span> <span class=p>!</span><span class=nx>isIgnoreSameContract</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>		<span class=k>if</span> <span class=nx>err</span> <span class=o>!=</span> <span class=kc>nil</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>			<span class=nx>log</span><span class=p>.</span><span class=nf>Fatalln</span><span class=p>(</span><span class=nx>err</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>		<span class=p>}</span>
+</span></span><span class=line><span class=cl>	<span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>	<span class=nx>fmt</span><span class=p>.</span><span class=nf>Printf</span><span class=p>(</span><span class=s>&#34;CREATE EVM Winner contract resp: %+v\n&#34;</span><span class=p>,</span> <span class=nx>resp</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1>// 查询结果 调用whoIsWinner 方法
+</span></span></span><span class=line><span class=cl><span class=c1></span><span class=kd>func</span> <span class=nf>testUserContractWinnerEVMGetWinner</span><span class=p>(</span><span class=nx>client</span> <span class=o>*</span><span class=nx>sdk</span><span class=p>.</span><span class=nx>ChainClient</span><span class=p>,</span> <span class=nx>withSyncResult</span> <span class=kt>bool</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>	<span class=nx>abiJson</span><span class=p>,</span> <span class=nx>err</span> <span class=o>:=</span> <span class=nx>ioutil</span><span class=p>.</span><span class=nf>ReadFile</span><span class=p>(</span><span class=nx>WinnerABIPath</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>	<span class=k>if</span> <span class=nx>err</span> <span class=o>!=</span> <span class=kc>nil</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>		<span class=nx>log</span><span class=p>.</span><span class=nf>Fatalln</span><span class=p>(</span><span class=nx>err</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>	<span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>	<span class=nx>myAbi</span><span class=p>,</span> <span class=nx>err</span> <span class=o>:=</span> <span class=nx>abi</span><span class=p>.</span><span class=nf>JSON</span><span class=p>(</span><span class=nx>strings</span><span class=p>.</span><span class=nf>NewReader</span><span class=p>(</span><span class=nb>string</span><span class=p>(</span><span class=nx>abiJson</span><span class=p>)))</span>
+</span></span><span class=line><span class=cl>	<span class=k>if</span> <span class=nx>err</span> <span class=o>!=</span> <span class=kc>nil</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>		<span class=nx>log</span><span class=p>.</span><span class=nf>Fatalln</span><span class=p>(</span><span class=nx>err</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>	<span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>	<span class=nx>method</span> <span class=o>:=</span> <span class=s>&#34;whoIsWinner&#34;</span>
+</span></span><span class=line><span class=cl>	<span class=nx>dataByte</span><span class=p>,</span> <span class=nx>err</span> <span class=o>:=</span> <span class=nx>myAbi</span><span class=p>.</span><span class=nf>Pack</span><span class=p>(</span><span class=nx>method</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>	<span class=k>if</span> <span class=nx>err</span> <span class=o>!=</span> <span class=kc>nil</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>		<span class=nx>log</span><span class=p>.</span><span class=nf>Fatalln</span><span class=p>(</span><span class=nx>err</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>	<span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>	<span class=nx>dataString</span> <span class=o>:=</span> <span class=nx>hex</span><span class=p>.</span><span class=nf>EncodeToString</span><span class=p>(</span><span class=nx>dataByte</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>	<span class=nx>kvs</span> <span class=o>:=</span> <span class=p>[]</span><span class=o>*</span><span class=nx>common</span><span class=p>.</span><span class=nx>KeyValuePair</span><span class=p>{</span>
+</span></span><span class=line><span class=cl>		<span class=p>{</span>
+</span></span><span class=line><span class=cl>			<span class=nx>Key</span><span class=p>:</span>   <span class=s>&#34;data&#34;</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>			<span class=nx>Value</span><span class=p>:</span> <span class=p>[]</span><span class=nb>byte</span><span class=p>(</span><span class=nx>dataString</span><span class=p>),</span>
+</span></span><span class=line><span class=cl>		<span class=p>},</span>
+</span></span><span class=line><span class=cl>	<span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>	<span class=nx>result</span><span class=p>,</span> <span class=nx>err</span> <span class=o>:=</span> <span class=nf>invokeUserContractWithResult</span><span class=p>(</span><span class=nx>client</span><span class=p>,</span> <span class=nx>WinnerContractName</span><span class=p>,</span> <span class=nx>method</span><span class=p>,</span> <span class=s>&#34;&#34;</span><span class=p>,</span> <span class=nx>kvs</span><span class=p>,</span> <span class=nx>withSyncResult</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>	<span class=k>if</span> <span class=nx>err</span> <span class=o>!=</span> <span class=kc>nil</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>		<span class=nx>log</span><span class=p>.</span><span class=nf>Fatalln</span><span class=p>(</span><span class=nx>err</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>	<span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>	<span class=nx>winner</span><span class=p>,</span> <span class=nx>err</span> <span class=o>:=</span> <span class=nx>myAbi</span><span class=p>.</span><span class=nf>Unpack</span><span class=p>(</span><span class=s>&#34;whoIsWinner&#34;</span><span class=p>,</span> <span class=nx>result</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>	<span class=k>if</span> <span class=nx>err</span> <span class=o>!=</span> <span class=kc>nil</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>		<span class=nx>log</span><span class=p>.</span><span class=nf>Fatalln</span><span class=p>(</span><span class=nx>err</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>	<span class=p>}</span>
+</span></span><span class=line><span class=cl>	<span class=nx>fmt</span><span class=p>.</span><span class=nf>Printf</span><span class=p>(</span><span class=s>&#34;get winner [%s]\n&#34;</span><span class=p>,</span> <span class=nx>winner</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1>// 石头剪刀布，具体动作
+</span></span></span><span class=line><span class=cl><span class=c1></span><span class=kd>func</span> <span class=nf>testUserContractWinnerEVMSetAction</span><span class=p>(</span><span class=nx>client</span> <span class=o>*</span><span class=nx>sdk</span><span class=p>.</span><span class=nx>ChainClient</span><span class=p>,</span> <span class=nx>action</span> <span class=kt>string</span><span class=p>,</span> <span class=nx>withSyncResult</span> <span class=kt>bool</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>	<span class=nx>abiJson</span><span class=p>,</span> <span class=nx>err</span> <span class=o>:=</span> <span class=nx>ioutil</span><span class=p>.</span><span class=nf>ReadFile</span><span class=p>(</span><span class=nx>WinnerABIPath</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>	<span class=k>if</span> <span class=nx>err</span> <span class=o>!=</span> <span class=kc>nil</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>		<span class=nx>log</span><span class=p>.</span><span class=nf>Fatalln</span><span class=p>(</span><span class=nx>err</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>	<span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>	<span class=nx>myAbi</span><span class=p>,</span> <span class=nx>err</span> <span class=o>:=</span> <span class=nx>abi</span><span class=p>.</span><span class=nf>JSON</span><span class=p>(</span><span class=nx>strings</span><span class=p>.</span><span class=nf>NewReader</span><span class=p>(</span><span class=nb>string</span><span class=p>(</span><span class=nx>abiJson</span><span class=p>)))</span>
+</span></span><span class=line><span class=cl>	<span class=k>if</span> <span class=nx>err</span> <span class=o>!=</span> <span class=kc>nil</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>		<span class=nx>log</span><span class=p>.</span><span class=nf>Fatalln</span><span class=p>(</span><span class=nx>err</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>	<span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>	<span class=nx>method</span> <span class=o>:=</span> <span class=s>&#34;setAction&#34;</span>
+</span></span><span class=line><span class=cl>	<span class=nx>dataByte</span><span class=p>,</span> <span class=nx>err</span> <span class=o>:=</span> <span class=nx>myAbi</span><span class=p>.</span><span class=nf>Pack</span><span class=p>(</span><span class=nx>method</span><span class=p>,</span> <span class=nx>action</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>	<span class=k>if</span> <span class=nx>err</span> <span class=o>!=</span> <span class=kc>nil</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>		<span class=nx>log</span><span class=p>.</span><span class=nf>Fatalln</span><span class=p>(</span><span class=nx>err</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>	<span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>	<span class=nx>dataString</span> <span class=o>:=</span> <span class=nx>hex</span><span class=p>.</span><span class=nf>EncodeToString</span><span class=p>(</span><span class=nx>dataByte</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>	<span class=nx>kvs</span> <span class=o>:=</span> <span class=p>[]</span><span class=o>*</span><span class=nx>common</span><span class=p>.</span><span class=nx>KeyValuePair</span><span class=p>{</span>
+</span></span><span class=line><span class=cl>		<span class=p>{</span>
+</span></span><span class=line><span class=cl>			<span class=nx>Key</span><span class=p>:</span>   <span class=s>&#34;data&#34;</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>			<span class=nx>Value</span><span class=p>:</span> <span class=p>[]</span><span class=nb>byte</span><span class=p>(</span><span class=nx>dataString</span><span class=p>),</span>
+</span></span><span class=line><span class=cl>		<span class=p>},</span>
+</span></span><span class=line><span class=cl>	<span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>	<span class=nx>err</span> <span class=p>=</span> <span class=nf>invokeUserContract</span><span class=p>(</span><span class=nx>client</span><span class=p>,</span> <span class=nx>WinnerContractName</span><span class=p>,</span> <span class=nx>method</span><span class=p>,</span> <span class=s>&#34;&#34;</span><span class=p>,</span> <span class=nx>kvs</span><span class=p>,</span> <span class=nx>withSyncResult</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>	<span class=k>if</span> <span class=nx>err</span> <span class=o>!=</span> <span class=kc>nil</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>		<span class=nx>log</span><span class=p>.</span><span class=nf>Fatalln</span><span class=p>(</span><span class=nx>err</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>	<span class=p>}</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span></code></pre></td></tr></table></div></div><h4 id=合约调用>合约调用</h4><p>调用部署合约交易
+<img src=../../static/blockchain/create-sc.png alt=create>
+查看页面执行结果：
+<img src=../../static/blockchain/create-sc-page.png alt=create-page>
+本次交易id为：17597575d8fc4f5ecabc6a678c29abaf7f4e40a7b8fe4f77870678ef3335d2cc</p><p>开始石头剪刀布行为：
+<img src=../../static/blockchain/sc-vote.png alt=vote>
+查看页面执行结果：<br><img src=../../static/blockchain/sc-vote-page.png alt=vote-page></p><p>投票结束，查看结果：
+<img src=../../static/blockchain/who-win.png alt=whoWin>
+查看页面执行结果：<br><img src=../../static/blockchain/who-win-page.png alt=vote-page></p><p>文档：
+<a href=http://www.caict.ac.cn/kxyj/qwfb/bps/202212/t20221229_413462.htm>中国信通院2022年区块链白皮书</a><br><a href=http://www.caict.ac.cn/kxyj/qwfb/bps/201911/t20191108_269109.htm>中国信通院2019年区块链白皮书</a>。</p></div><footer class=post-footer><nav class=post-nav><a class=prev href=/post/even-preview/><i class="iconfont icon-left"></i>
+<span class="prev-text nav-default">Theme preview</span>
+<span class="prev-text nav-mobile">Prev</span></a></nav></footer></article></div><div id=vcomments></div><script src=//cdn1.lncld.net/static/js/3.0.4/av-min.js></script>
+<script src=//unpkg.com/valine/dist/Valine.min.js></script>
+<script type=text/javascript>new Valine({el:"#vcomments",appId:"fb6qCfVYGmIrC87K3STOS3V8-gzGzoHsz",appKey:"FilghKK7HHC4hMQHxhR90dDE",notify:!1,verify:!1,avatar:"mm",placeholder:"说点什么吧...",visitor:!1})</script></div></main><footer id=footer class=footer><div class=social-links><a href=mailto:hanglinux@163.com class="iconfont icon-email" title=email></a>
+<a href=https://github.com/fridayhub class="iconfont icon-github" title=github></a>
+<a href=https://fridayhub.github.io/index.xml type=application/rss+xml class="iconfont icon-rss" title=rss></a></div><div class=copyright><span class=power-by>Powered by <a class=hexo-link href=https://gohugo.io>Hugo</a></span>
+<span class=division>|</span>
+<span class=theme-info>Theme -
+<a class=theme-link href=https://github.com/olOwOlo/hugo-theme-even>Even</a></span><div class=busuanzi-footer><span id=busuanzi_container_site_pv>site pv: <span id=busuanzi_value_site_pv><img src=/img/spinner.svg alt=spinner.svg></span></span>
+<span class=division>|</span>
+<span id=busuanzi_container_site_uv>site uv: <span id=busuanzi_value_site_uv><img src=/img/spinner.svg alt=spinner.svg></span></span></div><span class=copyright-year>&copy;
+2017 -
+2024
+<span class=heart><i class="iconfont icon-heart"></i></span>
+<span class=author>friday</span></span></div></footer><div class=back-to-top id=back-to-top><i class="iconfont icon-up"></i></div></div><script src=https://cdn.jsdelivr.net/npm/jquery@3.2.1/dist/jquery.min.js integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin=anonymous></script>
+<script src=https://cdn.jsdelivr.net/npm/slideout@1.0.1/dist/slideout.min.js integrity="sha256-t+zJ/g8/KXIJMjSVQdnibt4dlaDxc9zXr/9oNPeWqdg=" crossorigin=anonymous></script>
+<script src=https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.js integrity="sha256-XVLffZaxoWfGUEbdzuLi7pwaUJv1cecsQJQqGLe7axY=" crossorigin=anonymous></script>
+<script type=text/javascript src=/js/main.min.1c70606d1b733282f06230615f5561b5894924b6f9930ba2ab99cf1254f75a1a.js></script></body></html>
