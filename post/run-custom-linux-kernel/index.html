@@ -1,0 +1,136 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta http-equiv=x-ua-compatible content="IE=edge,chrome=1"><title>qemu实现编译运行自定义内核和文件系统 - Friday - Here I record my experience</title><meta name=renderer content="webkit"><meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1"><meta http-equiv=cache-control content="no-transform"><meta http-equiv=cache-control content="no-siteapp"><meta name=theme-color content="#f8f5ec"><meta name=msapplication-navbutton-color content="#f8f5ec"><meta name=apple-mobile-web-app-capable content="yes"><meta name=apple-mobile-web-app-status-bar-style content="#f8f5ec"><meta name=author content="friday"><meta name=description content="kernel"><meta name=keywords content="kernel"><meta name=generator content="Hugo 0.110.0 with theme even"><link rel=canonical href=https://fridayhub.github.io/post/run-custom-linux-kernel/><link rel=apple-touch-icon sizes=180x180 href=/apple-touch-icon.png><link rel=icon type=image/png sizes=32x32 href=/favicon-32x32.png><link rel=icon type=image/png sizes=16x16 href=/favicon-16x16.png><link rel=manifest href=/manifest.json><link rel=mask-icon href=/safari-pinned-tab.svg color=#5bbad5><script async src=//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js></script><meta name=referrer content="no-referrer-when-downgrade"><link href=/sass/main.min.c2803d17ea439bb194b104ce262b40c9118b45b7b108e27dadf43e96dd6664a3.css rel=stylesheet><link rel=stylesheet href=https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.css integrity="sha256-7TyXnr2YU040zfSP+rEcz29ggW4j56/ujTPwjMzyqFY=" crossorigin=anonymous><meta property="og:title" content="qemu实现编译运行自定义内核和文件系统"><meta property="og:description" content="kernel"><meta property="og:type" content="article"><meta property="og:url" content="https://fridayhub.github.io/post/run-custom-linux-kernel/"><meta property="article:section" content="post"><meta property="article:published_time" content="2024-05-10T10:43:17+08:00"><meta property="article:modified_time" content="2024-05-10T10:43:17+08:00"><meta itemprop=name content="qemu实现编译运行自定义内核和文件系统"><meta itemprop=description content="kernel"><meta itemprop=datePublished content="2024-05-10T10:43:17+08:00"><meta itemprop=dateModified content="2024-05-10T10:43:17+08:00"><meta itemprop=wordCount content="1013"><meta itemprop=keywords content="kernel,"><meta name=twitter:card content="summary"><meta name=twitter:title content="qemu实现编译运行自定义内核和文件系统"><meta name=twitter:description content="kernel"><!--[if lte IE 9]><script src=https://cdnjs.cloudflare.com/ajax/libs/classlist/1.1.20170427/classList.min.js></script><![endif]--><!--[if lt IE 9]><script src=https://cdn.jsdelivr.net/npm/html5shiv@3.7.3/dist/html5shiv.min.js></script>
+<script src=https://cdn.jsdelivr.net/npm/respond.js@1.4.2/dest/respond.min.js></script><![endif]--></head><body><div id=mobile-navbar class=mobile-navbar><div class=mobile-header-logo><a href=/ class=logo>Friday</a></div><div class=mobile-navbar-icon><span></span>
+<span></span>
+<span></span></div></div><nav id=mobile-menu class="mobile-menu slideout-menu"><ul class=mobile-menu-list><a href=/><li class=mobile-menu-item>Home</li></a><a href=/post/><li class=mobile-menu-item>Archives</li></a><a href=/tags/><li class=mobile-menu-item>Tags</li></a><a href=/categories/><li class=mobile-menu-item>Categories</li></a><a href=/about/><li class=mobile-menu-item>About</li></a></ul></nav><div class=container id=mobile-panel><header id=header class=header><div class=logo-wrapper><a href=/ class=logo>Friday</a></div><nav class=site-navbar><ul id=menu class=menu><li class=menu-item><a class=menu-item-link href=/>Home</a></li><li class=menu-item><a class=menu-item-link href=/post/>Archives</a></li><li class=menu-item><a class=menu-item-link href=/tags/>Tags</a></li><li class=menu-item><a class=menu-item-link href=/categories/>Categories</a></li><li class=menu-item><a class=menu-item-link href=/about/>About</a></li></ul></nav></header><main id=main class=main><div class=content-wrapper><div id=content class=content><article class=post><header class=post-header><h1 class=post-title>qemu实现编译运行自定义内核和文件系统</h1><div class=post-meta><span class=post-time>2024-05-10 10:43:17</span><div class=post-category><a href=/categories/kernel/>kernel</a></div><span class=more-meta>1013 words</span>
+<span class=more-meta>3 mins read</span>
+<span id=busuanzi_container_page_pv class=more-meta><span id=busuanzi_value_page_pv><img src=/img/spinner.svg alt=spinner.svg></span> times read</span></div></header><div class=post-toc id=post-toc><h2 class=post-toc-title>Contents</h2><div class="post-toc-content always-active"><nav id=TableOfContents><ul><li><ul><li><a href=#准备内核>准备内核</a></li><li><a href=#修改编译>修改、编译</a></li><li><a href=#运行>运行</a><ul><li><a href=#准备>准备</a></li></ul></li></ul></li></ul></nav></div></div><div class=post-content><h3 id=准备内核>准备内核</h3><p>前往<a href=https://kernel.org/>kernel 官网</a>下载合适版本的内核源码</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl><span class=c1># 使用清华加速站</span>
+</span></span><span class=line><span class=cl>wget https://mirrors.tuna.tsinghua.edu.cn/kernel/v5.x/linux-5.11.14.tar.xz
+</span></span><span class=line><span class=cl>tar xJf linux-5.11.14.tar.xz
+</span></span></code></pre></td></tr></table></div></div><h3 id=修改编译>修改、编译</h3><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span><span class=lnt>5
+</span><span class=lnt>6
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>make menuconfig
+</span></span><span class=line><span class=cl><span class=c1># 设置 make menuconfig 设置&#34;Kernel hacking&#34; -&gt;&#34;Memory Debugging&#34; -&gt; &#34;KASan: runtime memory debugger&#34;</span>
+</span></span><span class=line><span class=cl><span class=c1># 保存退出</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># 编译</span>
+</span></span><span class=line><span class=cl>make -j<span class=k>$(</span>nproc<span class=k>)</span> bzImage
+</span></span></code></pre></td></tr></table></div></div><p>编译指令小结：</p><ul><li>make config：内核配置，调用 ./scripts/Configure 按照 arch/i386/config.in 来进行配置。</li><li>make dep：寻找依赖关系。</li><li>make clean：清除以前构建内核所产生的所有目标文件、模块文件、以及一些临时文件等。</li><li>make rmproper：删除所有因构建内核过程中产生的所有文件，把内核恢复到最原始的状态。</li><li>make：构核，通过各目录的Makefile 文件将会在各个目录下产生许多目标文件。如果内核没有错误，将产生文件vmlinux，这就是构建的内核。</li><li>make zImage：在make 的基础上产生压缩的内核映象文件./arch/$(ARCH)/boot/zImage 以及在 ./arch/$(ARCH)/boot/compresed/目录下产生临时文件。</li><li>make bzImage：在make 的基础上产生压缩比例更大的内核映象文件./arch/$(ARCH)/boot/bzImage 以及在 ./arch/$(ARCH)/boot/compresed/目录下产生临时文件。</li><li>make modules：编译模块文件，在make config 时所配置的所有模块将在这时编译，形成模块目标文件，并把这些目标文件存放在modules 目录中。</li><li>make modules_install：把上面编译好的模块目标文件放置在目录 ./lib/modules/$KERNEL_VERSION/ 中</li></ul><p>报错解决：
+openssl/opensslv.h: No such file or directory
+<code>sudo apt-get install libssl-dev</code></p><h3 id=运行>运行</h3><h4 id=准备>准备</h4><p>一个系统需要运行，需要硬件环境+内核+文件系统。<br>硬件这里选择qemu模拟；
+文件系统准备：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>$ git clone https://github.com/fridayhub/ubuntu-rootfs-build.git
+</span></span><span class=line><span class=cl>$ <span class=nb>cd</span> ubuntu-rootfs-build
+</span></span><span class=line><span class=cl>$ sudo ./build_ubuntu_rootfs.sh
+</span></span></code></pre></td></tr></table></div></div><p>文件系统build过程中，要求选择时区，输入密码等。<br>生成文件系统：
+Writing superblocks and filesystem accounting information: done
+rootfs.img: 25636/194304 files (0.0% non-contiguous), 225723/776192 blocks</p><p>运行脚本<br>run.sh</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl><span class=nb>export</span> <span class=nv>IMAGE</span><span class=o>=</span>/work/ubuntu-rootfs-build
+</span></span><span class=line><span class=cl><span class=nb>export</span> <span class=nv>KERNEL</span><span class=o>=</span>/work/linux-5.11.14
+</span></span><span class=line><span class=cl><span class=nb>export</span> <span class=nv>HOST</span><span class=o>=</span>xx.x.x.xx
+</span></span><span class=line><span class=cl>qemu-system-x86_64 -cpu host <span class=se>\
+</span></span></span><span class=line><span class=cl><span class=se></span>    -m 2G -smp <span class=m>2</span> <span class=se>\
+</span></span></span><span class=line><span class=cl><span class=se></span>    -kernel <span class=nv>$KERNEL</span>/arch/x86/boot/bzImage <span class=se>\
+</span></span></span><span class=line><span class=cl><span class=se></span>    -append <span class=s2>&#34;console=ttyS0 root=/dev/sda rw earlyprintk=serial net.ifnames=0&#34;</span> <span class=se>\
+</span></span></span><span class=line><span class=cl><span class=se></span>    -drive <span class=nv>file</span><span class=o>=</span><span class=nv>$IMAGE</span>/rootfs.img,format<span class=o>=</span>raw <span class=se>\
+</span></span></span><span class=line><span class=cl><span class=se></span>    -net user,host<span class=o>=</span><span class=nv>$HOST</span>,hostfwd<span class=o>=</span>tcp:127.0.0.1:10021-:22 <span class=se>\
+</span></span></span><span class=line><span class=cl><span class=se></span>    -net nic,model<span class=o>=</span>e1000 <span class=se>\
+</span></span></span><span class=line><span class=cl><span class=se></span>    <span class=c1># 挂载本地目录到系统中</span>
+</span></span><span class=line><span class=cl>    -virtfs local,path<span class=o>=</span>/mywork,mount_tag<span class=o>=</span>tag001,security_model<span class=o>=</span>mapped-xattr <span class=se>\
+</span></span></span><span class=line><span class=cl><span class=se></span>    -enable-kvm <span class=se>\
+</span></span></span><span class=line><span class=cl><span class=se></span>    -nographic <span class=se>\
+</span></span></span><span class=line><span class=cl><span class=se></span>    -pidfile vm.pid 2&gt;<span class=p>&amp;</span><span class=m>1</span> <span class=p>|</span> tee vm.log
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># 远程ssh到系统</span>
+</span></span><span class=line><span class=cl><span class=c1>#ssh -i $IMAGE/rootfs.img.id_rsa -p 10021 -o &#34;StrictHostKeyChecking no&#34; root@localhost</span>
+</span></span></code></pre></td></tr></table></div></div><p>报错：
+<code>qemu-system-x86_64: Initialization of device ide-hd failed: Could not reopen file: Permission denied</code>
+修改文件系统所属为普通用户：
+<code>sudo chown user1:user1 rootfs.*</code></p><p>启动后输入制作文件系统时设置的用户名密码，即可登录：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span><span class=lnt>22
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl><span class=o>[</span>  OK  <span class=o>]</span> Started Network Manager Script Dispatcher Service.
+</span></span><span class=line><span class=cl><span class=o>[</span>  OK  <span class=o>]</span> Started Dispatcher daemon <span class=k>for</span> systemd-networkd.
+</span></span><span class=line><span class=cl><span class=o>[</span>  OK  <span class=o>]</span> Found device /dev/ttyS0.
+</span></span><span class=line><span class=cl><span class=o>[</span>  OK  <span class=o>]</span> Started Serial Getty on ttyS0.
+</span></span><span class=line><span class=cl><span class=o>[</span>  OK  <span class=o>]</span> Reached target Login Prompts.
+</span></span><span class=line><span class=cl><span class=o>[</span>  OK  <span class=o>]</span> Reached target Multi-User System.
+</span></span><span class=line><span class=cl><span class=o>[</span>  OK  <span class=o>]</span> Reached target Graphical Interface.
+</span></span><span class=line><span class=cl>         Starting Update UTMP about System Runlevel Changes...
+</span></span><span class=line><span class=cl><span class=o>[</span>  OK  <span class=o>]</span> Finished Update UTMP about System Runlevel Changes.
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>Ubuntu 20.04.6 LTS mark01 ttyS0
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>mark01 login: friday
+</span></span><span class=line><span class=cl>Password: 
+</span></span><span class=line><span class=cl>Welcome to Ubuntu 20.04.6 LTS <span class=o>(</span>GNU/Linux 5.11.14 x86_64<span class=o>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl> * Documentation:  https://help.ubuntu.com
+</span></span><span class=line><span class=cl> * Management:     https://landscape.canonical.com
+</span></span><span class=line><span class=cl> * Support:        https://ubuntu.com/pro
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>friday@mark01:~$ uname -a
+</span></span><span class=line><span class=cl>Linux mark01 5.11.14 <span class=c1>#2 SMP Fri May 10 11:31:03 CST 2024 x86_64 x86_64 x86_64 GNU/Linux</span>
+</span></span></code></pre></td></tr></table></div></div></div><footer class=post-footer><div class=post-tags><a href=/tags/kernel/>kernel</a></div><nav class=post-nav><a class=next href=/post/vscode-custom-setting/><span class="next-text nav-default">Vscode Custom Setting</span>
+<span class="next-text nav-mobile">Next</span>
+<i class="iconfont icon-right"></i></a></nav></footer></article></div><div id=vcomments></div><script src=//cdn1.lncld.net/static/js/3.0.4/av-min.js></script>
+<script src=//unpkg.com/valine/dist/Valine.min.js></script>
+<script type=text/javascript>new Valine({el:"#vcomments",appId:"fb6qCfVYGmIrC87K3STOS3V8-gzGzoHsz",appKey:"FilghKK7HHC4hMQHxhR90dDE",notify:!1,verify:!1,avatar:"mm",placeholder:"说点什么吧...",visitor:!1})</script></div></main><footer id=footer class=footer><div class=social-links><a href=mailto:hanglinux@163.com class="iconfont icon-email" title=email></a>
+<a href=https://github.com/fridayhub class="iconfont icon-github" title=github></a>
+<a href=https://fridayhub.github.io/index.xml type=application/rss+xml class="iconfont icon-rss" title=rss></a></div><div class=copyright><span class=power-by>Powered by <a class=hexo-link href=https://gohugo.io>Hugo</a></span>
+<span class=division>|</span>
+<span class=theme-info>Theme -
+<a class=theme-link href=https://github.com/olOwOlo/hugo-theme-even>Even</a></span><div class=busuanzi-footer><span id=busuanzi_container_site_pv>site pv: <span id=busuanzi_value_site_pv><img src=/img/spinner.svg alt=spinner.svg></span></span>
+<span class=division>|</span>
+<span id=busuanzi_container_site_uv>site uv: <span id=busuanzi_value_site_uv><img src=/img/spinner.svg alt=spinner.svg></span></span></div><span class=copyright-year>&copy;
+2017 -
+2024
+<span class=heart><i class="iconfont icon-heart"></i></span>
+<span class=author>friday</span></span></div></footer><div class=back-to-top id=back-to-top><i class="iconfont icon-up"></i></div></div><script src=https://cdn.jsdelivr.net/npm/jquery@3.2.1/dist/jquery.min.js integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin=anonymous></script>
+<script src=https://cdn.jsdelivr.net/npm/slideout@1.0.1/dist/slideout.min.js integrity="sha256-t+zJ/g8/KXIJMjSVQdnibt4dlaDxc9zXr/9oNPeWqdg=" crossorigin=anonymous></script>
+<script src=https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.js integrity="sha256-XVLffZaxoWfGUEbdzuLi7pwaUJv1cecsQJQqGLe7axY=" crossorigin=anonymous></script>
+<script type=text/javascript src=/js/main.min.1c70606d1b733282f06230615f5561b5894924b6f9930ba2ab99cf1254f75a1a.js></script></body></html>
