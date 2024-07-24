@@ -5,7 +5,7 @@
 <a href=/categories/k8s/>k8s</a>
 <a href=/categories/go/>go</a></div><span class=more-meta>1048 words</span>
 <span class=more-meta>3 mins read</span>
-<span id=busuanzi_container_page_pv class=more-meta><span id=busuanzi_value_page_pv><img src=/img/spinner.svg alt=spinner.svg></span> times read</span></div></header><div class=post-toc id=post-toc><h2 class=post-toc-title>Contents</h2><div class=post-toc-content><nav id=TableOfContents><ul><li><a href=#1-问题起因>1. 问题起因</a></li><li><a href=#2-问题原因>2. 问题原因</a></li><li><a href=#3-原因解决>3. 原因解决</a><ul><li><a href=#调整1>调整1</a></li><li><a href=#调整2>调整2</a></li><li><a href=#调整3>调整3</a></li></ul></li></ul></nav></div></div><div class=post-content><h2 id=1-问题起因>1. 问题起因</h2><p>通过查看 cloudcore 监控，发现内存在缓慢增长：</p><p><img src=../../static/kubeedge-mem-leak/cloudcore-monitor-30min.png alt=cloudcore-monitor-30min></p><p>因之前在 cloudcore 中加过pprof</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+<span id=busuanzi_container_page_pv class=more-meta><span id=busuanzi_value_page_pv><img src=/img/spinner.svg alt=spinner.svg></span> times read</span></div></header><div class=post-toc id=post-toc><h2 class=post-toc-title>Contents</h2><div class=post-toc-content><nav id=TableOfContents><ul><li><a href=#1-问题起因>1. 问题起因</a></li><li><a href=#2-问题原因>2. 问题原因</a></li><li><a href=#3-原因解决>3. 原因解决</a><ul><li><a href=#调整-1>调整 1</a></li><li><a href=#调整-2>调整 2</a></li><li><a href=#调整-3>调整 3</a></li></ul></li></ul></nav></div></div><div class=post-content><h2 id=1-问题起因>1. 问题起因</h2><p>通过查看 cloudcore 监控，发现内存在缓慢增长：</p><p><img src=../../static/kubeedge-mem-leak/cloudcore-monitor-30min.png alt=cloudcore-monitor-30min></p><p>因之前在 cloudcore 中加过pprof</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
 </span><span class=lnt>2
 </span><span class=lnt>3
 </span><span class=lnt>4
@@ -15,13 +15,13 @@
 </span></span><span class=line><span class=cl><span class=nx>_</span> <span class=s>&#34;net/http/pprof&#34;</span>
 </span></span><span class=line><span class=cl>
 </span></span><span class=line><span class=cl><span class=k>go</span> <span class=kd>func</span><span class=p>()</span> <span class=p>{</span>
-</span></span><span class=line><span class=cl>				<span class=nx>klog</span><span class=p>.</span><span class=nf>Errorln</span><span class=p>(</span><span class=nx>http</span><span class=p>.</span><span class=nf>ListenAndServe</span><span class=p>(</span><span class=s>&#34;:6080&#34;</span><span class=p>,</span> <span class=kc>nil</span><span class=p>))</span>
-</span></span><span class=line><span class=cl>    <span class=p>}()</span>
+</span></span><span class=line><span class=cl>	<span class=nx>klog</span><span class=p>.</span><span class=nf>Errorln</span><span class=p>(</span><span class=nx>http</span><span class=p>.</span><span class=nf>ListenAndServe</span><span class=p>(</span><span class=s>&#34;:6080&#34;</span><span class=p>,</span> <span class=kc>nil</span><span class=p>))</span>
+</span></span><span class=line><span class=cl><span class=p>}()</span>
 </span></span></code></pre></td></tr></table></div></div><p>因此打开<code>/debug/pprof/</code>，经过一段时间的间隔观察，发现 goroutine数量在稳定的缓慢增长，确定有点像 goroutine 泄漏（阻塞），
-每间隔一段时间打开一个<code>/debug/pprof/goroutine?debug=1</code> 页面，最终四个页面的对比如下：</p><ul><li><p>1:
+每间隔一段时间打开一个<code>/debug/pprof/goroutine?debug=1</code> 页面，最终四次结果的对比如下：</p><ul><li><p>1:
 <img src=../../static/kubeedge-mem-leak/goroutine-1.png alt=goroutine-1></p></li><li><p>2:
 <img src=../../static/kubeedge-mem-leak/goroutine-2.png alt=goroutine-2></p></li><li><p>3:
-<img src=../../static/kubeedge-mem-leak/goroutine-3.png alt=goroutine-2></p></li><li><p>2:
+<img src=../../static/kubeedge-mem-leak/goroutine-3.png alt=goroutine-2></p></li><li><p>4:
 <img src=../../static/kubeedge-mem-leak/goroutine-4.png alt=goroutine-4></p></li></ul><p>通过上图可以看到发生了网络超时问题，导致大量的 goroutine 阻塞。</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
 </span><span class=lnt> 2
 </span><span class=lnt> 3
@@ -112,7 +112,7 @@ kubeedge 收到边缘发来的信息后，推送到pushgateway：</p><div class=
 </span></span></code></pre></td></tr></table></div></div><p>也就是说每个边缘节点每60s上报一次数据。目前线上有600个节点。</p><p>现在要确认的问题是 prometheus 每一次拉取多少数据，是一条？ 还是一批？</p><p>而且通过查看 prometheus 和 pushgateway 的pod网络监控也能发现，两个pod的流量是不均匀的：
 pushgateway 网络 流入270KiB/s：
 <img src=../../static/kubeedge-mem-leak/pushgateway-monitor-network-30min.png alt=pushgateway-monitor-network-30min></p><p>prometheus 网络 流入10KiB/s：
-<img src=../../static/kubeedge-mem-leak/prometheus-monitor-network-30min.png alt=prometheus-monitor-network-30min></p><p>两边的流量是不均匀的。</p><p>以上问题为了短平快，没有取深究源码，而是问了chatgpt和通义千问：</p><p><img src=../../static/kubeedge-mem-leak/chatgpt-prometheus.png alt=chatgpt-prometheus></p><p><img src=../../static/kubeedge-mem-leak/tongyi-prometheus.png alt=tongyi-prometheus></p><h2 id=3-原因解决>3. 原因解决</h2><h3 id=调整1>调整1</h3><p>缩短 prometheus 拉取间隔为2s:</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+<img src=../../static/kubeedge-mem-leak/prometheus-monitor-network-30min.png alt=prometheus-monitor-network-30min></p><p>两边的流量是不均匀的。</p><p>以上问题为了短平快，没有取深究源码，而是问了chatgpt和通义千问：</p><p><img src=../../static/kubeedge-mem-leak/chatgpt-prometheus.png alt=chatgpt-prometheus></p><p><img src=../../static/kubeedge-mem-leak/tongyi-prometheus.png alt=tongyi-prometheus></p><h2 id=3-原因解决>3. 原因解决</h2><h3 id=调整-1>调整 1</h3><p>缩短 prometheus 拉取间隔为2s:</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
 </span><span class=lnt> 2
 </span><span class=lnt> 3
 </span><span class=lnt> 4
@@ -147,10 +147,10 @@ pushgateway 网络 流入270KiB/s：
 </span></span></span><span class=line><span class=cl><span class=w>            </span><span class=nt>cpu</span><span class=p>:</span><span class=w> </span><span class=s2>&#34;1&#34;</span><span class=w>
 </span></span></span><span class=line><span class=cl><span class=w>            </span><span class=nt>memory</span><span class=p>:</span><span class=w> </span><span class=l>1Gi</span><span class=w>
 </span></span></span></code></pre></td></tr></table></div></div><p>优化后发现 pushgateway pod的内存还是在缓慢增长：
-<img src=../../static/kubeedge-mem-leak/pushgateway-op1-mem.png alt=pushgateway-op1-mem></p><h3 id=调整2>调整2</h3><p>缩短 prometheus 拉取间隔为1s.
+<img src=../../static/kubeedge-mem-leak/pushgateway-op1-mem.png alt=pushgateway-op1-mem></p><h3 id=调整-2>调整 2</h3><p>缩短 prometheus 拉取间隔为1s.
 更新 pushgateway：
 <img src=../../static/kubeedge-mem-leak/pushgateway-up-version.png alt=pushgateway-up-version>
-效果不明显。</p><h3 id=调整3>调整3</h3><p>既然瓶颈在 pushgateway， 能否通过增加复本解决。这里有一个问题就是，prometheus 通过 k8s svc 与 pushgateway 通信，
+效果不明显。</p><h3 id=调整-3>调整 3</h3><p>既然瓶颈在 pushgateway， 能否通过增加复本解决。这里有一个问题就是，prometheus 通过 k8s svc 与 pushgateway 通信，
 是否会出现消费不均的行？ 只能试一试：<br><img src=../../static/kubeedge-mem-leak/cloudcore-try-3.png alt=cloudcore-try-3></p><p><img src=../../static/kubeedge-mem-leak/pushgateway-try-3.png alt=pushgateway-try-3></p><p><img src=../../static/kubeedge-mem-leak/prometheus-try-3.png alt=prometheus-try-3></p><p>目前来看，暂时稳住了。还需再继续观察。</p></div><footer class=post-footer><div class=post-tags><a href=/tags/kubeedge/>kubeedge</a>
 <a href=/tags/k8s/>k8s</a>
 <a href=/tags/go/>go</a></div><nav class=post-nav><a class=next href=/post/kernel-debug-%E7%8E%AF%E5%A2%83%E5%87%86%E5%A4%87/><span class="next-text nav-default">Kernel Ctf 环境准备</span>
