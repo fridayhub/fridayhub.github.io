@@ -1,0 +1,377 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta http-equiv=x-ua-compatible content="IE=edge,chrome=1"><title>Android Kernel Build - Friday - Here I record my experience</title><meta name=renderer content="webkit"><meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1"><meta http-equiv=cache-control content="no-transform"><meta http-equiv=cache-control content="no-siteapp"><meta name=theme-color content="#f8f5ec"><meta name=msapplication-navbutton-color content="#f8f5ec"><meta name=apple-mobile-web-app-capable content="yes"><meta name=apple-mobile-web-app-status-bar-style content="#f8f5ec"><meta name=author content="friday"><meta name=description content><meta name=keywords content="android,kernel"><meta name=generator content="Hugo 0.110.0 with theme even"><link rel=canonical href=https://fridayhub.github.io/post/android-kernel-build/><link rel=apple-touch-icon sizes=180x180 href=/apple-touch-icon.png><link rel=icon type=image/png sizes=32x32 href=/favicon-32x32.png><link rel=icon type=image/png sizes=16x16 href=/favicon-16x16.png><link rel=manifest href=/manifest.json><link rel=mask-icon href=/safari-pinned-tab.svg color=#5bbad5><script async src=//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js></script><meta name=referrer content="no-referrer-when-downgrade"><link href=/sass/main.min.c2803d17ea439bb194b104ce262b40c9118b45b7b108e27dadf43e96dd6664a3.css rel=stylesheet><link rel=stylesheet href=https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.css integrity="sha256-7TyXnr2YU040zfSP+rEcz29ggW4j56/ujTPwjMzyqFY=" crossorigin=anonymous><meta property="og:title" content="Android Kernel Build"><meta property="og:description" content><meta property="og:type" content="article"><meta property="og:url" content="https://fridayhub.github.io/post/android-kernel-build/"><meta property="article:section" content="post"><meta property="article:published_time" content="2024-07-31T08:40:01+08:00"><meta property="article:modified_time" content="2024-07-31T08:40:01+08:00"><meta itemprop=name content="Android Kernel Build"><meta itemprop=description content><meta itemprop=datePublished content="2024-07-31T08:40:01+08:00"><meta itemprop=dateModified content="2024-07-31T08:40:01+08:00"><meta itemprop=wordCount content="1345"><meta itemprop=keywords content="android,kernel,"><meta name=twitter:card content="summary"><meta name=twitter:title content="Android Kernel Build"><meta name=twitter:description content><!--[if lte IE 9]><script src=https://cdnjs.cloudflare.com/ajax/libs/classlist/1.1.20170427/classList.min.js></script><![endif]--><!--[if lt IE 9]><script src=https://cdn.jsdelivr.net/npm/html5shiv@3.7.3/dist/html5shiv.min.js></script>
+<script src=https://cdn.jsdelivr.net/npm/respond.js@1.4.2/dest/respond.min.js></script><![endif]--></head><body><div id=mobile-navbar class=mobile-navbar><div class=mobile-header-logo><a href=/ class=logo>Friday</a></div><div class=mobile-navbar-icon><span></span>
+<span></span>
+<span></span></div></div><nav id=mobile-menu class="mobile-menu slideout-menu"><ul class=mobile-menu-list><a href=/><li class=mobile-menu-item>Home</li></a><a href=/post/><li class=mobile-menu-item>Archives</li></a><a href=/tags/><li class=mobile-menu-item>Tags</li></a><a href=/categories/><li class=mobile-menu-item>Categories</li></a><a href=/about/><li class=mobile-menu-item>About</li></a></ul></nav><div class=container id=mobile-panel><header id=header class=header><div class=logo-wrapper><a href=/ class=logo>Friday</a></div><nav class=site-navbar><ul id=menu class=menu><li class=menu-item><a class=menu-item-link href=/>Home</a></li><li class=menu-item><a class=menu-item-link href=/post/>Archives</a></li><li class=menu-item><a class=menu-item-link href=/tags/>Tags</a></li><li class=menu-item><a class=menu-item-link href=/categories/>Categories</a></li><li class=menu-item><a class=menu-item-link href=/about/>About</a></li></ul></nav></header><main id=main class=main><div class=content-wrapper><div id=content class=content><article class=post><header class=post-header><h1 class=post-title>Android Kernel Build</h1><div class=post-meta><span class=post-time>2024-07-31 08:40:01</span><div class=post-category><a href=/categories/android/>android</a>
+<a href=/categories/kernel/>kernel</a></div><span class=more-meta>1345 words</span>
+<span class=more-meta>3 mins read</span>
+<span id=busuanzi_container_page_pv class=more-meta><span id=busuanzi_value_page_pv><img src=/img/spinner.svg alt=spinner.svg></span> times read</span></div></header><div class=post-toc id=post-toc><h2 class=post-toc-title>Contents</h2><div class=post-toc-content><nav id=TableOfContents><ul><li><a href=#1-下载内核>1. 下载内核</a></li><li><a href=#2-编译内核>2. 编译内核</a></li><li><a href=#3-引子>3. 引子</a></li><li><a href=#4-分析>4. 分析</a></li><li><a href=#5-问题解决>5. 问题解决</a><ul><li><a href=#报错1>报错1:</a><ul><li><a href=#或者>或者：</a></li></ul></li><li><a href=#报错2>报错2:</a></li></ul></li><li><a href=#6-不能启动问题修复>6. 不能启动问题修复</a></li></ul></nav></div></div><div class=post-content><h2 id=1-下载内核>1. 下载内核</h2><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>repo init -u https://mirrors.ustc.edu.cn/aosp/kernel/manifest.git/ -b android-msm-redbull-4.19-android11-qpr3
+</span></span><span class=line><span class=cl>repo sync
+</span></span></code></pre></td></tr></table></div></div><h2 id=2-编译内核>2. 编译内核</h2><p><code>./build/build.sh</code></p><h2 id=3-引子>3. 引子</h2><p>魔幻的地方来了，网上千篇一律都是推荐这么编译，偏偏我这里报错不断。花了一点时间，跟踪了build的脚本执行流程。</p><h2 id=4-分析>4. 分析</h2><p>build.sh 其实就是准备Linux 内核编译所需的各种编译参数，如交叉编译工具链，编译环境变量等。
+还有android特有的一些配置，如特殊的内核源码位置，输出文件的位置等。
+以下按照调用流程分析：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>  1
+</span><span class=lnt>  2
+</span><span class=lnt>  3
+</span><span class=lnt>  4
+</span><span class=lnt>  5
+</span><span class=lnt>  6
+</span><span class=lnt>  7
+</span><span class=lnt>  8
+</span><span class=lnt>  9
+</span><span class=lnt> 10
+</span><span class=lnt> 11
+</span><span class=lnt> 12
+</span><span class=lnt> 13
+</span><span class=lnt> 14
+</span><span class=lnt> 15
+</span><span class=lnt> 16
+</span><span class=lnt> 17
+</span><span class=lnt> 18
+</span><span class=lnt> 19
+</span><span class=lnt> 20
+</span><span class=lnt> 21
+</span><span class=lnt> 22
+</span><span class=lnt> 23
+</span><span class=lnt> 24
+</span><span class=lnt> 25
+</span><span class=lnt> 26
+</span><span class=lnt> 27
+</span><span class=lnt> 28
+</span><span class=lnt> 29
+</span><span class=lnt> 30
+</span><span class=lnt> 31
+</span><span class=lnt> 32
+</span><span class=lnt> 33
+</span><span class=lnt> 34
+</span><span class=lnt> 35
+</span><span class=lnt> 36
+</span><span class=lnt> 37
+</span><span class=lnt> 38
+</span><span class=lnt> 39
+</span><span class=lnt> 40
+</span><span class=lnt> 41
+</span><span class=lnt> 42
+</span><span class=lnt> 43
+</span><span class=lnt> 44
+</span><span class=lnt> 45
+</span><span class=lnt> 46
+</span><span class=lnt> 47
+</span><span class=lnt> 48
+</span><span class=lnt> 49
+</span><span class=lnt> 50
+</span><span class=lnt> 51
+</span><span class=lnt> 52
+</span><span class=lnt> 53
+</span><span class=lnt> 54
+</span><span class=lnt> 55
+</span><span class=lnt> 56
+</span><span class=lnt> 57
+</span><span class=lnt> 58
+</span><span class=lnt> 59
+</span><span class=lnt> 60
+</span><span class=lnt> 61
+</span><span class=lnt> 62
+</span><span class=lnt> 63
+</span><span class=lnt> 64
+</span><span class=lnt> 65
+</span><span class=lnt> 66
+</span><span class=lnt> 67
+</span><span class=lnt> 68
+</span><span class=lnt> 69
+</span><span class=lnt> 70
+</span><span class=lnt> 71
+</span><span class=lnt> 72
+</span><span class=lnt> 73
+</span><span class=lnt> 74
+</span><span class=lnt> 75
+</span><span class=lnt> 76
+</span><span class=lnt> 77
+</span><span class=lnt> 78
+</span><span class=lnt> 79
+</span><span class=lnt> 80
+</span><span class=lnt> 81
+</span><span class=lnt> 82
+</span><span class=lnt> 83
+</span><span class=lnt> 84
+</span><span class=lnt> 85
+</span><span class=lnt> 86
+</span><span class=lnt> 87
+</span><span class=lnt> 88
+</span><span class=lnt> 89
+</span><span class=lnt> 90
+</span><span class=lnt> 91
+</span><span class=lnt> 92
+</span><span class=lnt> 93
+</span><span class=lnt> 94
+</span><span class=lnt> 95
+</span><span class=lnt> 96
+</span><span class=lnt> 97
+</span><span class=lnt> 98
+</span><span class=lnt> 99
+</span><span class=lnt>100
+</span><span class=lnt>101
+</span><span class=lnt>102
+</span><span class=lnt>103
+</span><span class=lnt>104
+</span><span class=lnt>105
+</span><span class=lnt>106
+</span><span class=lnt>107
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl><span class=c1># build/build.sh</span>
+</span></span><span class=line><span class=cl><span class=c1># 配置环境变量</span>
+</span></span><span class=line><span class=cl><span class=nb>source</span> <span class=s2>&#34;</span><span class=si>${</span><span class=nv>ROOT_DIR</span><span class=si>}</span><span class=s2>/build/_setup_env.sh&#34;</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># build/_setup_env.sh</span>
+</span></span><span class=line><span class=cl><span class=c1># 定义配置参数</span>
+</span></span><span class=line><span class=cl><span class=nb>export</span> <span class=nv>BUILD_CONFIG</span><span class=o>=</span><span class=si>${</span><span class=nv>BUILD_CONFIG</span><span class=k>:-</span><span class=nv>build</span><span class=p>.config</span><span class=si>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># build/build.config</span>
+</span></span><span class=line><span class=cl><span class=c1># 配置编译器 环境变量等</span>
+</span></span><span class=line><span class=cl>. <span class=si>${</span><span class=nv>ROOT_DIR</span><span class=si>}</span>/<span class=si>${</span><span class=nv>KERNEL_DIR</span><span class=si>}</span>/build.config.redbull.common.clang
+</span></span><span class=line><span class=cl><span class=c1># 给 POST_DEFCONFIG_CMDS 赋值，之后在build.sh会调用到</span>
+</span></span><span class=line><span class=cl><span class=nv>POST_DEFCONFIG_CMDS</span><span class=o>=</span><span class=s2>&#34;check_defconfig &amp;&amp; update_nocfi_config&#34;</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># private/msm-google/build.config.redbull.common.clang</span>
+</span></span><span class=line><span class=cl>. <span class=si>${</span><span class=nv>ROOT_DIR</span><span class=si>}</span>/<span class=si>${</span><span class=nv>KERNEL_DIR</span><span class=si>}</span>/build.config.redbull.common
+</span></span><span class=line><span class=cl><span class=nv>CC</span><span class=o>=</span>clang <span class=c1># 设置编译器</span>
+</span></span><span class=line><span class=cl><span class=nv>LD</span><span class=o>=</span>ld.lld
+</span></span><span class=line><span class=cl><span class=nv>CLANG_TRIPLE</span><span class=o>=</span>aarch64-linux-gnu-
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># private/msm-google/build.config.redbull.common</span>
+</span></span><span class=line><span class=cl><span class=c1># 编译器选项</span>
+</span></span><span class=line><span class=cl><span class=nv>CROSS_COMPILE</span><span class=o>=</span>aarch64-linux-gnu-
+</span></span><span class=line><span class=cl><span class=nv>CROSS_COMPILE_ARM32</span><span class=o>=</span>arm-linux-gnueabi-
+</span></span><span class=line><span class=cl><span class=nv>CROSS_COMPILE_COMPAT</span><span class=o>=</span><span class=nv>$CROSS_COMPILE_ARM32</span>
+</span></span><span class=line><span class=cl><span class=c1># 编译器模式，编译器所在的目录</span>
+</span></span><span class=line><span class=cl><span class=nv>LLVM</span><span class=o>=</span><span class=m>1</span>
+</span></span><span class=line><span class=cl><span class=nv>DEPMOD</span><span class=o>=</span>depmod
+</span></span><span class=line><span class=cl><span class=nv>CLANG_PREBUILT_BIN</span><span class=o>=</span>prebuilts-master/clang/host/linux-x86/clang-r383902/bin
+</span></span><span class=line><span class=cl><span class=nv>BUILDTOOLS_PREBUILT_BIN</span><span class=o>=</span>build/build-tools/path/linux-x86
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># 回到_setup_env.sh</span>
+</span></span><span class=line><span class=cl><span class=c1># 设置环境变量PATH</span>
+</span></span><span class=line><span class=cl><span class=nv>PREBUILTS_PATHS</span><span class=o>=(</span>
+</span></span><span class=line><span class=cl>LINUX_GCC_CROSS_COMPILE_PREBUILTS_BIN
+</span></span><span class=line><span class=cl>LINUX_GCC_CROSS_COMPILE_ARM32_PREBUILTS_BIN
+</span></span><span class=line><span class=cl>LINUX_GCC_CROSS_COMPILE_COMPAT_PREBUILTS_BIN
+</span></span><span class=line><span class=cl>CLANG_PREBUILT_BIN
+</span></span><span class=line><span class=cl>LZ4_PREBUILTS_BIN
+</span></span><span class=line><span class=cl>DTC_PREBUILTS_BIN
+</span></span><span class=line><span class=cl>LIBUFDT_PREBUILTS_BIN
+</span></span><span class=line><span class=cl>BUILDTOOLS_PREBUILT_BIN
+</span></span><span class=line><span class=cl><span class=o>)</span>
+</span></span><span class=line><span class=cl><span class=k>for</span> PREBUILT_BIN in <span class=s2>&#34;</span><span class=si>${</span><span class=nv>PREBUILTS_PATHS</span><span class=p>[@]</span><span class=si>}</span><span class=s2>&#34;</span><span class=p>;</span> <span class=k>do</span>
+</span></span><span class=line><span class=cl>    <span class=nv>PREBUILT_BIN</span><span class=o>=</span><span class=se>\$</span><span class=o>{</span><span class=si>${</span><span class=nv>PREBUILT_BIN</span><span class=si>}</span><span class=o>}</span>
+</span></span><span class=line><span class=cl>    <span class=nb>eval</span> <span class=nv>PREBUILT_BIN</span><span class=o>=</span><span class=s2>&#34;</span><span class=si>${</span><span class=nv>PREBUILT_BIN</span><span class=si>}</span><span class=s2>&#34;</span>
+</span></span><span class=line><span class=cl>    <span class=k>if</span> <span class=o>[</span> -n <span class=s2>&#34;</span><span class=si>${</span><span class=nv>PREBUILT_BIN</span><span class=si>}</span><span class=s2>&#34;</span> <span class=o>]</span><span class=p>;</span> <span class=k>then</span>
+</span></span><span class=line><span class=cl>        <span class=c1># Mitigate dup paths</span>
+</span></span><span class=line><span class=cl>        <span class=nv>PATH</span><span class=o>=</span><span class=si>${</span><span class=nv>PATH</span><span class=p>//</span><span class=s2>&#34;</span><span class=si>${</span><span class=nv>ROOT_DIR</span><span class=si>}</span><span class=s2>\/</span><span class=si>${</span><span class=nv>PREBUILT_BIN</span><span class=si>}</span><span class=s2>:&#34;</span><span class=si>}</span>
+</span></span><span class=line><span class=cl>        <span class=nv>PATH</span><span class=o>=</span><span class=si>${</span><span class=nv>ROOT_DIR</span><span class=si>}</span>/<span class=si>${</span><span class=nv>PREBUILT_BIN</span><span class=si>}</span>:<span class=si>${</span><span class=nv>PATH</span><span class=si>}</span>
+</span></span><span class=line><span class=cl>    <span class=k>fi</span>
+</span></span><span class=line><span class=cl><span class=k>done</span>
+</span></span><span class=line><span class=cl><span class=nb>export</span> PATH
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># 回到 build.sh</span>
+</span></span><span class=line><span class=cl><span class=c1># 导出环境变量</span>
+</span></span><span class=line><span class=cl><span class=nb>export</span> CLANG_TRIPLE CROSS_COMPILE CROSS_COMPILE_COMPAT CROSS_COMPILE_ARM32 ARCH SUBARCH MAKE_GOALS
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># 设置编译器</span>
+</span></span><span class=line><span class=cl>  <span class=nv>HOSTCC</span><span class=o>=</span>clang
+</span></span><span class=line><span class=cl>  <span class=nv>HOSTCXX</span><span class=o>=</span>clang++
+</span></span><span class=line><span class=cl>  <span class=nv>CC</span><span class=o>=</span>clang
+</span></span><span class=line><span class=cl>  <span class=nv>LD</span><span class=o>=</span>ld.lld
+</span></span><span class=line><span class=cl>  <span class=nv>AR</span><span class=o>=</span>llvm-ar
+</span></span><span class=line><span class=cl>  <span class=nv>NM</span><span class=o>=</span>llvm-nm
+</span></span><span class=line><span class=cl>  <span class=nv>OBJCOPY</span><span class=o>=</span>llvm-objcopy
+</span></span><span class=line><span class=cl>  <span class=nv>OBJDUMP</span><span class=o>=</span>llvm-objdump
+</span></span><span class=line><span class=cl>  <span class=nv>READELF</span><span class=o>=</span>llvm-readelf
+</span></span><span class=line><span class=cl>  <span class=nv>OBJSIZE</span><span class=o>=</span>llvm-size
+</span></span><span class=line><span class=cl>  <span class=nv>STRIP</span><span class=o>=</span>llvm-strip
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># 编译前的准备工作，主要是生成内核编译所需的 .config 文件</span>
+</span></span><span class=line><span class=cl>  <span class=k>if</span> <span class=o>[</span> -n <span class=s2>&#34;</span><span class=si>${</span><span class=nv>POST_DEFCONFIG_CMDS</span><span class=si>}</span><span class=s2>&#34;</span> <span class=o>]</span><span class=p>;</span> <span class=k>then</span>
+</span></span><span class=line><span class=cl>    <span class=nb>echo</span> <span class=s2>&#34;========================================================&#34;</span>
+</span></span><span class=line><span class=cl>    <span class=nb>echo</span> <span class=s2>&#34; Running pre-make command(s):&#34;</span>
+</span></span><span class=line><span class=cl>    <span class=nb>set</span> -x
+</span></span><span class=line><span class=cl>    <span class=nb>eval</span> <span class=si>${</span><span class=nv>POST_DEFCONFIG_CMDS</span><span class=si>}</span> <span class=c1># 就是 check_defconfig &amp;&amp; update_nocfi_config</span>
+</span></span><span class=line><span class=cl>    <span class=nb>set</span> +x
+</span></span><span class=line><span class=cl>  <span class=k>fi</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># 生成 .config  build/build.config</span>
+</span></span><span class=line><span class=cl><span class=k>function</span> update_nocfi_config<span class=o>()</span> <span class=o>{</span>
+</span></span><span class=line><span class=cl>  <span class=c1># Disable clang-specific options</span>
+</span></span><span class=line><span class=cl>  <span class=si>${</span><span class=nv>KERNEL_DIR</span><span class=si>}</span>/scripts/config --file <span class=si>${</span><span class=nv>OUT_DIR</span><span class=si>}</span>/.config <span class=se>\
+</span></span></span><span class=line><span class=cl><span class=se></span>    -e THINLTO <span class=se>\
+</span></span></span><span class=line><span class=cl><span class=se></span>    -d CFI <span class=se>\
+</span></span></span><span class=line><span class=cl><span class=se></span>    -d CFI_PERMISSIVE <span class=se>\
+</span></span></span><span class=line><span class=cl><span class=se></span>    -d CFI_CLANG
+</span></span><span class=line><span class=cl>  <span class=o>(</span><span class=nb>cd</span> <span class=si>${</span><span class=nv>OUT_DIR</span><span class=si>}</span> <span class=o>&amp;&amp;</span> <span class=se>\
+</span></span></span><span class=line><span class=cl><span class=se></span>    make <span class=nv>O</span><span class=o>=</span><span class=si>${</span><span class=nv>OUT_DIR</span><span class=si>}</span> <span class=nv>CLANG_TRIPLE</span><span class=o>=</span><span class=si>${</span><span class=nv>CLANG_TRIPLE</span><span class=si>}</span> <span class=nv>CROSS_COMPILE</span><span class=o>=</span><span class=si>${</span><span class=nv>CROSS_COMPILE</span><span class=si>}</span> <span class=s2>&#34;</span><span class=si>${</span><span class=nv>TOOL_ARGS</span><span class=p>[@]</span><span class=si>}</span><span class=s2>&#34;</span> <span class=si>${</span><span class=nv>MAKE_ARGS</span><span class=si>}</span> olddefconfig<span class=o>)</span>
+</span></span><span class=line><span class=cl>  <span class=c1># 展开为：</span>
+</span></span><span class=line><span class=cl>  + make <span class=nv>O</span><span class=o>=</span>/kernel_android-msm-redbull-4.19-android11-qpr3/out/android-msm-pixel-4.19/private/msm-google <span class=nv>CLANG_TRIPLE</span><span class=o>=</span>aarch64-linux-gnu- <span class=nv>CROSS_COMPILE</span><span class=o>=</span>aarch64-linux-gnu- <span class=nv>LLVM</span><span class=o>=</span><span class=m>1</span> <span class=nv>DEPMOD</span><span class=o>=</span>depmod olddefconfig
+</span></span><span class=line><span class=cl>  + GEN     ./Makefile
+</span></span><span class=line><span class=cl>  + scripts/kconfig/conf  --olddefconfig Kconfig
+</span></span><span class=line><span class=cl>  + <span class=c1># configuration written to .config</span>
+</span></span><span class=line><span class=cl><span class=o>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># 接下来的主要工作就是编译内核了</span>
+</span></span><span class=line><span class=cl><span class=c1># build/build.sh</span>
+</span></span><span class=line><span class=cl><span class=nb>echo</span> <span class=s2>&#34; Building kernel&#34;</span>
+</span></span><span class=line><span class=cl><span class=nb>set</span> -x
+</span></span><span class=line><span class=cl><span class=o>(</span><span class=nb>cd</span> <span class=si>${</span><span class=nv>OUT_DIR</span><span class=si>}</span> <span class=o>&amp;&amp;</span> make <span class=nv>O</span><span class=o>=</span><span class=si>${</span><span class=nv>OUT_DIR</span><span class=si>}</span> <span class=s2>&#34;</span><span class=si>${</span><span class=nv>TOOL_ARGS</span><span class=p>[@]</span><span class=si>}</span><span class=s2>&#34;</span> <span class=si>${</span><span class=nv>MAKE_ARGS</span><span class=si>}</span> <span class=si>${</span><span class=nv>MAKE_GOALS</span><span class=si>}</span><span class=o>)</span>
+</span></span><span class=line><span class=cl><span class=nb>set</span> +x
+</span></span><span class=line><span class=cl><span class=c1># 展开为：</span>
+</span></span><span class=line><span class=cl>+ <span class=nb>cd</span> /kernel_android-msm-redbull-4.19-android11-qpr3/out/android-msm-pixel-4.19/private/msm-google
+</span></span><span class=line><span class=cl>+ make <span class=nv>O</span><span class=o>=</span>/kernel_android-msm-redbull-4.19-android11-qpr3/out/android-msm-pixel-4.19/private/msm-google <span class=nv>LLVM</span><span class=o>=</span><span class=m>1</span> <span class=nv>DEPMOD</span><span class=o>=</span>depmod
+</span></span></code></pre></td></tr></table></div></div><h2 id=5-问题解决>5. 问题解决</h2><h3 id=报错1>报错1:</h3><p>编译内核时报错： <code>/usr/bin/as: unrecognized option '-EL'</code>：
+排查为在编译时，之前设置的环境变量没有被获取到。
+临时解决方式：
+打印出环境变量，手动export，并执行make：
+<code>env</code>
+保存到 env.sh
+<code>source env.sh</code></p><p>手动执行 <code>echo " Building kernel"</code> 步骤。</p><h4 id=或者>或者：</h4><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span><span class=lnt>5
+</span><span class=lnt>6
+</span><span class=lnt>7
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl><span class=nb>echo</span> <span class=s2>&#34; Building kernel&#34;</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=nb>set</span> -x
+</span></span><span class=line><span class=cl><span class=nb>echo</span> <span class=s2>&#34;----------env:&#34;</span>
+</span></span><span class=line><span class=cl>env &gt; /tmp/env
+</span></span><span class=line><span class=cl><span class=nb>echo</span> <span class=s2>&#34;----------done&#34;</span>
+</span></span><span class=line><span class=cl><span class=o>(</span><span class=nb>cd</span> <span class=si>${</span><span class=nv>OUT_DIR</span><span class=si>}</span> <span class=o>&amp;&amp;</span> <span class=nb>source</span> /tmp/env <span class=o>&amp;&amp;</span> make <span class=nv>O</span><span class=o>=</span><span class=si>${</span><span class=nv>OUT_DIR</span><span class=si>}</span> <span class=s2>&#34;</span><span class=si>${</span><span class=nv>TOOL_ARGS</span><span class=p>[@]</span><span class=si>}</span><span class=s2>&#34;</span> <span class=si>${</span><span class=nv>MAKE_ARGS</span><span class=si>}</span> <span class=si>${</span><span class=nv>MAKE_GOALS</span><span class=si>}</span><span class=o>)</span>
+</span></span></code></pre></td></tr></table></div></div><h3 id=报错2>报错2:</h3><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>In file included from /kernel_android-msm-redbull-4.19-android11-qpr3/private/msm-google/init/version.c:9:
+</span></span><span class=line><span class=cl>./include/generated/compile.h:7:24: error: missing terminating <span class=s1>&#39;&#34;&#39;</span> character <span class=o>[</span>-Werror,-Winvalid-pp-token<span class=o>]</span>
+</span></span><span class=line><span class=cl><span class=c1>#define LINUX_COMPILER &#34;Android (6443078 based on r383902) clang version 11.0.1 (https://android.googlesource.com/toolchain/llvm-project b397f81060ce6d701042b782172ed13bee898b79)</span>
+</span></span><span class=line><span class=cl>                       ^
+</span></span><span class=line><span class=cl>./include/generated/compile.h:8:1: error: unknown <span class=nb>type</span> name <span class=s1>&#39;Found&#39;</span>
+</span></span><span class=line><span class=cl>Found CUDA installation: /usr/local/cuda, version 7.0, LLD 11.0.1 <span class=o>(</span>/buildbot/tmp/tmp6_m7QH b397f81060ce6d701042b782172ed13bee898b79<span class=o>)</span><span class=s2>&#34;
+</span></span></span><span class=line><span class=cl><span class=s2>^
+</span></span></span><span class=line><span class=cl><span class=s2>./include/generated/compile.h:8:11: error: expected &#39;;&#39; after top level declarator
+</span></span></span><span class=line><span class=cl><span class=s2>Found CUDA installation: /usr/local/cuda, version 7.0, LLD 11.0.1 (/buildbot/tmp/tmp6_m7QH b397f81060ce6d701042b782172ed13bee898b79)&#34;</span>
+</span></span><span class=line><span class=cl>          ^
+</span></span><span class=line><span class=cl>          <span class=p>;</span>
+</span></span><span class=line><span class=cl>./include/generated/compile.h:8:133: error: missing terminating <span class=s1>&#39;&#34;&#39;</span> character <span class=o>[</span>-Werror,-Winvalid-pp-token<span class=o>]</span>
+</span></span></code></pre></td></tr></table></div></div><p>查看 compile.h内容：
+<code>cat out/android-msm-pixel-4.19/private/msm-google/include/generated/compile.h</code></p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span><span class=lnt>5
+</span><span class=lnt>6
+</span><span class=lnt>7
+</span><span class=lnt>8
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-c data-lang=c><span class=line><span class=cl><span class=cm>/* This file is auto generated, version 1 */</span>
+</span></span><span class=line><span class=cl><span class=cm>/* SMP PREEMPT */</span>
+</span></span><span class=line><span class=cl><span class=cp>#define UTS_MACHINE &#34;aarch64&#34;
+</span></span></span><span class=line><span class=cl><span class=cp>#define UTS_VERSION &#34;#1 SMP PREEMPT Tue Jul 30 23:49:29 CST 2024&#34;
+</span></span></span><span class=line><span class=cl><span class=cp>#define LINUX_COMPILE_BY &#34;xxx&#34;
+</span></span></span><span class=line><span class=cl><span class=cp>#define LINUX_COMPILE_HOST &#34;xxxx&#34;
+</span></span></span><span class=line><span class=cl><span class=cp>#define LINUX_COMPILER &#34;Android (6443078 based on r383902) clang version 11.0.1 (https:</span><span class=c1>//android.googlesource.com/toolchain/llvm-project b397f81060ce6d701042b782172ed13bee898b79)
+</span></span></span><span class=line><span class=cl><span class=c1></span><span class=n>Found</span> <span class=n>CUDA</span> <span class=nl>installation</span><span class=p>:</span> <span class=o>/</span><span class=n>usr</span><span class=o>/</span><span class=n>local</span><span class=o>/</span><span class=n>cuda</span><span class=p>,</span> <span class=n>version</span> <span class=mf>7.0</span><span class=p>,</span> <span class=n>LLD</span> <span class=mf>11.0.1</span> <span class=p>(</span><span class=o>/</span><span class=n>buildbot</span><span class=o>/</span><span class=n>tmp</span><span class=o>/</span><span class=n>tmp6_m7QH</span> <span class=n>b397f81060ce6d701042b782172ed13bee898b79</span><span class=p>)</span><span class=s>&#34;</span>
+</span></span></code></pre></td></tr></table></div></div><p>多了最后一行。</p><p>grep了整个项目，发现，最后一行在clang中有关键字：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span><span class=lnt>5
+</span><span class=lnt>6
+</span><span class=lnt>7
+</span><span class=lnt>8
+</span><span class=lnt>9
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>grep -nr <span class=s1>&#39;Found CUDA installation&#39;</span> ./
+</span></span><span class=line><span class=cl>grep: ./prebuilts-master/clang/host/linux-x86/clang-r377782c/bin/clang-10: binary file matches
+</span></span><span class=line><span class=cl>grep: ./prebuilts-master/clang/host/linux-x86/clang-r377782c/bin/clang-check: binary file matches
+</span></span><span class=line><span class=cl>grep: ./prebuilts-master/clang/host/linux-x86/clang-r377782c/bin/clang-tidy.real: binary file matches
+</span></span><span class=line><span class=cl>grep: ./prebuilts-master/clang/host/linux-x86/clang-r377782c/lib64/libclang_cxx.so.10git: binary file matches
+</span></span><span class=line><span class=cl>grep: ./prebuilts-master/clang/host/linux-x86/clang-r377782c/lib64/liblldb.so.10.0.5git: binary file matches
+</span></span><span class=line><span class=cl>grep: ./prebuilts-master/clang/host/linux-x86/clang-r377782c/lib64/libclang.so.10git: binary file matches
+</span></span><span class=line><span class=cl>grep: ./prebuilts-master/clang/host/linux-x86/clang-r377782b/bin/clang-10: binary file matches
+</span></span><span class=line><span class=cl>...
+</span></span></code></pre></td></tr></table></div></div><p>最终在 <a href=https://review.blissroms.org/plugins/gitiles/platform_vendor_bliss/+/150d5dc42c590c0eac632ba3599d68e85942085d>kernel: Force disable LLVM CUDA</a> 找到答案：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-diff data-lang=diff><span class=line><span class=cl><span class=gh>index 2409894..40285e5 100644
+</span></span></span><span class=line><span class=cl><span class=gh></span><span class=gd>--- a/build/tasks/kernel.mk
+</span></span></span><span class=line><span class=cl><span class=gd></span><span class=gi>+++ b/build/tasks/kernel.mk
+</span></span></span><span class=line><span class=cl><span class=gi></span><span class=gu>@@ -239,7 +239,7 @@
+</span></span></span><span class=line><span class=cl><span class=gu></span>     endif
+</span></span><span class=line><span class=cl>     PATH_OVERRIDE += PATH=$(TARGET_KERNEL_CLANG_PATH)/bin:$$PATH
+</span></span><span class=line><span class=cl>     ifeq ($(KERNEL_CC),)
+</span></span><span class=line><span class=cl><span class=gd>-        KERNEL_CC := CC=&#34;$(CCACHE_BIN) clang&#34;
+</span></span></span><span class=line><span class=cl><span class=gd></span><span class=gi>+        KERNEL_CC := CC=&#34;$(CCACHE_BIN) clang --cuda-path=/dev/null&#34;
+</span></span></span><span class=line><span class=cl><span class=gi></span>     endif
+</span></span><span class=line><span class=cl> endif
+</span></span></code></pre></td></tr></table></div></div><p>编辑：private/msm-google/Makefile</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-diff data-lang=diff><span class=line><span class=cl><span class=gd>- CLANG_FLAGS :=
+</span></span></span><span class=line><span class=cl><span class=gd></span><span class=gi>+ CLANG_FLAGS := --cuda-path=/dev/null
+</span></span></span></code></pre></td></tr></table></div></div><p>终极解决方案， 换版本。其他版本的内核 执行 bash build/build.sh 可以直接编译成功(makefile 中 cuda 的修改仍是必须的)。</p><h2 id=6-不能启动问题修复>6. 不能启动问题修复</h2><p>找到aosp编译中的原版 boot.img:<br>out/target/product/bramble/boot.img<br>解压工具：(Android_boot_image_editor)[https://github.com/cfig/Android_boot_image_editor.git]</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span><span class=lnt>5
+</span><span class=lnt>6
+</span><span class=lnt>7
+</span><span class=lnt>8
+</span><span class=lnt>9
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl><span class=nb>cd</span> Android_boot_image_editor
+</span></span><span class=line><span class=cl>./gradlew unpack
+</span></span><span class=line><span class=cl>cp /aosp/out/target/product/bramble/boot.img ./
+</span></span><span class=line><span class=cl><span class=nb>cd</span> build/unzip_boot
+</span></span><span class=line><span class=cl>cp /android-msm-redbull-4.19-android13/out/android-msm-pixel-4.19/dist/Image.lz4-dtb ./kernel
+</span></span><span class=line><span class=cl>./gradlew pack
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>adb reboot bootloader
+</span></span><span class=line><span class=cl>fastboot boot boot.img.signed
+</span></span></code></pre></td></tr></table></div></div><p>此时启动会卡住，然后重启。</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl><span class=nb>cd</span> private/msm-google/arch/arm64/configs
+</span></span><span class=line><span class=cl>mv redbull_defconfig redbull_defconfig_bak
+</span></span><span class=line><span class=cl>拷贝上面 build/unzip_boot 的 kernel_configs.txt
+</span></span><span class=line><span class=cl>cp /Android_boot_image_editor/build/unzip_boot/kernel_configs.txt out/android-msm-pixel-4.19/private/msm-google/.config
+</span></span></code></pre></td></tr></table></div></div></div><footer class=post-footer><div class=post-tags><a href=/tags/android/>android</a>
+<a href=/tags/kernel/>kernel</a></div><nav class=post-nav><a class=next href=/post/kubeedge-%E5%86%85%E5%AD%98%E6%B3%84%E6%BC%8F%E6%8E%92%E6%9F%A5/><span class="next-text nav-default">Kubeedge "内存泄漏"排查</span>
+<span class="next-text nav-mobile">Next</span>
+<i class="iconfont icon-right"></i></a></nav></footer></article></div><div id=vcomments></div><script src=//cdn1.lncld.net/static/js/3.0.4/av-min.js></script>
+<script src=//unpkg.com/valine/dist/Valine.min.js></script>
+<script type=text/javascript>new Valine({el:"#vcomments",appId:"fb6qCfVYGmIrC87K3STOS3V8-gzGzoHsz",appKey:"FilghKK7HHC4hMQHxhR90dDE",notify:!1,verify:!1,avatar:"mm",placeholder:"说点什么吧...",visitor:!1})</script></div></main><footer id=footer class=footer><div class=social-links><a href=mailto:hanglinux@163.com class="iconfont icon-email" title=email></a>
+<a href=https://github.com/fridayhub class="iconfont icon-github" title=github></a>
+<a href=https://fridayhub.github.io/index.xml type=application/rss+xml class="iconfont icon-rss" title=rss></a></div><div class=copyright><span class=power-by>Powered by <a class=hexo-link href=https://gohugo.io>Hugo</a></span>
+<span class=division>|</span>
+<span class=theme-info>Theme -
+<a class=theme-link href=https://github.com/olOwOlo/hugo-theme-even>Even</a></span><div class=busuanzi-footer><span id=busuanzi_container_site_pv>site pv: <span id=busuanzi_value_site_pv><img src=/img/spinner.svg alt=spinner.svg></span></span>
+<span class=division>|</span>
+<span id=busuanzi_container_site_uv>site uv: <span id=busuanzi_value_site_uv><img src=/img/spinner.svg alt=spinner.svg></span></span></div><span class=copyright-year>&copy;
+2017 -
+2024
+<span class=heart><i class="iconfont icon-heart"></i></span>
+<span class=author>friday</span></span></div></footer><div class=back-to-top id=back-to-top><i class="iconfont icon-up"></i></div></div><script src=https://cdn.jsdelivr.net/npm/jquery@3.2.1/dist/jquery.min.js integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin=anonymous></script>
+<script src=https://cdn.jsdelivr.net/npm/slideout@1.0.1/dist/slideout.min.js integrity="sha256-t+zJ/g8/KXIJMjSVQdnibt4dlaDxc9zXr/9oNPeWqdg=" crossorigin=anonymous></script>
+<script src=https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.js integrity="sha256-XVLffZaxoWfGUEbdzuLi7pwaUJv1cecsQJQqGLe7axY=" crossorigin=anonymous></script>
+<script type=text/javascript src=/js/main.min.1c70606d1b733282f06230615f5561b5894924b6f9930ba2ab99cf1254f75a1a.js></script></body></html>

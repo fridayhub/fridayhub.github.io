@@ -153,7 +153,10 @@ pushgateway 网络 流入270KiB/s：
 效果不明显。</p><h3 id=调整-3>调整 3</h3><p>既然瓶颈在 pushgateway， 能否通过增加复本解决。这里有一个问题就是，prometheus 通过 k8s svc 与 pushgateway 通信，
 是否会出现消费不均的行？ 只能试一试：<br><img src=../../static/kubeedge-mem-leak/cloudcore-try-3.png alt=cloudcore-try-3></p><p><img src=../../static/kubeedge-mem-leak/pushgateway-try-3.png alt=pushgateway-try-3></p><p><img src=../../static/kubeedge-mem-leak/prometheus-try-3.png alt=prometheus-try-3></p><p>目前来看，暂时稳住了。还需再继续观察。</p></div><footer class=post-footer><div class=post-tags><a href=/tags/kubeedge/>kubeedge</a>
 <a href=/tags/k8s/>k8s</a>
-<a href=/tags/go/>go</a></div><nav class=post-nav><a class=next href=/post/kernel-debug-%E7%8E%AF%E5%A2%83%E5%87%86%E5%A4%87/><span class="next-text nav-default">Kernel Ctf 环境准备</span>
+<a href=/tags/go/>go</a></div><nav class=post-nav><a class=prev href=/post/android-kernel-build/><i class="iconfont icon-left"></i>
+<span class="prev-text nav-default">Android Kernel Build</span>
+<span class="prev-text nav-mobile">Prev</span></a>
+<a class=next href=/post/kernel-debug-%E7%8E%AF%E5%A2%83%E5%87%86%E5%A4%87/><span class="next-text nav-default">Kernel Ctf 环境准备</span>
 <span class="next-text nav-mobile">Next</span>
 <i class="iconfont icon-right"></i></a></nav></footer></article></div><div id=vcomments></div><script src=//cdn1.lncld.net/static/js/3.0.4/av-min.js></script>
 <script src=//unpkg.com/valine/dist/Valine.min.js></script>
